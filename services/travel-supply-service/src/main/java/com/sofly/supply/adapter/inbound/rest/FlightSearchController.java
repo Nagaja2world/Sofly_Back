@@ -16,12 +16,13 @@ public class FlightSearchController {
 
     @GetMapping("/offers")
     public JsonNode offers(
+            @RequestParam(required = false) String supplier,  // 예: amadeus, skyscanner
             @RequestParam String origin,
             @RequestParam String dest,
             @RequestParam String date,
             @RequestParam(defaultValue = "1") int adults,
             @RequestParam(defaultValue = "5") int max
     ) {
-        return flightSearchService.search(origin, dest, date, adults, max);
+        return flightSearchService.search(supplier, origin, dest, date, adults, max);
     }
 }

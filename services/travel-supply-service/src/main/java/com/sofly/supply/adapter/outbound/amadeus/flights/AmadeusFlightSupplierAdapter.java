@@ -18,6 +18,11 @@ public class AmadeusFlightSupplierAdapter implements FlightSupplierPort {
     }
 
     @Override
+    public String supplierKey() {
+        return "amadeus";
+    }
+
+    @Override
     public JsonNode searchFlightOffers(String origin, String dest, String date, int adults, int max) {
         String token = authClient.getAccessToken();
 
