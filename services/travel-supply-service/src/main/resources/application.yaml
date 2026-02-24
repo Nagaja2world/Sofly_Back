@@ -1,0 +1,24 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: travel-supply-service
+  jackson:
+    serialization:
+      indent_output: true
+
+amadeus:
+  base-url: ${AMADEUS_BASE_URL:https://test.api.amadeus.com}
+  client-id: ${AMADEUS_CLIENT_ID:}
+  client-secret: ${AMADEUS_CLIENT_SECRET:}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  suppliers:
+    default: amadeus
