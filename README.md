@@ -1,7 +1,7 @@
 # Sofly BE
 
 
-| <img src="https://avatars.githubusercontent.com/u/162114710?v=4" width="100" height="100"> | <img src="https://avatars.githubusercontent.com/u/163288437?v=4" width="100" height="100"> | 
+| <img src="https://avatars.githubusercontent.com/u/88922405?v=4" width="100" height="100" alt="박상민 프로필"> | <img src="https://avatars.githubusercontent.com/u/168955357?v=4" width="100" height="100" alt="정세현 프로필"> |
 |:---:|:---:|
 | [박상민](https://github.com/sm010422) | [정세현](https://github.com/gitIt-sehyeon) | 
 | Backend<br> | Backend<br> |
