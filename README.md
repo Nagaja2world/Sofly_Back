@@ -1,5 +1,12 @@
 # Sofly BE
 
+
+| <img src="https://avatars.githubusercontent.com/u/162114710?v=4" width="100" height="100"> | <img src="https://avatars.githubusercontent.com/u/163288437?v=4" width="100" height="100"> | 
+|:---:|:---:|
+| [박상민](https://github.com/sm010422) | [정세현](https://github.com/gitIt-sehyeon) | 
+| Backend<br> | Backend<br> |
+
+
 ## 📢 Convention
 
 본 프로젝트는 아래의 Git 및 협업 규칙을 따릅니다.
