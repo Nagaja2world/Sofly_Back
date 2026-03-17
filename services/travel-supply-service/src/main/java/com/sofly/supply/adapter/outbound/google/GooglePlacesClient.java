@@ -33,7 +33,7 @@ public class GooglePlacesClient {
      */
     public PlaceInfo fetchPlaceInfo(String hotelName, String cityCode) {
         if (props.apiKey() == null || props.apiKey().isBlank()) {
-            System.out.println("api key or something wrong");
+            log.warn("Google Places API key is not configured");
             return null;
         }
 
