@@ -1,5 +1,6 @@
 package com.sofly.supply.adapter.inbound.rest;
 
+import com.sofly.supply.adapter.outbound.google.PlaceInfo;
 import com.sofly.supply.application.dto.HotelSearchResult;
 import com.sofly.supply.application.service.HotelSearchService;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +19,20 @@ public class HotelSearchController {
 
     @GetMapping("/offers")
     public List<HotelSearchResult> offers(
-            @RequestParam String cityCode,                              // IATA 도시 코드 (예: PAR, NYC, ICN)
-            @RequestParam java.time.LocalDate checkIn,                               // 체크인 날짜 (yyyy-MM-dd)
-            @RequestParam java.time.LocalDate checkOut,                              // 체크아웃 날짜 (yyyy-MM-dd)
+            @RequestParam String cityCode,
+            @RequestParam java.time.LocalDate checkIn,
+            @RequestParam java.time.LocalDate checkOut,
             @RequestParam(defaultValue = "1") int adults,
             @RequestParam(defaultValue = "1") int roomQuantity
     ) {
         return hotelSearchService.search(cityCode, checkIn, checkOut, adults, roomQuantity);
+    }
+
+    @GetMapping("/place-info")
+    public PlaceInfo placeInfo(
+            @RequestParam String hotelName,
+            @RequestParam String cityCode
+    ) {
+        return hotelSearchService.getPlaceInfo(hotelName, cityCode);
     }
 }

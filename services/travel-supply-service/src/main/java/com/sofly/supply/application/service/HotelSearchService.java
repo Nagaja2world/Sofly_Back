@@ -40,14 +40,13 @@ public class HotelSearchService {
             Double lng       = hotel.has("longitude")  ? hotel.get("longitude").asDouble(): null;
             JsonNode offers  = item.get("offers");
 
-            // Google Places로 평점·리뷰 수·사진 보완 (실패해도 전체 응답에 영향 없음)
-            PlaceInfo placeInfo = (hotelName != null)
-                    ? googlePlacesClient.fetchPlaceInfo(hotelName, city)
-                    : null;
-
-            results.add(new HotelSearchResult(hotelId, hotelName, city, lat, lng, offers, placeInfo));
+            results.add(new HotelSearchResult(hotelId, hotelName, city, lat, lng, offers));
         }
 
         return results;
+    }
+
+    public PlaceInfo getPlaceInfo(String hotelName, String cityCode) {
+        return googlePlacesClient.fetchPlaceInfo(hotelName, cityCode);
     }
 }
