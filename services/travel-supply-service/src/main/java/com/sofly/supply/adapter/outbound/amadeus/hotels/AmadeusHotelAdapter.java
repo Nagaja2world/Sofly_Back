@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 @Component
 public class AmadeusHotelAdapter implements HotelSupplierPort {
@@ -50,11 +50,11 @@ public class AmadeusHotelAdapter implements HotelSupplierPort {
             throw new IllegalStateException("No hotels found for city: " + cityCode);
         }
 
-        List<String> hotelIds = new ArrayList<>();
-        for (JsonNode hotel : hotelListResponse.get("data")) {
-            if (hotelIds.size() >= MAX_HOTELS) break;
-            hotelIds.add(hotel.get("hotelId").asText());
-        }
+        List<String> hotelIds = StreamSupport
+                .stream(hotelListResponse.get("data").spliterator(), false)
+                .limit(MAX_HOTELS)
+                .map(hotel -> hotel.get("hotelId").asText())
+                .toList();
 
         if (hotelIds.isEmpty()) {
             throw new IllegalStateException("No hotel IDs found for city: " + cityCode);
