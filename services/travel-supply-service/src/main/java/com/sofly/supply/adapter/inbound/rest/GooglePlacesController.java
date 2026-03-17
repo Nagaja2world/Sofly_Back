@@ -2,11 +2,13 @@ package com.sofly.supply.adapter.inbound.rest;
 
 import com.sofly.supply.adapter.outbound.google.GooglePlacesClient;
 import com.sofly.supply.adapter.outbound.google.PlaceInfo;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Profile("!prod")
 @RestController
 @RequestMapping("/supply/places")
 public class GooglePlacesController {
