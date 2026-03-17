@@ -21,7 +21,7 @@ public class HotelSearchService {
         this.googlePlacesClient = googlePlacesClient;
     }
 
-    public List<HotelSearchResult> search(String cityCode, String checkIn, String checkOut, int adults, int roomQuantity) {
+    public List<HotelSearchResult> search(String cityCode, java.time.LocalDate checkIn, java.time.LocalDate checkOut, int adults, int roomQuantity) {
         JsonNode amadeusResponse = hotelSupplierPort.searchHotelsByCity(cityCode, checkIn, checkOut, adults, roomQuantity);
 
         List<HotelSearchResult> results = new ArrayList<>();
