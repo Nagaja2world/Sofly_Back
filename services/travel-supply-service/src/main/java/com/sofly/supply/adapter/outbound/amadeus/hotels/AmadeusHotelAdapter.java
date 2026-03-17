@@ -6,6 +6,7 @@ import com.sofly.supply.application.port.outbound.HotelSupplierPort;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class AmadeusHotelAdapter implements HotelSupplierPort {
     }
 
     @Override
-    public JsonNode searchHotelsByCity(String cityCode, String checkIn, String checkOut, int adults, int roomQuantity) {
+    public JsonNode searchHotelsByCity(String cityCode, LocalDate checkIn, LocalDate checkOut, int adults, int roomQuantity) {
         String token = authClient.getAccessToken();
 
         // Step 1: 도시 코드로 호텔 ID 목록 조회
