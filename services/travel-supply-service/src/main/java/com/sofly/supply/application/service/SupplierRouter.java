@@ -1,6 +1,7 @@
 package com.sofly.supply.application.service;
 
 import com.sofly.supply.application.port.outbound.FlightSupplierPort;
+import com.sofly.supply.application.port.outbound.HotelSupplierPort;
 import com.sofly.supply.bootstrap.SupplierRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,5 +23,12 @@ public class SupplierRouter {
                 ? defaultSupplier
                 : requestedSupplier;
         return registry.getFlightSupplier(key);
+    }
+
+    public HotelSupplierPort selectHotelSupplier(String requestedSupplier) {
+        String key = (requestedSupplier == null || requestedSupplier.isBlank())
+                ? defaultSupplier
+                : requestedSupplier;
+        return registry.getHotelSupplier(key);
     }
 }
