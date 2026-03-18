@@ -19,6 +19,11 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+google:
+  places:
+    api-key: ${GOOGLE_PLACES_API_KEY:}
+    base-url: ${GOOGLE_PLACES_BASE_URL:https://places.googleapis.com}
+
 app:
   suppliers:
     default: amadeus
