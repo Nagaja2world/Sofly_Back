@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,8 +78,11 @@ public class GooglePlacesClient {
 
             return new PlaceInfo(placeId, rating, userRatingsTotal); //photoUrls 추가 예정
 
+        } catch (WebClientResponseException e) {
+            log.warn("Google Places API error for hotel '{}': {} {}", hotelName, e.getStatusCode(), e.getMessage());
+            return null;
         } catch (Exception e) {
-            log.warn("Google Places enrichment failed for hotel '{}': {}", hotelName, e.getMessage());
+            log.warn("Unexpected error during Google Places enrichment for hotel '{}': {}", hotelName, e.getMessage());
             return null;
         }
     }
