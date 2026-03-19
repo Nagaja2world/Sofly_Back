@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.adapter.outbound.google.GooglePlacesClient;
 import com.sofly.supply.adapter.outbound.google.PlaceInfo;
 import com.sofly.supply.application.dto.HotelSearchResult;
-import com.sofly.supply.application.port.outbound.HotelSupplierPort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,16 +12,16 @@ import java.util.List;
 @Service
 public class HotelSearchService {
 
-    private final HotelSupplierPort hotelSupplierPort;
+    private final SupplierRouter router;
     private final GooglePlacesClient googlePlacesClient;
 
-    public HotelSearchService(HotelSupplierPort hotelSupplierPort, GooglePlacesClient googlePlacesClient) {
-        this.hotelSupplierPort = hotelSupplierPort;
+    public HotelSearchService(SupplierRouter router, GooglePlacesClient googlePlacesClient) {
+        this.router = router;
         this.googlePlacesClient = googlePlacesClient;
     }
 
-    public List<HotelSearchResult> search(String cityCode, java.time.LocalDate checkIn, java.time.LocalDate checkOut, int adults, int roomQuantity) {
-        JsonNode amadeusResponse = hotelSupplierPort.searchHotelsByCity(cityCode, checkIn, checkOut, adults, roomQuantity);
+    public List<HotelSearchResult> search(String supplier, String cityCode, java.time.LocalDate checkIn, java.time.LocalDate checkOut, int adults, int roomQuantity) {
+        JsonNode amadeusResponse = router.selectHotelSupplier(supplier).searchHotelsByCity(cityCode, checkIn, checkOut, adults, roomQuantity);
 
         List<HotelSearchResult> results = new ArrayList<>();
 
