@@ -23,9 +23,10 @@ public class HotelSearchController {
             @RequestParam java.time.LocalDate checkIn,
             @RequestParam java.time.LocalDate checkOut,
             @RequestParam(defaultValue = "1") int adults,
-            @RequestParam(defaultValue = "1") int roomQuantity
+            @RequestParam(defaultValue = "1") int roomQuantity,
+            @RequestParam(required = false) String supplier
     ) {
-        return hotelSearchService.search(cityCode, checkIn, checkOut, adults, roomQuantity);
+        return hotelSearchService.search(supplier, cityCode, checkIn, checkOut, adults, roomQuantity);
     }
 
     @GetMapping("/place-info")

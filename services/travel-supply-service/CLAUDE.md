@@ -35,7 +35,7 @@ bootstrap/                   ← SupplierRegistry (auto-discovers supplier imple
 
 ### Supplier System
 
-New flight/hotel suppliers are added by implementing `FlightSupplierPort` or `HotelSupplierPort` and registering them. `SupplierRegistry` auto-discovers all port implementations at startup. `SupplierRouter` routes requests to the correct supplier by key (configurable default: `amadeus`).
+New flight/hotel suppliers are added by implementing `FlightSupplierPort` or `HotelSupplierPort` and registering them. `SupplierRegistry` auto-discovers all port implementations at startup and maintains separate maps for flight and hotel suppliers. `SupplierRouter` routes requests to the correct supplier by key via `selectFlightSupplier(key)` / `selectHotelSupplier(key)` (configurable default: `amadeus`). Both `/supply/flights/offers` and `/supply/hotels/offers` accept an optional `supplier` query parameter for runtime supplier selection.
 
 ### Amadeus Integration
 
