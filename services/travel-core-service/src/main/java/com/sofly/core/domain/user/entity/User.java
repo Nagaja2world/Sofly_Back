@@ -85,13 +85,21 @@ public class User extends BaseTimeEntity {
     }
 
     public void updatePreferThemes(List<TravelTheme> themes) {
-        this.preferThemes.clear();
-        this.preferThemes.addAll(themes);
+        // 추가할 것만 add
+        themes.stream()
+            .filter(theme -> !this.preferThemes.contains(theme))
+            .forEach(this.preferThemes::add);
+        
+        // 삭제할 것만 remove
+        this.preferThemes.removeIf(theme -> !themes.contains(theme));
     }
 
     public void updatePreferCities(List<String> cities) {
-        this.preferCities.clear();
-        this.preferCities.addAll(cities);
+        cities.stream()
+            .filter(city -> !this.preferCities.contains(city))
+            .forEach(this.preferCities::add);
+        
+        this.preferCities.removeIf(city -> !cities.contains(city));
     }
 
     // ── Enum ────────────────────────────────────────────────
