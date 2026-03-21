@@ -38,6 +38,10 @@ public class WorkspaceMember extends BaseTimeEntity {
         VIEWER   // 조회만
     }
 
+    void setWorkspace(Workspace workspace) {
+        this.workspace = workspace;
+    }
+
     public void updateRole(MemberRole role) {
         this.role = role;
     }

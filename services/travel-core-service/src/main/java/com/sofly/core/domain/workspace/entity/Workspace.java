@@ -53,6 +53,10 @@ public class Workspace extends BaseTimeEntity {
 
     // ── 비즈니스 메서드 ──────────────────────────────────────
 
+    public void addMember(WorkspaceMember member) {
+        this.members.add(member);
+        member.setWorkspace(this);
+    }
     public void update(String title, String destination, LocalDate startDate,
                        LocalDate endDate, Integer headcount, String coverImageUrl) {
         this.title = title;
