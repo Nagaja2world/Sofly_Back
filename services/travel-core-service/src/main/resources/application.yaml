@@ -6,9 +6,9 @@ spring:
     name: travel-core-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:sofly_db}
-    username: ${DB_USER:sofly_user}
-    password: ${DB_PASSWORD:sofly_password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sofly_db}
+    username: ${SPRING_DATASOURCE_USERNAME:sofly_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:sofly_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
