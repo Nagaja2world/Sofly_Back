@@ -1,0 +1,76 @@
+package com.sofly.core.domain.schedule.entity;
+
+import com.sofly.core.global.entity.BaseTimeEntity;
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "schedule_items")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
+public class ScheduleItem extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private Schedule schedule;
+
+    @Column(nullable = false)
+    private Integer day;                // 여행 일차 (1부터 시작)
+
+    @Column(nullable = false)
+    private Integer orderIndex;         // 일차 내 순서 (D&D 로 변경)
+
+    private String visitTime;           // HH:mm (예: "10:30")
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Category category;          // ACCOMMODATION, RESTAURANT, CAFE, ATTRACTION, TRANSPORT
+
+    @Column(nullable = false)
+    private String name;                // 장소/활동 이름
+
+    private String address;
+
+    private Double latitude;
+
+    private Double longitude;
+
+    @Column(columnDefinition = "TEXT")
+    private String memo;
+
+    private String deepLinkUrl;         // 예약 딥링크 (숙소/교통)
+
+    private Integer estimatedCost;      // 예상 비용 (원)
+
+    private Integer deepLinkClickCount; // 딥링크 클릭 통계
+
+    // ── 비즈니스 메서드 ──────────────────────────────────────
+
+    public void update(String visitTime, String memo, Category category) {
+        this.visitTime = visitTime;
+        this.memo = memo;
+        this.category = category;
+    }
+
+    public void updateOrder(Integer orderIndex) {
+        this.orderIndex = orderIndex;
+    }
+
+    public void incrementDeepLinkClick() {
+        this.deepLinkClickCount = (this.deepLinkClickCount == null ? 0 : this.deepLinkClickCount) + 1;
+    }
+
+    public enum Category {
+        ACCOMMODATION,  // 숙소
+        RESTAURANT,     // 맛집
+        CAFE,           // 카페
+        ATTRACTION,     // 관광지
+        TRANSPORT       // 교통
+    }
+}
