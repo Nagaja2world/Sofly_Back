@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: travel-core-service
@@ -21,3 +24,12 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/service
+  api-docs:
+    path: /v3/api-docs/service
+
+logging:
+  exception-conversion-word: "%wEx{0}"
