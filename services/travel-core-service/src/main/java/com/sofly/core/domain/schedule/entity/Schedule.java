@@ -42,6 +42,7 @@ public class Schedule extends BaseTimeEntity {
 
     public void addItem(ScheduleItem item) {
         this.items.add(item);
+        // item.setSchedule(this); // ScheduleItem에 setSchedule(Schedule) 추가 필요
     }
 
     public void updateTitle(String title) {
