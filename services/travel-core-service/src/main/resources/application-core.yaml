@@ -27,9 +27,9 @@ spring:
 
 springdoc:
   swagger-ui:
-    path: /swagger-ui/service
+    path: /swagger-ui/core
   api-docs:
-    path: /v3/api-docs/service
+    path: /v3/api-docs/core
 
 logging:
   exception-conversion-word: "%wEx{0}"
