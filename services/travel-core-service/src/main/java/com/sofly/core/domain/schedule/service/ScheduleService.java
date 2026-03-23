@@ -129,8 +129,8 @@ public class ScheduleService {
 
     // 아이템 단건 수정 (visitTime, memo, category)
     @Transactional
-    public ScheduleItemResponse updateItem(Long itemId, ScheduleItemUpdateRequest request) {
-        ScheduleItem item = scheduleItemRepository.findById(itemId)
+    public ScheduleItemResponse updateItem(Long scheduleId, Long itemId, ScheduleItemUpdateRequest request) {
+        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.update(request.visitTime(), request.memo(), request.category());
         return ScheduleItemResponse.from(item);
@@ -203,8 +203,8 @@ public class ScheduleService {
 
     // 아이템 단건 삭제
     @Transactional
-    public void deleteItem(Long itemId) {
-        ScheduleItem item = scheduleItemRepository.findById(itemId)
+    public void deleteItem(Long scheduleId, Long itemId) {
+        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         scheduleItemRepository.delete(item);
     }
@@ -220,8 +220,8 @@ public class ScheduleService {
     // ── 딥링크 ──────────────────────────────────────────────
 
     @Transactional
-    public void trackDeepLinkClick(Long itemId) {
-        ScheduleItem item = scheduleItemRepository.findById(itemId)
+    public void trackDeepLinkClick(Long scheduleId, Long itemId) {
+        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.incrementDeepLinkClick();
     }

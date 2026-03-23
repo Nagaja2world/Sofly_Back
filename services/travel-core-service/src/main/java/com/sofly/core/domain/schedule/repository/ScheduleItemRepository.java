@@ -8,8 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleItemRepository extends JpaRepository<ScheduleItem, Long> {
+
+    //itemId과 scheduleId로 items 찾기
+    Optional<ScheduleItem> findByIdAndScheduleId(Long id, Long scheduleId);
+
     // 특정 일정의 모든 아이템 (day, orderIndex 정렬)
     List<ScheduleItem> findByScheduleIdOrderByDayAscOrderIndexAsc(Long scheduleId);
 

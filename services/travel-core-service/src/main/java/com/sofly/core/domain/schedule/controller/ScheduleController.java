@@ -75,11 +75,12 @@ public class ScheduleController {
     }
 
     // PATCH /api/v1/schedules/items/{itemId}
-    @PatchMapping("/items/{itemId}")
+    @PatchMapping("/schedules/{scheduleId}/items/{itemId}")
     public ResponseEntity<ScheduleItemResponse> updateItem(
+            @PathVariable Long scheduleId,
             @PathVariable Long itemId,
             @RequestBody @Valid ScheduleItemUpdateRequest request) {
-        return ResponseEntity.ok(scheduleService.updateItem(itemId, request));
+        return ResponseEntity.ok(scheduleService.updateItem(scheduleId, itemId, request));
     }
 
     // PATCH /api/v1/schedules/{scheduleId}/items/reorder
@@ -101,21 +102,23 @@ public class ScheduleController {
         return ResponseEntity.noContent().build();
     }
 
-    // DELETE /api/v1/schedules/items/{itemId}
-    @DeleteMapping("/items/{itemId}")
+    // DELETE /schedules/{scheduleId}/items/{itemId}
+    @DeleteMapping("/schedules/{scheduleId}/items/{itemId}")
     public ResponseEntity<Void> deleteItem(
+            @PathVariable Long scheduleId,
             @PathVariable Long itemId) {
-        scheduleService.deleteItem(itemId);
+        scheduleService.deleteItem(scheduleId ,itemId);
         return ResponseEntity.noContent().build();
     }
 
     // ── 딥링크 ──────────────────────────────────────────────
 
-    // POST /api/v1/schedules/items/{itemId}/deeplink-click
-    @PostMapping("/items/{itemId}/deeplink-click")
+    // POST /schedules/{scheduleId}/items/{itemId}/deeplink-click
+    @PostMapping("/schedules/{scheduleId}/items/{itemId}/deeplink-click")
     public ResponseEntity<Void> trackDeepLinkClick(
+            @PathVariable Long scheduleId,
             @PathVariable Long itemId) {
-        scheduleService.trackDeepLinkClick(itemId);
+        scheduleService.trackDeepLinkClick(scheduleId, itemId);
         return ResponseEntity.noContent().build();
     }
 }
