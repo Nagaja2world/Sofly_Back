@@ -34,6 +34,8 @@ public class SecurityConfig {
             // 폼 로그인 비활성화 (소셜 로그인만 사용)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(session ->
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             // 세션 비활성화 (JWT Stateless)
             .sessionManagement(session ->
