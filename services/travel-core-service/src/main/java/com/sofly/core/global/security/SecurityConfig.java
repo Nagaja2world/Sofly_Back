@@ -42,6 +42,8 @@ public class SecurityConfig {
             // 요청 권한 설정
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(
+                            "/",
+                            "/index.html",
                             "/login/oauth2/**",
                             "/oauth2/**",
                             "/api/auth/**",

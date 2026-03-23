@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sofly — Auth Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #222230;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --mono: 'DM Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 56px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .logo span { color: var(--accent); }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #6c63ff22;
+      color: var(--accent);
+      border: 1px solid #6c63ff44;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── 사이드바 ── */
+    aside {
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+
+    .nav-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin: 12px 0 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover { background: var(--surface); color: var(--text); }
+
+    .nav-item.active {
+      background: #6c63ff18;
+      color: var(--accent);
+      border-color: #6c63ff33;
+    }
+
+    .nav-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ── 메인 ── */
+    main {
+      padding: 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .page { display: none; flex-direction: column; gap: 24px; }
+    .page.active { display: flex; }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .page-title .dim { color: var(--muted); font-weight: 400; }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── 소셜 로그인 버튼 ── */
+    .login-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .social-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .social-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      background: #6c63ff0d;
+    }
+
+    .social-btn svg { width: 28px; height: 28px; }
+
+    .social-btn.google:hover { border-color: #4285f4; background: #4285f40d; }
+    .social-btn.kakao:hover  { border-color: #fee500; background: #fee5000d; color: #fee500; }
+    .social-btn.naver:hover  { border-color: #03c75a; background: #03c75a0d; color: #03c75a; }
+
+    /* ── 토큰 표시 ── */
+    .token-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .token-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .token-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .token-value {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .token-value.empty { color: var(--muted); }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .copy-btn:hover { background: var(--border); color: var(--text); }
+
+    /* ── API 테스트 ── */
+    .api-row {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-row:last-child { border-bottom: none; }
+
+    .method {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 400;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .method.post { background: #6c63ff22; color: var(--accent); border: 1px solid #6c63ff44; }
+    .method.get  { background: #4ade8022; color: var(--success); border: 1px solid #4ade8044; }
+
+    .api-path {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .api-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .run-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .run-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── 응답 패널 ── */
+    .response-panel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.6;
+      min-height: 80px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .response-panel.success { color: var(--success); border-color: #4ade8033; }
+    .response-panel.error   { color: var(--danger);  border-color: #f8717133; }
+    .response-panel.idle    { color: var(--muted); }
+
+    /* ── 유저 정보 ── */
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-info .name { font-size: 15px; font-weight: 600; }
+    .user-info .email { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .provider-badge {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .provider-badge.google { background: #4285f422; color: #4285f4; }
+    .provider-badge.kakao  { background: #fee50022; color: #fee500; }
+    .provider-badge.naver  { background: #03c75a22; color: #03c75a; }
+
+    /* ── 알림 토스트 ── */
+    #toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── URL 파라미터 입력 ── */
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    .send-btn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .send-btn:hover { opacity: 0.85; }
+
+    /* 애니메이션 */
+    .page.active > * {
+      animation: fadeUp 0.25s ease both;
+    }
+    .page.active > *:nth-child(1) { animation-delay: 0s; }
+    .page.active > *:nth-child(2) { animation-delay: 0.05s; }
+    .page.active > *:nth-child(3) { animation-delay: 0.1s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header>
+  <span class="logo">so<span>fly</span></span>
+  <span class="badge">Auth Test</span>
+  <div class="header-right">
+    <div class="status-dot" id="serverDot"></div>
+    <span class="status-text" id="serverStatus">connecting...</span>
+  </div>
+</header>
+
+<!-- 사이드바 -->
+<aside>
+  <span class="nav-label">Auth</span>
+  <div class="nav-item active" onclick="showPage('login')">
+    <span class="nav-dot"></span> 소셜 로그인
+  </div>
+  <div class="nav-item" onclick="showPage('token')">
+    <span class="nav-dot"></span> 토큰 관리
+  </div>
+  <div class="nav-item" onclick="showPage('api')">
+    <span class="nav-dot"></span> API 테스트
+  </div>
+  <div class="nav-item" onclick="showPage('user')">
+    <span class="nav-dot"></span> 유저 정보
+  </div>
+  <span class="nav-label">Docs</span>
+  <div class="nav-item" onclick="window.open('/swagger-ui/core','_blank')">
+    <span class="nav-dot"></span> Swagger UI ↗
+  </div>
+  <div class="nav-item" onclick="window.open('/v3/api-docs/core','_blank')">
+    <span class="nav-dot"></span> API Docs ↗
+  </div>
+</aside>
+
+<!-- 메인 -->
+<main>
+
+  <!-- 소셜 로그인 -->
+  <div class="page active" id="page-login">
+    <div class="page-title">소셜 로그인 <span class="dim">/ OAuth2</span></div>
+
+    <div class="card">
+      <div class="card-title">Provider 선택</div>
+      <div class="login-grid">
+        <a class="social-btn google" href="/oauth2/authorization/google">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Google
+        </a>
+        <a class="social-btn kakao" href="/oauth2/authorization/kakao">
+          <svg viewBox="0 0 24 24" fill="#3C1E1E">
+            <path d="M12 3C6.48 3 2 6.69 2 11.25c0 2.88 1.87 5.41 4.7 6.87l-.94 3.47 4.05-2.67c.69.1 1.42.16 2.19.16 5.52 0 10-3.69 10-8.25S17.52 3 12 3z" fill="currentColor"/>
+          </svg>
+          Kakao
+        </a>
+        <a class="social-btn naver" href="/oauth2/authorization/naver">
+          <svg viewBox="0 0 24 24">
+            <path d="M16.27 12.96L7.5 1H1v22h7.73L17.5 12v11H23V1h-6.73z" fill="#03C75A"/>
+          </svg>
+          Naver
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">URL 파라미터 토큰 파싱</div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
+        로그인 성공 후 <code style="color:var(--accent)">?accessToken=...&refreshToken=...</code> 파라미터가 자동으로 파싱됩니다.
+      </p>
+      <div id="parseResult" class="response-panel idle">대기 중...</div>
+    </div>
+  </div>
+
+  <!-- 토큰 관리 -->
+  <div class="page" id="page-token">
+    <div class="page-title">토큰 관리 <span class="dim">/ JWT</span></div>
+
+    <div class="card">
+      <div class="card-title">저장된 토큰</div>
+      <div class="token-row" style="gap:16px;">
+        <div>
+          <div class="token-label">ACCESS TOKEN</div>
+          <div class="token-box">
+            <span class="token-value" id="displayAccess">없음</span>
+            <button class="copy-btn" onclick="copyToken('access')">copy</button>
+          </div>
+        </div>
+        <div>
+          <div class="token-label">REFRESH TOKEN</div>
+          <div class="token-box">
+            <span class="token-value" id="displayRefresh">없음</span>
+            <button class="copy-btn" onclick="copyToken('refresh')">copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">토큰 재발급 — POST /api/auth/refresh</div>
+      <button class="send-btn" onclick="refreshToken()" style="margin-bottom:12px;">Refresh 실행</button>
+      <div id="refreshResult" class="response-panel idle">대기 중...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">로그아웃 — POST /api/auth/logout</div>
+      <button class="send-btn" onclick="logout()" style="background:#f8717133; color:var(--danger); border:1px solid #f8717133; margin-bottom:12px;">Logout 실행</button>
+      <div id="logoutResult" class="response-panel idle">대기 중...</div>
+    </div>
+  </div>
+
+  <!-- API 테스트 -->
+  <div class="page" id="page-api">
+    <div class="page-title">API 테스트 <span class="dim">/ Request</span></div>
+
+    <div class="card">
+      <div class="card-title">Custom Request</div>
+      <div class="input-row">
+        <input type="text" id="customPath" placeholder="/api/..." value="/api/auth/refresh">
+        <select id="customMethod" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 12px;border-radius:6px;outline:none;">
+          <option>GET</option>
+          <option selected>POST</option>
+        </select>
+        <button class="send-btn" onclick="runCustom()">Send</button>
+      </div>
+      <div id="customResult" class="response-panel idle">대기 중...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">빠른 실행</div>
+      <div class="api-row">
+        <span class="method get">GET</span>
+        <div>
+          <div class="api-path">/actuator/health</div>
+          <div class="api-desc">서버 헬스체크</div>
+        </div>
+        <button class="run-btn" onclick="runApi('GET','/actuator/health','health')">Run</button>
+      </div>
+      <div id="result-health" class="response-panel idle" style="display:none;margin-top:8px;"></div>
+
+      <div class="api-row">
+        <span class="method post">POST</span>
+        <div>
+          <div class="api-path">/api/auth/logout</div>
+          <div class="api-desc">로그아웃 (토큰 필요)</div>
+        </div>
+        <button class="run-btn" onclick="runApi('POST','/api/auth/logout','logout2')">Run</button>
+      </div>
+      <div id="result-logout2" class="response-panel idle" style="display:none;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- 유저 정보 -->
+  <div class="page" id="page-user">
+    <div class="page-title">유저 정보 <span class="dim">/ Profile</span></div>
+
+    <div class="card">
+      <div class="card-title">현재 로그인 상태</div>
+      <div id="userCard">
+        <p style="font-size:13px; color:var(--muted);">로그인 정보가 없습니다. 소셜 로그인 후 토큰이 저장되면 표시됩니다.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">JWT Payload 디코딩</div>
+      <div id="jwtPayload" class="response-panel idle">Access Token을 저장하면 자동으로 디코딩됩니다.</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+
+<script>
+  // ── 상태 ──────────────────────────────────────────────
+  let tokens = {
+    access: localStorage.getItem('sofly_access') || '',
+    refresh: localStorage.getItem('sofly_refresh') || ''
+  };
+
+  // ── URL 파라미터 파싱 (로그인 콜백) ──────────────────
+  (function parseUrlTokens() {
+    const params = new URLSearchParams(window.location.search);
+    const access  = params.get('accessToken');
+    const refresh = params.get('refreshToken');
+    const error   = params.get('error');
+    const panel   = document.getElementById('parseResult');
+
+    if (error) {
+      panel.className = 'response-panel error';
+      panel.textContent = '로그인 실패: ' + error;
+      return;
+    }
+
+    if (access && refresh) {
+      tokens.access  = access;
+      tokens.refresh = refresh;
+      localStorage.setItem('sofly_access', access);
+      localStorage.setItem('sofly_refresh', refresh);
+      panel.className = 'response-panel success';
+      panel.textContent = '토큰 저장 완료!\naccess:  ' + access.slice(0,40) + '...\nrefresh: ' + refresh.slice(0,40) + '...';
+      window.history.replaceState({}, '', '/');
+      updateDisplay();
+      return;
+    }
+
+    if (!access && !refresh) {
+      panel.className = 'response-panel idle';
+      panel.textContent = '소셜 로그인 버튼을 클릭하면 여기에 결과가 표시됩니다.';
+    }
+  })();
+
+  // ── 디스플레이 업데이트 ───────────────────────────────
+  function updateDisplay() {
+    const aEl = document.getElementById('displayAccess');
+    const rEl = document.getElementById('displayRefresh');
+
+    if (tokens.access) {
+      aEl.textContent = tokens.access;
+      aEl.classList.remove('empty');
+    } else {
+      aEl.textContent = '없음';
+      aEl.classList.add('empty');
+    }
+
+    if (tokens.refresh) {
+      rEl.textContent = tokens.refresh;
+      rEl.classList.remove('empty');
+    } else {
+      rEl.textContent = '없음';
+      rEl.classList.add('empty');
+    }
+
+    decodeJwt();
+    updateUserCard();
+  }
+
+  updateDisplay();
+
+  // ── JWT 디코딩 ────────────────────────────────────────
+  function decodeJwt() {
+    const el = document.getElementById('jwtPayload');
+    if (!tokens.access) return;
+    try {
+      const payload = JSON.parse(atob(tokens.access.split('.')[1]));
+      payload._exp_readable = new Date(payload.exp * 1000).toLocaleString('ko-KR');
+      el.className = 'response-panel success';
+      el.textContent = JSON.stringify(payload, null, 2);
+    } catch(e) {
+      el.className = 'response-panel error';
+      el.textContent = '디코딩 실패: ' + e.message;
+    }
+  }
+
+  // ── 유저 카드 ─────────────────────────────────────────
+  function updateUserCard() {
+    if (!tokens.access) return;
+    try {
+      const payload = JSON.parse(atob(tokens.access.split('.')[1]));
+      const userId = payload.sub;
+      const el = document.getElementById('userCard');
+      el.innerHTML = `
+        <div class="user-card">
+          <div class="avatar">${userId ? userId.toString().slice(-2) : '?'}</div>
+          <div class="user-info">
+            <div class="name">User ID: ${userId}</div>
+            <div class="email">type: ${payload.type || 'access'}</div>
+          </div>
+          <span class="provider-badge google">JWT</span>
+        </div>`;
+    } catch(e) {}
+  }
+
+  // ── 페이지 전환 ───────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // ── 토큰 복사 ─────────────────────────────────────────
+  function copyToken(type) {
+    const val = type === 'access' ? tokens.access : tokens.refresh;
+    if (!val) { toast('저장된 토큰이 없습니다'); return; }
+    navigator.clipboard.writeText(val).then(() => toast('복사 완료!'));
+  }
+
+  // ── Refresh ───────────────────────────────────────────
+  async function refreshToken() {
+    const el = document.getElementById('refreshResult');
+    if (!tokens.refresh) { el.className='response-panel error'; el.textContent='Refresh Token이 없습니다.'; return; }
+    el.className='response-panel idle'; el.textContent='요청 중...';
+    try {
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: tokens.refresh })
+      });
+      const data = await res.json();
+      if (data.success) {
+        tokens.access  = data.data.accessToken;
+        tokens.refresh = data.data.refreshToken;
+        localStorage.setItem('sofly_access', tokens.access);
+        localStorage.setItem('sofly_refresh', tokens.refresh);
+        updateDisplay();
+        el.className='response-panel success';
+      } else {
+        el.className='response-panel error';
+      }
+      el.textContent = JSON.stringify(data, null, 2);
+    } catch(e) {
+      el.className='response-panel error';
+      el.textContent = '요청 실패: ' + e.message;
+    }
+  }
+
+  // ── Logout ────────────────────────────────────────────
+  async function logout() {
+    const el = document.getElementById('logoutResult');
+    if (!tokens.access) { el.className='response-panel error'; el.textContent='Access Token이 없습니다.'; return; }
+    el.className='response-panel idle'; el.textContent='요청 중...';
+    try {
+      const res = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tokens.access }
+      });
+      const data = await res.json();
+      tokens.access = ''; tokens.refresh = '';
+      localStorage.removeItem('sofly_access');
+      localStorage.removeItem('sofly_refresh');
+      updateDisplay();
+      el.className = res.ok ? 'response-panel success' : 'response-panel error';
+      el.textContent = JSON.stringify(data, null, 2);
+    } catch(e) {
+      el.className='response-panel error';
+      el.textContent = '요청 실패: ' + e.message;
+    }
+  }
+
+  // ── 빠른 API 실행 ─────────────────────────────────────
+  async function runApi(method, path, id) {
+    const el = document.getElementById('result-' + id);
+    el.style.display = 'block';
+    el.className = 'response-panel idle';
+    el.textContent = '요청 중...';
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (tokens.access) headers['Authorization'] = 'Bearer ' + tokens.access;
+      const res = await fetch(path, { method, headers });
+      const text = await res.text();
+      let pretty;
+      try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch { pretty = text; }
+      el.className = res.ok ? 'response-panel success' : 'response-panel error';
+      el.textContent = `HTTP ${res.status}\n\n${pretty}`;
+    } catch(e) {
+      el.className = 'response-panel error';
+      el.textContent = '요청 실패: ' + e.message;
+    }
+  }
+
+  // ── Custom Request ────────────────────────────────────
+  async function runCustom() {
+    const path   = document.getElementById('customPath').value;
+    const method = document.getElementById('customMethod').value;
+    await runApi(method, path, 'custom');
+    document.getElementById('customResult').style.display = 'block';
+  }
+
+  // ── 서버 헬스체크 ─────────────────────────────────────
+  async function checkServer() {
+    try {
+      const res = await fetch('/actuator/health');
+      const dot = document.getElementById('serverDot');
+      const txt = document.getElementById('serverStatus');
+      if (res.ok) {
+        dot.style.background = 'var(--success)';
+        dot.style.boxShadow  = '0 0 6px var(--success)';
+        txt.textContent = 'server online';
+      } else {
+        dot.style.background = 'var(--warning)';
+        txt.textContent = 'server error';
+      }
+    } catch {
+      document.getElementById('serverDot').style.background = 'var(--danger)';
+      document.getElementById('serverStatus').textContent = 'server offline';
+    }
+  }
+
+  checkServer();
+  setInterval(checkServer, 30000);
+
+  // ── 토스트 ────────────────────────────────────────────
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+  }
+</script>
+</body>
+</html>
