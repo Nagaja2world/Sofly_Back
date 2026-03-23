@@ -38,14 +38,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String accessToken  = jwtTokenProvider.generateAccessToken(userId);
         String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
 
-        // Refresh Token Redis 저장 (기존 토큰 삭제 후 저장)
-        refreshTokenRepository.deleteByUserId(userId);
+        // 저장 시 id를 userId로 고정
+        refreshTokenRepository.deleteById(String.valueOf(userId));
         refreshTokenRepository.save(
-                RefreshToken.builder()
-                        .refreshToken(refreshToken)
-                        .userId(userId)
-                        .expiration(jwtProperties.expiration().refresh() / 1000) // ms → 초
-                        .build()
+            RefreshToken.builder()
+                .id(String.valueOf(userId))        // key: refresh_token:{userId}
+                .refreshToken(refreshToken)
+                .expiration(jwtProperties.expiration().refresh() / 1000)
+                .build()
         );
 
         // 프론트로 redirect (쿼리 파라미터로 토큰 전달)

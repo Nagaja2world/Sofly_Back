@@ -30,12 +30,17 @@ public class AuthService {
             throw new SoflyException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
+        // refresh 메서드 — refreshToken 값으로 userId 꺼내기
+        Long userId = jwtTokenProvider.getUserId(request.refreshToken());
+
         // Redis에서 조회
-        RefreshToken saved = refreshTokenRepository.findById(refreshToken)
-                .orElseThrow(() -> new SoflyException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+        RefreshToken saved = refreshTokenRepository.findById(String.valueOf(userId))
+            .orElseThrow(() -> new SoflyException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
-        Long userId = saved.getUserId();
-
+        // 저장된 토큰값이랑 요청 토큰값 일치 확인
+        if (!saved.getRefreshToken().equals(request.refreshToken())) {
+            throw new SoflyException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
         // 새 토큰 발급
         String newAccessToken  = jwtTokenProvider.generateAccessToken(userId);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
@@ -44,8 +49,8 @@ public class AuthService {
         refreshTokenRepository.delete(saved);
         refreshTokenRepository.save(
                 RefreshToken.builder()
+                        .id(String.valueOf(userId))
                         .refreshToken(newRefreshToken)
-                        .userId(userId)
                         .expiration(jwtProperties.expiration().refresh() / 1000)
                         .build()
         );
@@ -56,6 +61,6 @@ public class AuthService {
     // ── 로그아웃 ─────────────────────────────────────────
     @Transactional
     public void logout(Long userId) {
-        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenRepository.deleteById(String.valueOf(userId));
     }
 }

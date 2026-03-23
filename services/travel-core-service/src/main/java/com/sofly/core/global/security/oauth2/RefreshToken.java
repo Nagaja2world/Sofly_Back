@@ -13,11 +13,10 @@ import org.springframework.data.redis.core.index.Indexed;
 public class RefreshToken {
 
     @Id
-    private String refreshToken;    // key: refresh_token:{refreshToken}
+    private String id;          // key를 "refresh_token:{userId}" 로 고정
 
-    @Indexed
-    private Long userId;            // userId로 검색 가능
+    private String refreshToken; // 실제 토큰 값
 
     @TimeToLive
-    private Long expiration;        // TTL (초 단위) — JwtProperties.expiration.refresh / 1000
+    private Long expiration;    // TTL (초)
 }
