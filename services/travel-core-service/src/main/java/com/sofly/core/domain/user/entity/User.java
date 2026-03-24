@@ -104,7 +104,7 @@ public class User extends BaseTimeEntity {
 
     // ── Enum ────────────────────────────────────────────────
 
-    public enum Provider { GOOGLE, KAKAO }
+    public enum Provider { GOOGLE, KAKAO, NAVER }
 
     public enum Role { USER, ADMIN }
 
