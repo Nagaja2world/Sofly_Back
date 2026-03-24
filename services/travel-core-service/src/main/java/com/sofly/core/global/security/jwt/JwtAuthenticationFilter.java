@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
+        // TODO: social login jwt PR #16 성능개선 필요 (gemini-code-assist)
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             Long userId = jwtTokenProvider.getUserId(token);
 
