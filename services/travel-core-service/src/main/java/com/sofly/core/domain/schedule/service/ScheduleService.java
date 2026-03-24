@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -183,11 +185,11 @@ public class ScheduleService {
         }
 
         // 순서 업데이트 (더티 체킹)
+        Map<Long, ScheduleItem> itemMap = items.stream()
+                .collect(Collectors.toMap(ScheduleItem::getId, i -> i));
+
         request.orders().forEach(order -> {
-            ScheduleItem item = items.stream()
-                    .filter(i -> i.getId().equals(order.itemId()))
-                    .findFirst()
-                    .orElseThrow();
+            ScheduleItem item = itemMap.get(order.itemId());
             item.updateOrder(order.orderIndex());
             // day 변경도 지원 (다른 일차로 이동)
             if (!item.getDay().equals(order.day())) {
