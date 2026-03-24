@@ -16,11 +16,16 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private final JwtProperties jwtProperties;
+    private final SecretKey secretKey;
+
+    public JwtTokenProvider(JwtProperties jwtProperties){
+        this.jwtProperties = jwtProperties;
+        this.secretKey = Keys.hmacShaKeyFor(
+            jwtProperties.secretKey().getBytes(StandardCharsets.UTF_8));
+    }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(
-                jwtProperties.secretKey().getBytes(StandardCharsets.UTF_8)
-        );
+        return secretKey;
     }
 
     // ── Access Token 생성 ────────────────────────────────
