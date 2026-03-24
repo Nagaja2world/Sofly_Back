@@ -31,14 +31,14 @@ public class AuthService {
         }
 
         // refresh 메서드 — refreshToken 값으로 userId 꺼내기
-        Long userId = jwtTokenProvider.getUserId(request.refreshToken());
+        Long userId = jwtTokenProvider.getUserId(refreshToken);
 
         // Redis에서 조회
         RefreshToken saved = refreshTokenRepository.findById(String.valueOf(userId))
             .orElseThrow(() -> new SoflyException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
         // 저장된 토큰값이랑 요청 토큰값 일치 확인
-        if (!saved.getRefreshToken().equals(request.refreshToken())) {
+        if (!saved.getRefreshToken().equals(refreshToken)) {
             throw new SoflyException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
         // 새 토큰 발급
