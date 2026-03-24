@@ -27,10 +27,7 @@ public class ScheduleService {
 
     // 워크스페이스 일정 버전 목록
     public List<ScheduleSummaryResponse> getSchedulesByWorkspace(Long workspaceId) {
-        return scheduleRepository.findByWorkspaceIdOrderByVersionDesc(workspaceId)
-                .stream()
-                .map(ScheduleSummaryResponse::from)
-                .toList();
+        return scheduleRepository.findSummariesByWorkspaceId(workspaceId);
     }
 
     // 일정 단건 상세 (아이템 포함)
