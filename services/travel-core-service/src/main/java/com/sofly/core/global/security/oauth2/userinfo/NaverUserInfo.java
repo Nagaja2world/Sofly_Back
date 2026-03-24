@@ -14,21 +14,21 @@ public class NaverUserInfo implements OAuth2UserInfo {
 
     @Override
     public String getProviderId() {
-        return (String) response.get("id");
+        return response != null ? (String) response.get("id") : null;
     }
 
     @Override
     public String getEmail() {
-        return (String) response.get("email");
+        return response != null ? (String) response.get("email") : null;
     }
 
     @Override
     public String getNickname() {
-        return (String) response.get("name");
+        return response != null ? (String) response.get("name") : null;
     }
 
     @Override
     public String getProfileImageUrl() {
-        return (String) response.get("profile_image");
+        return response != null ? (String) response.get("profile_image") : null;
     }
 }
