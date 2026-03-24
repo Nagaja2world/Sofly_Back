@@ -4,6 +4,8 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -18,6 +20,7 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
     private final SecretKey secretKey;
 
+    @Autowired
     public JwtTokenProvider(JwtProperties jwtProperties){
         this.jwtProperties = jwtProperties;
         this.secretKey = Keys.hmacShaKeyFor(
