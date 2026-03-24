@@ -87,7 +87,7 @@ sofly:
 
 springdoc:
   swagger-ui:
-    path: /core
+    path: /core-docs
   api-docs:
     path: /v3/api-docs/core
 
