@@ -49,7 +49,10 @@ public class SecurityConfig {
                             "/login/oauth2/**",
                             "/oauth2/**",
                             "/api/auth/**",
-                            "/actuator/health"
+                            "/actuator/health",
+                            "/swagger-ui/**",
+                            "/swagger-ui/core",
+                            "/v3/api-docs/**"     
                     ).permitAll()
                     .anyRequest().authenticated()
             )
