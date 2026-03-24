@@ -73,4 +73,8 @@ public class ScheduleItem extends BaseTimeEntity {
         ATTRACTION,     // 관광지
         TRANSPORT       // 교통
     }
+
+    public void moveToDay(Integer day) {
+        this.day = day;
+    }
 }

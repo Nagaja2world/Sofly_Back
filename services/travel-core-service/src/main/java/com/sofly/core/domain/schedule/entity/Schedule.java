@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "schedules")
+@Table(name = "schedules", uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id", "version"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
