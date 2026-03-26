@@ -1,0 +1,88 @@
+services:
+  # ── core Blue ──────────────────────────────────────────
+  core-blue:
+    build:
+      context: ./services/travel-core-service
+      dockerfile: Dockerfile
+    container_name: core-blue
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - sofly-net
+    profiles: ["core-blue"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── core Green ─────────────────────────────────────────
+  core-green:
+    build:
+      context: ./services/travel-core-service
+      dockerfile: Dockerfile
+    container_name: core-green
+    ports:
+      - "8081:8080"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - sofly-net
+    profiles: ["core-green"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── supply Blue ────────────────────────────────────────
+  supply-blue:
+    build:
+      context: ./services/travel-supply-service
+      dockerfile: Dockerfile
+    container_name: supply-blue
+    ports:
+      - "8082:8081"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - sofly-net
+    profiles: ["supply-blue"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── supply Green ───────────────────────────────────────
+  supply-green:
+    build:
+      context: ./services/travel-supply-service
+      dockerfile: Dockerfile
+    container_name: supply-green
+    ports:
+      - "8083:8081"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - sofly-net
+    profiles: ["supply-green"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  sofly-net:
+    driver: bridge
