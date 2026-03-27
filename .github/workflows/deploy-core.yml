@@ -154,6 +154,9 @@ jobs:
             cd "$DEPLOY_PATH"
 
             # ── 6. 새 컨테이너 실행 (profiles 방식) ───────────
+            export CORE_PORT=$TARGET_PORT
+            export CORE_CONTAINER_NAME=core-${TARGET_COLOR}
+
             sudo -E docker compose --profile core-${TARGET_COLOR} up -d --build
 
             # ── 7. 헬스체크 ────────────────────────────────────
