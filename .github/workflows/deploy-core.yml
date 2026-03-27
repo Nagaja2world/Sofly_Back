@@ -2,7 +2,7 @@ name: Deploy travel-core-service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'services/travel-core-service/**'
       - '.github/workflows/deploy-core.yml'
@@ -52,16 +52,12 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
-          # DB
           SPRING_DATASOURCE_URL: ${{ secrets.CORE_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.CORE_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.CORE_DATASOURCE_PASSWORD }}
-          # Redis
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
-          # JWT
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          # OAuth2
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
@@ -69,9 +65,7 @@ jobs:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           OAUTH2_REDIRECT_URI: ${{ secrets.OAUTH2_REDIRECT_URI }}
-          # Supply 서비스 URL
           SUPPLY_SERVICE_URL: ${{ secrets.SUPPLY_SERVICE_URL }}
-          # 배포 경로
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
@@ -102,15 +96,14 @@ jobs:
             # ── 롤백 함수 ──────────────────────────────────────
             rollback() {
               echo "[ROLLBACK] 배포 실패 — 롤백 시작"
+              trap - ERR
               git reset --hard "$PREV_COMMIT"
               cd services/travel-core-service
               chmod +x ./gradlew
               ./gradlew clean bootJar -x test --no-daemon
               cd "$DEPLOY_PATH"
-              export APP_PORT=$TARGET_PORT
-              export CONTAINER_NAME="core-$TARGET_COLOR"
-              sudo -E docker compose -p "core-${TARGET_COLOR}" \
-                -f docker-compose.core.yml up -d --build
+              sudo -E docker compose --profile core-${TARGET_COLOR} up -d --build
+              echo "[ROLLBACK] 완료"
             }
 
             trap 'rollback; exit 1' ERR
@@ -119,7 +112,7 @@ jobs:
             cd "$DEPLOY_PATH"
 
             # ── 2. 현재 포트 확인 → 타겟 결정 ────────────────
-            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/conf.d/service-url-core.inc || echo "8080")
+            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/sites-available/service-url-core.inc 2>/dev/null || echo "8080")
 
             if [ "$CURRENT_PORT" = "8080" ]; then
               TARGET_PORT=8081; TARGET_COLOR=green; CURRENT_COLOR=blue
@@ -132,8 +125,8 @@ jobs:
 
             # ── 3. 최신 코드 pull ──────────────────────────────
             PREV_COMMIT=$(git rev-parse HEAD)
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch origin develop
+            git reset --hard origin/develop
 
             # ── 4. .env 생성 ───────────────────────────────────
             cat <<EOF > .env
@@ -151,8 +144,6 @@ jobs:
             NAVER_CLIENT_SECRET=$NAVER_CLIENT_SECRET
             OAUTH2_REDIRECT_URI=$OAUTH2_REDIRECT_URI
             SUPPLY_SERVICE_URL=$SUPPLY_SERVICE_URL
-            APP_PORT=$TARGET_PORT
-            CONTAINER_NAME=core-$TARGET_COLOR
             EOF
             chmod 600 .env
 
@@ -162,28 +153,26 @@ jobs:
             ./gradlew clean bootJar -x test --no-daemon
             cd "$DEPLOY_PATH"
 
-            # ── 6. 새 컨테이너 실행 ────────────────────────────
-            export APP_PORT=$TARGET_PORT
-            export CONTAINER_NAME="core-$TARGET_COLOR"
-            sudo -E docker compose -p "core-${TARGET_COLOR}" \
-              -f docker-compose.core.yml up -d --build
+            # ── 6. 새 컨테이너 실행 (profiles 방식) ───────────
+            sudo -E docker compose --profile core-${TARGET_COLOR} up -d --build
 
             # ── 7. 헬스체크 ────────────────────────────────────
             if ! wait_for_health $TARGET_PORT; then
-              sudo docker compose -p "core-${TARGET_COLOR}" logs --tail=50
-              sudo -E docker compose -p "core-${TARGET_COLOR}" \
-                -f docker-compose.core.yml down
+              echo "❌ 헬스체크 실패 — 로그 확인"
+              sudo docker logs core-${TARGET_COLOR} --tail=50
+              sudo -E docker compose --profile core-${TARGET_COLOR} down
               exit 1
             fi
 
             # ── 8. Nginx 트래픽 전환 ───────────────────────────
             echo "set \$core_url http://127.0.0.1:${TARGET_PORT};" | \
-              sudo tee /etc/nginx/conf.d/service-url-core.inc
+              sudo tee /etc/nginx/sites-available/service-url-core.inc
             sudo nginx -s reload
+            echo "✅ Nginx → core-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
             # ── 9. 이전 컨테이너 종료 ─────────────────────────
-            sudo docker compose -p "core-${CURRENT_COLOR}" \
-              -f docker-compose.core.yml down || true
+            sudo -E docker compose --profile core-${CURRENT_COLOR} down || true
+            echo "🛑 core-${CURRENT_COLOR} 종료"
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
             sudo docker image prune -f
