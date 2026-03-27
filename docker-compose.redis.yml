@@ -5,7 +5,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - app-network
+      - sofly-net
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -14,5 +14,5 @@ services:
       retries: 3
 
 networks:
-  app-network:
+  sofly-net:
     external: true
