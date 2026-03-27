@@ -6,9 +6,12 @@ services:
     container_name: ${CORE_CONTAINER_NAME:-core-blue}
     ports:
       - "${CORE_PORT:-8080}:8080"
-    env_file: .env.core
+    env_file: .env.core          # .env.core에서 환경변수 읽음
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      # Redis가 외부 컨테이너라면 아래처럼 명시
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-localhost}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
     networks:
       - sofly-net
     restart: unless-stopped
@@ -29,6 +32,8 @@ services:
     env_file: .env.supply
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-localhost}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
     networks:
       - sofly-net
     restart: unless-stopped
@@ -41,4 +46,4 @@ services:
 
 networks:
   sofly-net:
-    driver: bridge
+    external: true
