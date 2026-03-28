@@ -224,6 +224,7 @@ jobs:
             export SUPPLY_IMAGE=$IMAGE_TAG
             export SUPPLY_PORT=$TARGET_PORT
             export SUPPLY_CONTAINER_NAME=supply-${TARGET_COLOR}
+            export CORE_IMAGE=dummy
 
             sudo -E docker compose up -d supply
 

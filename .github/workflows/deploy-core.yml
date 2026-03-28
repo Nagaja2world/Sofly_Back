@@ -238,6 +238,7 @@ jobs:
             export CORE_IMAGE=$IMAGE_TAG
             export CORE_PORT=$TARGET_PORT
             export CORE_CONTAINER_NAME=core-${TARGET_COLOR}
+            export SUPPLY_IMAGE=dummy
 
             sudo -E docker compose up -d core
 
