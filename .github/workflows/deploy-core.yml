@@ -148,7 +148,7 @@ jobs:
 
             # ── 2. 현재 포트 확인 → 타겟 결정 ────────────────
             echo "[2] Check Current Port & Determine Target"
-            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/sites-available/service-url-core.inc 2>/dev/null || echo "8080")
+            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/bluegreen/service-url-core.inc 2>/dev/null || echo "8080")
 
             if [ "$CURRENT_PORT" = "8080" ]; then
               TARGET_PORT=8081; TARGET_COLOR=green; CURRENT_COLOR=blue
@@ -214,7 +214,7 @@ jobs:
             # ── 8. Nginx 트래픽 전환 ───────────────────────────
             echo "[8] Switch Nginx Traffic"
             echo "set \$core_url http://127.0.0.1:${TARGET_PORT};" | \
-              sudo tee /etc/nginx/sites-available/service-url-core.inc
+              sudo tee /etc/nginx/bluegreen/service-url-core.inc
             sudo nginx -s reload
             echo "✅ Nginx → core-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
