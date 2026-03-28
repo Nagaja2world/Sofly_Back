@@ -194,6 +194,7 @@ jobs:
             echo "🟢 Target  core: $TARGET_COLOR ($TARGET_PORT)"
 
             # ── 3.1 이전 이미지 저장 (롤백용) ← 여기 추가 ──────
+            echo "[3] Previous Image save for rollback"
             PREV_IMAGE=$(docker inspect core-${CURRENT_COLOR} \
               --format='{{.Config.Image}}' 2>/dev/null || echo "")
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
