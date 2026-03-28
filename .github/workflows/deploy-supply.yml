@@ -223,7 +223,10 @@ jobs:
             export SUPPLY_IMAGE=$IMAGE_TAG
             export SUPPLY_PORT=$TARGET_PORT
             export SUPPLY_CONTAINER_NAME=supply-${TARGET_COLOR}
-            # export CORE_IMAGE=dummy
+            EXISTING_CORE_IMAGE=$(docker inspect core-blue --format='{{.Config.Image}}' 2>/dev/null || \
+                                    docker inspect core-green --format='{{.Config.Image}}' 2>/dev/null || \
+                                    echo "dummy")
+            export CORE_IMAGE=$EXISTING_CORE_IMAGE
 
             sudo -E docker compose up -d --no-deps supply
 
