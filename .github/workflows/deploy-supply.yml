@@ -252,7 +252,7 @@ jobs:
             echo "👉🏻[9] stop old container ($CURRENT_COLOR)"
             # sudo docker stop supply-${CURRENT_COLOR} || true
             # sudo docker rm supply-${CURRENT_COLOR} || true
-            sudo docker compose -p "core-$CURRENT_COLOR" down
+            sudo docker compose -p "supply-$CURRENT_COLOR" down
             echo "🛑 supply-${CURRENT_COLOR} 종료"
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
