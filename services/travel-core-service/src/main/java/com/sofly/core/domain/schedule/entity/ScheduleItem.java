@@ -4,6 +4,8 @@ import com.sofly.core.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalTime;
+
 @Entity
 @Table(name = "schedule_items")
 @Getter
@@ -26,7 +28,7 @@ public class ScheduleItem extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer orderIndex;         // 일차 내 순서 (D&D 로 변경)
 
-    private String visitTime;           // HH:mm (예: "10:30")
+    private LocalTime visitTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -46,16 +48,19 @@ public class ScheduleItem extends BaseTimeEntity {
 
     private String deepLinkUrl;         // 예약 딥링크 (숙소/교통)
 
-    private Integer estimatedCost;      // 예상 비용 (원)
+    private Double estimatedCost;       // 예상 비용 (원)
 
     private Integer deepLinkClickCount; // 딥링크 클릭 통계
 
     // ── 비즈니스 메서드 ──────────────────────────────────────
 
-    public void update(String visitTime, String memo, Category category) {
+    public void update(LocalTime visitTime, String memo, Category category, String address, Double estimatedCost, String name) {
         this.visitTime = visitTime;
         this.memo = memo;
         this.category = category;
+        this.address = address;
+        this.estimatedCost = estimatedCost;
+        this.name = name;
     }
 
     public void updateOrder(Integer orderIndex) {

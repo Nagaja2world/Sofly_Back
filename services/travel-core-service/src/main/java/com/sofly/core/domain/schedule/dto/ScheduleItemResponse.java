@@ -1,9 +1,11 @@
 package com.sofly.core.domain.schedule.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sofly.core.domain.schedule.entity.ScheduleItem;
 import com.sofly.core.domain.schedule.entity.ScheduleItem.Category;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 // 아이템 단건 응답
 public record ScheduleItemResponse(
@@ -11,7 +13,7 @@ public record ScheduleItemResponse(
         Long id,
         Integer day,
         Integer orderIndex,
-        String visitTime,
+        @JsonFormat(pattern = "HH:mm") LocalTime visitTime,
         Category category,
         String name,
         String address,
@@ -19,7 +21,7 @@ public record ScheduleItemResponse(
         Double longitude,
         String memo,
         String deepLinkUrl,
-        Integer estimatedCost,
+        Double estimatedCost,
         Integer deepLinkClickCount,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

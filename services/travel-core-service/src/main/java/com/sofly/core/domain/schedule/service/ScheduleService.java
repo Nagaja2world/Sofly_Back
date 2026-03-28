@@ -129,7 +129,14 @@ public class ScheduleService {
     public ScheduleItemResponse updateItem(Long scheduleId, Long itemId, ScheduleItemUpdateRequest request) {
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
-        item.update(request.visitTime(), request.memo(), request.category());
+        item.update(
+                request.visitTime(),
+                request.memo(),
+                request.category(),
+                request.address(),
+                request.estimatedCost(),
+                request.name()
+        );
         return ScheduleItemResponse.from(item);
     }
 
