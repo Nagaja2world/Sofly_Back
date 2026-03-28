@@ -222,21 +222,22 @@ jobs:
             echo "👉🏻[6] Run New Container supply-($TARGET_COLOR)"
             export SUPPLY_IMAGE=$IMAGE_TAG
             export SUPPLY_PORT=$TARGET_PORT
-            export SUPPLY_CONTAINER_NAME=supply-${TARGET_COLOR}
-            EXISTING_CORE_IMAGE=$(docker inspect core-blue --format='{{.Config.Image}}' 2>/dev/null || \
-                                    docker inspect core-green --format='{{.Config.Image}}' 2>/dev/null || \
-                                    echo "dummy")
-            export CORE_IMAGE=$EXISTING_CORE_IMAGE
+            # export SUPPLY_CONTAINER_NAME=supply-${TARGET_COLOR}
+            # EXISTING_CORE_IMAGE=$(docker inspect core-blue --format='{{.Config.Image}}' 2>/dev/null || \
+            #                         docker inspect core-green --format='{{.Config.Image}}' 2>/dev/null || \
+            #                         echo "dummy")
+            # export CORE_IMAGE=$EXISTING_CORE_IMAGE
 
-            sudo -E docker compose up -d --no-deps supply
+            sudo -E docker compose -p "supply-$TARGET_COLOR" up -d --no-deps supply
 
             # ── 7. 헬스체크 ────────────────────────────────────
             echo "👉🏻[7] Health Check supply-($TARGET_COLOR)"
             if ! wait_for_health $TARGET_PORT; then
               echo "❌ 헬스체크 실패 — 로그 확인"
               sudo docker logs supply-${TARGET_COLOR} --tail=50
-              sudo docker stop supply-${TARGET_COLOR} || true
-              sudo docker rm supply-${TARGET_COLOR} || true
+              # sudo docker stop supply-${TARGET_COLOR} || true
+              # sudo docker rm supply-${TARGET_COLOR} || true
+            sudo docker compose -p "supply-$TARGET_COLOR" down
               exit 1
             fi
 
@@ -249,8 +250,9 @@ jobs:
 
             # ── 9. 이전 컨테이너 종료 ────────────────────────
             echo "👉🏻[9] stop old container ($CURRENT_COLOR)"
-            sudo docker stop supply-${CURRENT_COLOR} || true
-            sudo docker rm supply-${CURRENT_COLOR} || true
+            # sudo docker stop supply-${CURRENT_COLOR} || true
+            # sudo docker rm supply-${CURRENT_COLOR} || true
+            sudo docker compose -p "core-$CURRENT_COLOR" down
             echo "🛑 supply-${CURRENT_COLOR} 종료"
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
