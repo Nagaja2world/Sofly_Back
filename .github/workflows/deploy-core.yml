@@ -230,7 +230,7 @@ jobs:
             chmod 600 .env.core
 
             # ── 5. Docker Hub 이미지 pull ──────────────────────
-            echo "[5] Docker Hub Image pull
+            echo "[5] Docker Hub Image pull"
             sudo docker pull $IMAGE_TAG
 
             # ── 6. 새 컨테이너 실행 ────────────────────────────
