@@ -177,17 +177,17 @@ jobs:
             echo "[2] Check Current Port & Determine Target"
             CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/bluegreen/service-url-supply.inc 2>/dev/null || echo "8082")
 
-            if [ "$CURRENT_PORT" == "8080" ]; then
-              TARGET_PORT=8081
+            if [ "$CURRENT_PORT" == "8082" ]; then
+              TARGET_PORT=8083
               TARGET_COLOR="green"
               CURRENT_COLOR="blue"
-            elif [ "$CURRENT_PORT" == "8081" ]; then
-              TARGET_PORT=8080
+            elif [ "$CURRENT_PORT" == "8083" ]; then
+              TARGET_PORT=8082
               TARGET_COLOR="blue"
               CURRENT_COLOR="green"
             else
-              echo "⚠️ Defaulting to Green(8081)."
-              TARGET_PORT=8081
+              echo "⚠️ Defaulting to Green(8083)."
+              TARGET_PORT=8083
               TARGET_COLOR="green"
               CURRENT_COLOR="blue"
             fi
@@ -200,16 +200,6 @@ jobs:
             PREV_IMAGE=$(docker inspect supply-${CURRENT_COLOR} \
               --format='{{.Config.Image}}' 2>/dev/null || echo "")
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
-
-            # ── 3.2 최신 코드 pull ──────────────────────────────
-            # echo "[3] Save Commit & Pull Code"
-            # PREV_COMMIT=$(git rev-parse HEAD)
-            #
-            # git reset --hard HEAD
-            # git clean -fd
-            # git fetch origin develop
-            # git checkout -B develop origin/develop
-            # git reset --hard origin/develop
 
             # ── 4. .env 생성 ───────────────────────────────────
             echo "[4] Create .env.supply"
