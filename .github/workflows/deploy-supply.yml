@@ -83,6 +83,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
+      - name: Debug outputs
+        run: echo "image_tag=${{ needs.build-and-push.outputs.image_tag }}"
+        
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -212,9 +215,11 @@ jobs:
             chmod 600 .env.supply
 
             # ── 5. Docker Hub 이미지 pull ──────────────────────
+            echo "[5] Docker Hub Image pull
             sudo docker pull $IMAGE_TAG
 
             # ── 6. 새 컨테이너 실행 ────────────────────────────
+            echo "[6] Run New Container supply-($TARGET_COLOR)"
             export SUPPLY_IMAGE=$IMAGE_TAG
             export SUPPLY_PORT=$TARGET_PORT
             export SUPPLY_CONTAINER_NAME=supply-${TARGET_COLOR}
@@ -222,7 +227,7 @@ jobs:
             sudo -E docker compose up -d supply
 
             # ── 7. 헬스체크 ────────────────────────────────────
-            echo "[7] Health Check ($TARGET_COLOR)"
+            echo "[7] Health Check supply-($TARGET_COLOR)"
             if ! wait_for_health $TARGET_PORT; then
               echo "❌ 헬스체크 실패 — 로그 확인"
               sudo docker logs supply-${TARGET_COLOR} --tail=50
