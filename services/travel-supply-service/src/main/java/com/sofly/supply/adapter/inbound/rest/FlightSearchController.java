@@ -24,5 +24,6 @@ public class FlightSearchController {
             @RequestParam(defaultValue = "5") int max
     ) {
         return flightSearchService.search(supplier, origin, dest, date, adults, max);
+
     }
 }
