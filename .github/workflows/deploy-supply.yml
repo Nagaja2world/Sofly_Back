@@ -51,7 +51,7 @@ jobs:
           context: services/travel-supply-service
           dockerfile: services/travel-supply-service/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tag }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sofly-supply:${{ github.sha }}
 
       - name: ❌ Leave comment on PR if build fails
         if: failure() && github.event_name == 'pull_request'
@@ -98,7 +98,7 @@ jobs:
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          IMAGE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/sofly-core:${{ needs.build-and-push.outputs.image_tag }}
+          IMAGE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/sofly-supply:${{ needs.build-and-push.outputs.image_tag }}
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER }}

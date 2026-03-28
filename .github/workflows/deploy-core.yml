@@ -51,7 +51,7 @@ jobs:
           context: services/travel-core-service
           dockerfile: services/travel-core-service/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tag }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sofly-core:${{ github.sha }}
 
       - name: ❌ Leave comment on PR if build fails
         if: failure() && github.event_name == 'pull_request'
