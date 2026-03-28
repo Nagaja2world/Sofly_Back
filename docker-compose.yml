@@ -1,8 +1,6 @@
 services:
   core:
-    build:
-      context: ./services/travel-core-service
-      dockerfile: Dockerfile
+    image: ${CORE_IMAGE}        
     container_name: ${CORE_CONTAINER_NAME:-core-blue}
     ports:
       - "${CORE_PORT:-8080}:8080"
@@ -23,9 +21,7 @@ services:
       start_period: 30s
 
   supply:
-    build:
-      context: ./services/travel-supply-service
-      dockerfile: Dockerfile
+    image: ${SUPPLY_IMAGE}        
     container_name: ${SUPPLY_CONTAINER_NAME:-supply-blue}
     ports:
       - "${SUPPLY_PORT:-8082}:8081"

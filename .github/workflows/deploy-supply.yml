@@ -6,14 +6,17 @@ on:
     paths:
       - 'services/travel-supply-service/**'
       - '.github/workflows/deploy-supply.yml'
+      - 'docker-compose.yml'
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build travel-supply-service
+  build-and-push:
+    name: 🧪 Build travel-supply-service
     runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
     steps:
-      - name: Checkout
+      - name: ✅ Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
@@ -23,15 +26,33 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
-      - name: Grant Gradle permission
+      - name: 🔧 Grant Gradle permission
         run: chmod +x services/travel-supply-service/gradlew
 
-      - name: Build without tests
+      - name: 🔄 Build without tests
         run: |
           cd services/travel-supply-service
           ./gradlew clean build -x test --no-daemon
 
-      - name: Comment on PR if build fails
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${{ secrets.DOCKERHUB_USERNAME }}/sofly-supply:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/travel-supply-service
+          dockerfile: services/travel-supply-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tag }}
+
+      - name: ❌ Leave comment on PR if build fails
         if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
@@ -44,25 +65,41 @@ jobs:
               body: `🚨 [supply] 빌드 실패 (브랜치: \`${context.payload.pull_request.head.ref}\`) - 로그를 확인해주세요!`
             });
 
+      - name: ✅ Leave comment on PR if build succeeds
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `✅ CI 성공 (브랜치: \`${context.payload.pull_request.head.ref}\`) - 빌드를 통과했습니다!`
+            });
+
   deploy:
     name: Deploy supply Blue/Green
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-and-push
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
           AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
           AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
+          AMADEUS_BASE_URL: ${{ secrets.AMADEUS_BASE_URL }}
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          GOOGLE_PLACES_BASE_URL: ${{ secrets.GOOGLE_PLACES_BASE_URL }}
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          envs: AMADEUS_CLIENT_ID,AMADEUS_CLIENT_SECRET,GOOGLE_PLACES_API_KEY,REDIS_HOST,REDIS_PORT,DEPLOY_PATH
+          envs: AMADEUS_CLIENT_ID,AMADEUS_CLIENT_SECRET,AMADEUS_BASE_URL,GOOGLE_PLACES_API_KEY,GOOGLE_PLACES_BASE_URL,REDIS_HOST,REDIS_PORT,DEPLOY_PATH,IMAGE_TAG
           script_stop: true
           script: |
             set -e
@@ -70,7 +107,7 @@ jobs:
             # ── 헬스체크 함수 ──────────────────────────────────
             wait_for_health() {
               local port=$1
-              echo "[Health Check] port: $port"
+              echo "[Health Check] Waiting for service on port $port..."
               for i in $(seq 1 60); do
                 code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${port}/actuator/health || echo "000")
                 if [ "$code" = "200" ]; then
@@ -88,22 +125,52 @@ jobs:
             rollback() {
               echo "[ROLLBACK] 배포 실패 — 롤백 시작"
               trap - ERR
-              git reset --hard "$PREV_COMMIT"
-              cd services/travel-supply-service
-              chmod +x ./gradlew
-              ./gradlew clean bootJar -x test --no-daemon
-              cd "$DEPLOY_PATH"
-              sudo -E docker compose --profile supply-${TARGET_COLOR} up -d --build
-              echo "[ROLLBACK] 완료"
+
+              # 변수가 설정되지 않은 초기 단계 실패면 롤백할 게 없음
+              if [ -z "$TARGET_COLOR" ] || [ -z "$CURRENT_COLOR" ]; then
+                echo "[ROLLBACK] 초기 단계 실패 — 롤백 생략"
+                return 0
+              fi
+
+              # Nginx가 이미 전환됐을 수 있으므로 기존 포트로 되돌림
+              echo "[ROLLBACK] Nginx를 $CURRENT_COLOR($CURRENT_PORT)로 복구"
+              echo "set \$supply_url http://127.0.0.1:${CURRENT_PORT};" | \
+                sudo tee /etc/nginx/bluegreen/service-url-supply.inc
+              sudo nginx -s reload
+
+              # 실패한 새 컨테이너 정리
+              sudo docker stop supply-${TARGET_COLOR} 2>/dev/null || true
+              sudo docker rm  supply-${TARGET_COLOR} 2>/dev/null || true
+
+              # 기존 컨테이너(CURRENT)가 살아있으면 롤백 완료
+              if sudo docker inspect supply-${CURRENT_COLOR} > /dev/null 2>&1; then
+                echo "[ROLLBACK] 완료 — supply-${CURRENT_COLOR}($CURRENT_PORT) 이미 서비스 중"
+                return 0
+              fi
+
+              # 기존 컨테이너가 없을 때만 이전 이미지로 재기동
+              if [ -n "$PREV_IMAGE" ]; then
+                echo "[ROLLBACK] supply-${CURRENT_COLOR} 재기동 — $PREV_IMAGE"
+                export SUPPLY_IMAGE=$PREV_IMAGE
+                export SUPPLY_PORT=$CURRENT_PORT
+                export SUPPLY_CONTAINER_NAME=supply-${CURRENT_COLOR}
+                cd "$DEPLOY_PATH"
+                sudo -E docker compose up -d supply
+                echo "[ROLLBACK] 완료"
+              else
+                echo "[ROLLBACK] 이전 이미지 없음 — 수동 복구 필요"
+              fi
             }
 
             trap 'rollback; exit 1' ERR
 
             # ── 1. 배포 경로 이동 ──────────────────────────────
+            echo "[1] Move to deploy path"
             cd "$DEPLOY_PATH"
 
             # ── 2. 현재 포트 확인 → 타겟 결정 ────────────────
-            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/sites-available/service-url-supply.inc 2>/dev/null || echo "8082")
+            echo "[2] Check Current Port & Determine Target"
+            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/bluegreen/service-url-supply.inc 2>/dev/null || echo "8082")
 
             if [ "$CURRENT_PORT" = "8082" ]; then
               TARGET_PORT=8083; TARGET_COLOR=green; CURRENT_COLOR=blue
@@ -114,49 +181,69 @@ jobs:
             echo "🔵 Current supply: $CURRENT_COLOR ($CURRENT_PORT)"
             echo "🟢 Target  supply: $TARGET_COLOR ($TARGET_PORT)"
 
-            # ── 3. 최신 코드 pull ──────────────────────────────
+            # ── 3.1 이전 이미지 저장 (롤백용) ← 여기 추가 ──────
+            PREV_IMAGE=$(docker inspect supply-${CURRENT_COLOR} \
+              --format='{{.Config.Image}}' 2>/dev/null || echo "")
+            echo "📦 PREV_IMAGE: $PREV_IMAGE"
+
+            # ── 3.2 최신 코드 pull ──────────────────────────────
+            echo "[3] Save Commit & Pull Code"
             PREV_COMMIT=$(git rev-parse HEAD)
+            
+            git reset --hard HEAD
+            git clean -fd
             git fetch origin develop
+            git checkout -B develop origin/develop
             git reset --hard origin/develop
 
             # ── 4. .env 생성 ───────────────────────────────────
-            cat <<EOF > .env
+            echo "[4] Create .env.supply"
+            cat <<EOF > .env.supply
             AMADEUS_CLIENT_ID=$AMADEUS_CLIENT_ID
             AMADEUS_CLIENT_SECRET=$AMADEUS_CLIENT_SECRET
+            AMADEUS_BASE_URL=$AMADEUS_BASE_URL
             GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY
+            GOOGLE_PLACES_BASE_URL=$GOOGLE_PLACES_BASE_URL
             REDIS_HOST=$REDIS_HOST
             REDIS_PORT=$REDIS_PORT
             EOF
-            chmod 600 .env
+            chmod 600 .env.supply
 
-            # ── 5. JAR 빌드 ────────────────────────────────────
-            cd services/travel-supply-service
-            chmod +x ./gradlew
-            ./gradlew clean bootJar -x test --no-daemon
-            cd "$DEPLOY_PATH"
+            # ── 5. Docker Hub 이미지 pull ──────────────────────
+            sudo docker pull $IMAGE_TAG
 
-            # ── 6. 새 컨테이너 실행 (profiles 방식) ───────────
-            sudo -E docker compose --profile supply-${TARGET_COLOR} up -d --build
+            # ── 6. 새 컨테이너 실행 ────────────────────────────
+            export SUPPLY_IMAGE=$IMAGE_TAG
+            export SUPPLY_PORT=$TARGET_PORT
+            export SUPPLY_CONTAINER_NAME=supply-${TARGET_COLOR}
+
+            sudo -E docker compose up -d supply
 
             # ── 7. 헬스체크 ────────────────────────────────────
+            echo "[7] Health Check ($TARGET_COLOR)"
             if ! wait_for_health $TARGET_PORT; then
               echo "❌ 헬스체크 실패 — 로그 확인"
               sudo docker logs supply-${TARGET_COLOR} --tail=50
-              sudo -E docker compose --profile supply-${TARGET_COLOR} down
+              sudo docker stop supply-${TARGET_COLOR} || true
+              sudo docker rm supply-${TARGET_COLOR} || true
               exit 1
             fi
 
             # ── 8. Nginx 트래픽 전환 ───────────────────────────
+            echo "[8] Switch Nginx Traffic"
             echo "set \$supply_url http://127.0.0.1:${TARGET_PORT};" | \
-              sudo tee /etc/nginx/sites-available/service-url-supply.inc
+              sudo tee /etc/nginx/bluegreen/service-url-supply.inc
             sudo nginx -s reload
             echo "✅ Nginx → supply-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
-            # ── 9. 이전 컨테이너 종료 ─────────────────────────
-            sudo -E docker compose --profile supply-${CURRENT_COLOR} down || true
-            echo "🛑 supply-${CURRENT_COLOR} 종료"
+            # ── 9. 이전 컨테이너 종료 ────────────────────────
+            echo "[9] stop old container ($current_color)"
+            sudo docker stop supply-${current_color} || true
+            sudo docker rm supply-${current_color} || true
+            echo "🛑 supply-${current_color} 종료"
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
+            echo "[10] Cleanup Unused Images"
             sudo docker image prune -f
 
             echo "🚀 supply Blue/Green 배포 완료! ($TARGET_COLOR:$TARGET_PORT)"
