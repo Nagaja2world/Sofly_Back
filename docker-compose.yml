@@ -1,7 +1,7 @@
 services:
   core:
     profiles: ["core"]
-    image: ${CORE_IMAGE}
+    image: ${CORE_IMAGE:-core-placeholder}
     # container_name: ${CORE_CONTAINER_NAME:-core-blue}
     ports:
       - "${CORE_PORT:-8080}:8080"
@@ -23,7 +23,7 @@ services:
 
   supply:
     profiles: ["supply"]
-    image: ${SUPPLY_IMAGE}
+    image: ${SUPPLY_IMAGE:-supply-placeholder}
     # container_name: ${SUPPLY_CONTAINER_NAME:-supply-blue}
     ports:
       - "${SUPPLY_PORT:-8082}:8081"

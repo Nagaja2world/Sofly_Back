@@ -236,11 +236,11 @@ jobs:
             echo "👉🏻[6] Run New Container core-($TARGET_COLOR)"
             export CORE_IMAGE=$IMAGE_TAG
             export CORE_PORT=$TARGET_PORT
-            # export CORE_CONTAINER_NAME=core-${TARGET_COLOR}
-            # EXISTING_SUPPLY_IMAGE=$(docker inspect supply-blue --format='{{.Config.Image}}' 2>/dev/null || \
-            #                         docker inspect supply-green --format='{{.Config.Image}}' 2>/dev/null || \
-            #                         echo "dummy")
-            # export SUPPLY_IMAGE=$EXISTING_SUPPLY_IMAGE
+            export CORE_CONTAINER_NAME=core-${TARGET_COLOR}
+            EXISTING_SUPPLY_IMAGE=$(docker inspect supply-blue --format='{{.Config.Image}}' 2>/dev/null || \
+                                    docker inspect supply-green --format='{{.Config.Image}}' 2>/dev/null || \
+                                    echo "dummy")
+            export SUPPLY_IMAGE=$EXISTING_SUPPLY_IMAGE
 
             sudo -E docker compose -p "core-$TARGET_COLOR" up -d --no-deps core
 
