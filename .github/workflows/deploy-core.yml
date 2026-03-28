@@ -194,14 +194,14 @@ jobs:
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
 
             # ── 3.2 최신 코드 pull ──────────────────────────────
-            echo "[3] Save Commit & Pull Code"
-            PREV_COMMIT=$(git rev-parse HEAD)
-            
-            git reset --hard HEAD
-            git clean -fd
-            git fetch origin develop
-            git checkout -B develop origin/develop
-            git reset --hard origin/develop
+            # echo "[3] Save Commit & Pull Code"
+            # PREV_COMMIT=$(git rev-parse HEAD)
+            #
+            # git reset --hard HEAD
+            # git clean -fd
+            # git fetch origin develop
+            # git checkout -B develop origin/develop
+            # git reset --hard origin/develop
 
             # ── 4. .env 생성 ───────────────────────────────────
             echo "[4] Create .env.core"
@@ -251,10 +251,10 @@ jobs:
             echo "✅ Nginx → core-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
             # ── 9. 이전 컨테이너 종료 ────────────────────────
-            echo "[9] stop old container ($current_color)"
-            sudo docker stop core-${current_color} || true
-            sudo docker rm core-${current_color} || true
-            echo "🛑 core-${current_color} 종료"
+            echo "[9] stop old container ($CURRENT_COLOR)"
+            sudo docker stop core-${CURRENT_COLOR} || true
+            sudo docker rm core-${CURRENT_COLOR} || true
+            echo "🛑 core-${CURRENT_COLOR} 종료"
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
             echo "[10] Cleanup Unused Images"
