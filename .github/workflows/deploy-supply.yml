@@ -106,6 +106,7 @@ jobs:
           script_stop: true
           script: |
             set -e
+            set -x
             echo "IMAGE_TAG=[$IMAGE_TAG]"
             env | grep IMAGE
 
