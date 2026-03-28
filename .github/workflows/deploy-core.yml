@@ -177,11 +177,11 @@ jobs:
             trap 'rollback; exit 1' ERR
 
             # ── 1. 배포 경로 이동 ──────────────────────────────
-            echo "[1] Move to deploy path"
+            echo "👉🏻[1] Move to deploy path"
             cd "$DEPLOY_PATH"
 
             # ── 2. 현재 포트 확인 → 타겟 결정 ────────────────
-            echo "[2] Check Current Port & Determine Target"
+            echo "👉🏻[2] Check Current Port & Determine Target"
             CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/bluegreen/service-url-core.inc 2>/dev/null || echo "8080")
 
             if [ "$CURRENT_PORT" == "8080" ]; then
@@ -203,13 +203,13 @@ jobs:
             echo "🟢 Target  core: $TARGET_COLOR ($TARGET_PORT)"
 
             # ── 3.1 이전 이미지 저장 (롤백용) ← 여기 추가 ──────
-            echo "[3] Previous Image save for rollback"
+            echo "👉🏻[3] Previous Image save for rollback"
             PREV_IMAGE=$(docker inspect core-${CURRENT_COLOR} \
               --format='{{.Config.Image}}' 2>/dev/null || echo "")
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
 
             # ── 4. .env 생성 ───────────────────────────────────
-            echo "[4] Create .env.core"
+            echo "👉🏻[4] Create .env.core"
             cat <<EOF > .env.core
             SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL
             SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME
@@ -229,20 +229,20 @@ jobs:
             chmod 600 .env.core
 
             # ── 5. Docker Hub 이미지 pull ──────────────────────
-            echo "[5] Docker Hub Image pull"
+            echo "👉🏻[5] Docker Hub Image pull"
             sudo docker pull $IMAGE_TAG
 
             # ── 6. 새 컨테이너 실행 ────────────────────────────
-            echo "[6] Run New Container core-($TARGET_COLOR)"
+            echo "👉🏻[6] Run New Container core-($TARGET_COLOR)"
             export CORE_IMAGE=$IMAGE_TAG
             export CORE_PORT=$TARGET_PORT
             export CORE_CONTAINER_NAME=core-${TARGET_COLOR}
-            export SUPPLY_IMAGE=dummy
+            # export SUPPLY_IMAGE=dummy
 
-            sudo -E docker compose up -d core
+            sudo -E docker compose up -d --no-deps core
 
             # ── 7. 헬스체크 ────────────────────────────────────
-            echo "[7] Health Check core-($TARGET_COLOR)"
+            echo "👉🏻[7] Health Check core-($TARGET_COLOR)"
             if ! wait_for_health $TARGET_PORT; then
               echo "❌ 헬스체크 실패 — 로그 확인"
               sudo docker logs core-${TARGET_COLOR} --tail=50
@@ -252,20 +252,20 @@ jobs:
             fi
 
             # ── 8. Nginx 트래픽 전환 ───────────────────────────
-            echo "[8] Switch Nginx Traffic"
+            echo "👉🏻[8] Switch Nginx Traffic"
             echo "set \$core_url http://127.0.0.1:${TARGET_PORT};" | \
               sudo tee /etc/nginx/bluegreen/service-url-core.inc
             sudo nginx -s reload
             echo "✅ Nginx → core-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
             # ── 9. 이전 컨테이너 종료 ────────────────────────
-            echo "[9] stop old container ($CURRENT_COLOR)"
+            echo "👉🏻[9] stop old container ($CURRENT_COLOR)"
             sudo docker stop core-${CURRENT_COLOR} || true
             sudo docker rm core-${CURRENT_COLOR} || true
             echo "🛑 core-${CURRENT_COLOR} 종료"
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
-            echo "[10] Cleanup Unused Images"
+            echo "👉🏻[10] Cleanup Unused Images"
             sudo docker image prune -f
 
             echo "🚀 core Blue/Green 배포 완료! ($TARGET_COLOR:$TARGET_PORT)"
