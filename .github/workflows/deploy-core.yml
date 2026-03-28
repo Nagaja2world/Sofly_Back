@@ -110,6 +110,8 @@ jobs:
           script_stop: true
           script: |
             set -e
+            echo "IMAGE_TAG=[$IMAGE_TAG]"
+            env | grep IMAGE
 
             # ── 헬스체크 함수 ──────────────────────────────────
             wait_for_health() {
