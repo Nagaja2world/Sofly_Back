@@ -1,0 +1,230 @@
+name: Deploy travel-core-service
+
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'services/travel-core-service/**'
+      - '.github/workflows/deploy-core.yml'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: 🧪 Build & Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: ✅ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: 🔧 Grant Gradle permission
+        run: chmod +x services/travel-core-service/gradlew
+
+      - name: 🔄 Build JAR
+        run: |
+          cd services/travel-core-service
+          ./gradlew clean bootJar -x test --no-daemon
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${{ secrets.DOCKERHUB_USERNAME }}/sofly-core:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/travel-core-service
+          dockerfile: services/travel-core-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tag }}
+
+      - name: ❌ Leave comment on PR if build fails
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `🚨 [core] 빌드 실패 (브랜치: \`${context.payload.pull_request.head.ref}\`) - 로그를 확인해주세요!`
+            });
+
+      - name: ✅ Leave comment on PR if build succeeds
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `✅ CI 성공 (브랜치: \`${context.payload.pull_request.head.ref}\`) - 빌드를 통과했습니다!`
+            });
+
+  deploy:
+    name: Deploy core Blue/Green
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          SPRING_DATASOURCE_URL: ${{ secrets.CORE_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.CORE_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.CORE_DATASOURCE_PASSWORD }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          OAUTH2_REDIRECT_URI: ${{ secrets.OAUTH2_REDIRECT_URI }}
+          SUPPLY_SERVICE_URL: ${{ secrets.SUPPLY_SERVICE_URL }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          envs: SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,REDIS_HOST,REDIS_PORT,JWT_SECRET_KEY,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,OAUTH2_REDIRECT_URI,SUPPLY_SERVICE_URL,DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -e
+
+            # ── 헬스체크 함수 ──────────────────────────────────
+            wait_for_health() {
+              local port=$1
+              echo "[Health Check] Waiting for service on port $port..."
+              for i in $(seq 1 60); do
+                code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${port}/actuator/health || echo "000")
+                if [ "$code" = "200" ]; then
+                  echo "✅ core is UP on port $port"
+                  return 0
+                fi
+                echo "  attempt $i/60 — HTTP $code"
+                sleep 2
+              done
+              echo "❌ Health check failed"
+              return 1
+            }
+
+            # ── 롤백 함수 ──────────────────────────────────────
+            rollback() {
+              echo "[ROLLBACK] 배포 실패 — 롤백 시작"
+              trap - ERR
+              git reset --hard "$PREV_COMMIT"
+              cd services/travel-core-service
+              chmod +x ./gradlew
+              ./gradlew clean bootJar -x test --no-daemon
+              cd "$DEPLOY_PATH"
+              sudo -E docker compose --profile core-${TARGET_COLOR} up -d --build
+              echo "[ROLLBACK] 완료"
+            }
+
+            trap 'rollback; exit 1' ERR
+
+            # ── 1. 배포 경로 이동 ──────────────────────────────
+            echo "[1] Move to deploy path"
+            cd "$DEPLOY_PATH"
+
+            # ── 2. 현재 포트 확인 → 타겟 결정 ────────────────
+            echo "[2] Check Current Port & Determine Target"
+            CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/bluegreen/service-url-core.inc 2>/dev/null || echo "8080")
+
+            if [ "$CURRENT_PORT" = "8080" ]; then
+              TARGET_PORT=8081; TARGET_COLOR=green; CURRENT_COLOR=blue
+            else
+              TARGET_PORT=8080; TARGET_COLOR=blue;  CURRENT_COLOR=green
+            fi
+
+            echo "🔵 Current core: $CURRENT_COLOR ($CURRENT_PORT)"
+            echo "🟢 Target  core: $TARGET_COLOR ($TARGET_PORT)"
+
+            # ── 3. 최신 코드 pull ──────────────────────────────
+            echo "[3] Save Commit & Pull Code"
+            PREV_COMMIT=$(git rev-parse HEAD)
+            
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
+
+            # ── 4. .env 생성 ───────────────────────────────────
+            echo "[4] Create .env.core"
+            cat <<EOF > .env.core
+            SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL
+            SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME
+            SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD
+            REDIS_HOST=$REDIS_HOST
+            REDIS_PORT=$REDIS_PORT
+            JWT_SECRET_KEY=$JWT_SECRET_KEY
+            GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+            KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID
+            KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET
+            NAVER_CLIENT_ID=$NAVER_CLIENT_ID
+            NAVER_CLIENT_SECRET=$NAVER_CLIENT_SECRET
+            OAUTH2_REDIRECT_URI=$OAUTH2_REDIRECT_URI
+            SUPPLY_SERVICE_URL=$SUPPLY_SERVICE_URL
+            EOF
+            chmod 600 .env.core
+
+            # ── 5. JAR 빌드 ────────────────────────────────────
+            # cd services/travel-core-service
+            # chmod +x ./gradlew
+            # ./gradlew clean bootJar -x test --no-daemon
+            # cd "$DEPLOY_PATH"
+
+            # ── 6. 새 컨테이너 실행 (profiles 방식) ───────────
+            echo "[6] Run New Container ($TARGET_COLOR)"
+            export CORE_PORT=$TARGET_PORT
+            export CORE_CONTAINER_NAME=core-${TARGET_COLOR}
+
+            sudo -E docker compose --profile core-${TARGET_COLOR} up -d --build
+
+            # ── 7. 헬스체크 ────────────────────────────────────
+            echo "[7] Health Check ($TARGET_COLOR)"
+            if ! wait_for_health $TARGET_PORT; then
+              echo "❌ 헬스체크 실패 — 로그 확인"
+              sudo docker logs core-${TARGET_COLOR} --tail=50
+              sudo -E docker compose --profile core-${TARGET_COLOR} down
+              exit 1
+            fi
+
+            # ── 8. Nginx 트래픽 전환 ───────────────────────────
+            echo "[8] Switch Nginx Traffic"
+            echo "set \$core_url http://127.0.0.1:${TARGET_PORT};" | \
+              sudo tee /etc/nginx/bluegreen/service-url-core.inc
+            sudo nginx -s reload
+            echo "✅ Nginx → core-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
+
+            # ── 9. 이전 컨테이너 종료 ─────────────────────────
+            echo "[9] Stop Old Container ($CURRENT_COLOR)"
+            sudo -E docker compose --profile core-${CURRENT_COLOR} down || true
+            echo "🛑 core-${CURRENT_COLOR} 종료"
+
+            # ── 10. 미사용 이미지 정리 ─────────────────────────
+            echo "[10] Cleanup Unused Images"
+            sudo docker image prune -f
+
+            echo "🚀 core Blue/Green 배포 완료! ($TARGET_COLOR:$TARGET_PORT)"

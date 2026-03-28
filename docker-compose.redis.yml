@@ -1,0 +1,21 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: sofly-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sofly-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  sofly-net:
+    external: true
+
+# Docker Command
+# docker compose -f docker-compose.redis.yml up -d

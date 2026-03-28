@@ -1,0 +1,49 @@
+services:
+  core:
+    build:
+      context: ./services/travel-core-service
+      dockerfile: Dockerfile
+    container_name: ${CORE_CONTAINER_NAME:-core-blue}
+    ports:
+      - "${CORE_PORT:-8080}:8080"
+    env_file: .env.core          # .env.core에서 환경변수 읽음
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Redis가 외부 컨테이너라면 아래처럼 명시
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-sofly-redis}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
+    networks:
+      - sofly-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  supply:
+    build:
+      context: ./services/travel-supply-service
+      dockerfile: Dockerfile
+    container_name: ${SUPPLY_CONTAINER_NAME:-supply-blue}
+    ports:
+      - "${SUPPLY_PORT:-8082}:8081"
+    env_file: .env.supply
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-sofly-redis}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
+    networks:
+      - sofly-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  sofly-net:
+    external: true
