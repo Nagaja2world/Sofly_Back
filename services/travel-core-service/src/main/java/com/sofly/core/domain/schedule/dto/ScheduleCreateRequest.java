@@ -1,6 +1,5 @@
 package com.sofly.core.domain.schedule.dto;
 
-import com.sofly.core.domain.schedule.entity.ScheduleItem.Category;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -13,8 +12,6 @@ public record ScheduleCreateRequest(
         Long workspaceId,
 
         String title,
-
-        String aiChatSessionId,
 
         @NotNull @Valid
         List<ScheduleItemCreateRequest> items

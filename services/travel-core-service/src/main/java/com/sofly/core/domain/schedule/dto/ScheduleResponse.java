@@ -14,7 +14,6 @@ public record ScheduleResponse(
         Long workspaceId,
         String title,
         Integer version,
-        String aiChatSessionId,
         Map<Integer, List<ScheduleItemResponse>> itemsByDay,  // { 1: [...], 2: [...] }
         LocalDateTime createdAt,
         LocalDateTime updatedAt
@@ -29,7 +28,6 @@ public record ScheduleResponse(
                 schedule.getWorkspace().getId(),
                 schedule.getTitle(),
                 schedule.getVersion(),
-                schedule.getAiChatSessionId(),
                 itemsByDay,
                 schedule.getCreatedAt(),
                 schedule.getUpdatedAt()

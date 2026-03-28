@@ -59,7 +59,6 @@ public class ScheduleService {
                 .workspace(workspace)
                 .title(request.title() != null ? request.title() : nextVersion + "차 일정")
                 .version(nextVersion)
-                .aiChatSessionId(request.aiChatSessionId())
                 .build();
 
         // 아이템 생성 후 연관관계 설정
@@ -87,7 +86,6 @@ public class ScheduleService {
                 .workspace(origin.getWorkspace())
                 .title(newTitle != null ? newTitle : nextVersion + "차 일정")
                 .version(nextVersion)
-                .aiChatSessionId(origin.getAiChatSessionId())
                 .build();
 
         List<ScheduleItem> copiedItems = origin.getItems().stream()

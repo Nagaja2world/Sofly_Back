@@ -1,4 +1,7 @@
 package com.sofly.core.domain.chat.dto;
 
-public class ChatRequest {
-}
+import jakarta.validation.constraints.NotBlank;
+
+public record ChatRequest(
+        @NotBlank String message
+) {}

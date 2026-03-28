@@ -73,11 +73,17 @@ dependencies {
 
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+
+    //Gemini (Google AI)
+    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 }
 
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+
+        //Gemini
+        mavenBom "org.springframework.ai:spring-ai-bom:1.1.4"
     }
 }
 
