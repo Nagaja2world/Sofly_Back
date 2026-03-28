@@ -82,8 +82,8 @@ jwt:
 
 sofly:
   oauth2:
-    redirect-uri: ${FRONTEND_REDIRECT_URI:http://localhost:8080}
-    # redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth2/callback}
+    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth2/callback}
+    # redirect-uri: ${FRONTEND_REDIRECT_URI:http://localhost:8080}
 
 springdoc:
   swagger-ui:
