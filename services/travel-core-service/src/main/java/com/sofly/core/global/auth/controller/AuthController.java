@@ -59,4 +59,5 @@ public class AuthController {
         authService.logout(userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
 }
