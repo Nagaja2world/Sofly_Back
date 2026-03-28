@@ -30,7 +30,7 @@ public class AuthController {
      * Access Token 재발급
      * POST /api/auth/refresh
      */
-    @Operation(summary = "토큰 재발급", description = "Refresh Token으로 Access Token을 재발급합니다.")
+    @Operation(summary = "토큰 재발급 - test", description = "Refresh Token으로 Access Token을 재발급합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "재발급 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
