@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface ScheduleItemRepository extends JpaRepository<ScheduleItem, Long> {
 
     //itemId과 scheduleId로 items 찾기
-    Optional<ScheduleItem> findByIdAndScheduleId(Long id, Long scheduleId);
+    Optional<ScheduleItem> findByScheduleIdAndId(Long scheduleId, Long id);
 
     // 특정 일정의 모든 아이템 (day, orderIndex 정렬)
     List<ScheduleItem> findByScheduleIdOrderByDayAscOrderIndexAsc(Long scheduleId);

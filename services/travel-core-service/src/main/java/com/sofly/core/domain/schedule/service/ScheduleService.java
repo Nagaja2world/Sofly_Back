@@ -127,7 +127,7 @@ public class ScheduleService {
     // 아이템 단건 수정 (visitTime, memo, category)
     @Transactional
     public ScheduleItemResponse updateItem(Long scheduleId, Long itemId, ScheduleItemUpdateRequest request) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.update(request.visitTime(), request.memo(), request.category());
         return ScheduleItemResponse.from(item);
@@ -165,7 +165,7 @@ public class ScheduleService {
     // D&D 단일 아이템 이동 (프론트는 itemId + targetDay + targetOrderIndex만 전송)
     @Transactional
     public void moveItem(Long scheduleId, Long itemId, ScheduleItemMoveRequest request) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(itemId, scheduleId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
 
         int oldDay = item.getDay();
@@ -197,7 +197,7 @@ public class ScheduleService {
     // 아이템 단건 삭제
     @Transactional
     public void deleteItem(Long scheduleId, Long itemId) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         scheduleItemRepository.delete(item);
     }
@@ -214,7 +214,7 @@ public class ScheduleService {
 
     @Transactional
     public void trackDeepLinkClick(Long scheduleId, Long itemId) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.incrementDeepLinkClick();
     }
