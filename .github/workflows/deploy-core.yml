@@ -113,7 +113,6 @@ jobs:
           script_stop: true
           script: |
             set -e
-            set -x
             echo "IMAGE_TAG=[$IMAGE_TAG]"
             env | grep IMAGE
 
@@ -185,10 +184,19 @@ jobs:
             echo "[2] Check Current Port & Determine Target"
             CURRENT_PORT=$(grep -o '808[0-9]' /etc/nginx/bluegreen/service-url-core.inc 2>/dev/null || echo "8080")
 
-            if [ "$CURRENT_PORT" = "8080" ]; then
-              TARGET_PORT=8081; TARGET_COLOR=green; CURRENT_COLOR=blue
+            if [ "$CURRENT_PORT" == "8080" ]; then
+              TARGET_PORT=8081
+              TARGET_COLOR="green"
+              CURRENT_COLOR="blue"
+            elif [ "$CURRENT_PORT" == "8081" ]; then
+              TARGET_PORT=8080
+              TARGET_COLOR="blue"
+              CURRENT_COLOR="green"
             else
-              TARGET_PORT=8080; TARGET_COLOR=blue;  CURRENT_COLOR=green
+              echo "⚠️ Defaulting to Green(8081)."
+              TARGET_PORT=8081
+              TARGET_COLOR="green"
+              CURRENT_COLOR="blue"
             fi
 
             echo "🔵 Current core: $CURRENT_COLOR ($CURRENT_PORT)"
