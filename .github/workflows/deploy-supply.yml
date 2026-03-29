@@ -113,18 +113,18 @@ jobs:
 
             # ── 롤백 함수 ──────────────────────────────────────
             rollback() {
-              echo "[ROLLBACK] 배포 실패 — 롤백 시작"
+              echo "⏱️[ROLLBACK] 배포 실패 — 롤백 시작"
               trap - ERR
 
               # 변수가 설정되지 않은 초기 단계 실패면 롤백할 게 없음
               if [ -z "$TARGET_COLOR" ] || [ -z "$CURRENT_COLOR" ]; then
-                echo "[ROLLBACK] 초기 단계 실패 — 롤백 생략"
+                echo "⏱️[ROLLBACK] 초기 단계 실패 — 롤백 생략"
                 return 0
               fi
 
               # Nginx가 이미 전환됐을 수 있으므로 기존 포트로 되돌림
-              echo "[ROLLBACK] Nginx를 $CURRENT_COLOR($CURRENT_PORT)로 복구"
-              echo "set \$supply_url http://127.0.0.1:${CURRENT_PORT};" | \
+              echo "⏱️[ROLLBACK] Nginx를 $CURRENT_COLOR($CURRENT_PORT)로 복구"
+              echo "⏱️set \$supply_url http://127.0.0.1:${CURRENT_PORT};" | \
                 sudo tee /etc/nginx/bluegreen/service-url-supply.inc
               sudo nginx -s reload
 
@@ -134,21 +134,21 @@ jobs:
 
               # 기존 컨테이너(CURRENT)가 살아있으면 롤백 완료
               if sudo docker inspect supply-${CURRENT_COLOR} > /dev/null 2>&1; then
-                echo "[ROLLBACK] 완료 — supply-${CURRENT_COLOR}($CURRENT_PORT) 이미 서비스 중"
+                echo "⏱️[ROLLBACK] 완료 — supply-${CURRENT_COLOR}($CURRENT_PORT) 이미 서비스 중"
                 return 0
               fi
 
               # 기존 컨테이너가 없을 때만 이전 이미지로 재기동
               if [ -n "$PREV_IMAGE" ]; then
-                echo "[ROLLBACK] supply-${CURRENT_COLOR} 재기동 — $PREV_IMAGE"
+                echo "⏱️[ROLLBACK] supply-${CURRENT_COLOR} 재기동 — $PREV_IMAGE"
                 export SUPPLY_IMAGE=$PREV_IMAGE
                 export SUPPLY_PORT=$CURRENT_PORT
                 export SUPPLY_CONTAINER_NAME=supply-${CURRENT_COLOR}
                 cd "$DEPLOY_PATH"
                 sudo -E docker compose up -d supply
-                echo "[ROLLBACK] 완료"
+                echo "⏱️[ROLLBACK] 완료"
               else
-                echo "[ROLLBACK] 이전 이미지 없음 — 수동 복구 필요"
+                echo "⏱️[ROLLBACK] 이전 이미지 없음 — 수동 복구 필요"
               fi
             }
 
@@ -236,7 +236,9 @@ jobs:
               sudo docker logs supply-${TARGET_COLOR} --tail=50
               # sudo docker stop supply-${TARGET_COLOR} || true
               # sudo docker rm supply-${TARGET_COLOR} || true
-            sudo docker compose -p "supply-$TARGET_COLOR" down
+              echo "🛑 supply-${TARGET_COLOR} 종료"
+              sudo docker compose -p "supply-$TARGET_COLOR" down
+              rollback
               exit 1
             fi
 
@@ -244,7 +246,23 @@ jobs:
             echo "👉🏻[8] Switch Nginx Traffic"
             echo "set \$supply_url http://127.0.0.1:${TARGET_PORT};" | \
               sudo tee /etc/nginx/bluegreen/service-url-supply.inc
+
+            # 설정 파일 내용 확인
+            echo "📄 service-url-supply.inc 내용:"
+            cat /etc/nginx/bluegreen/service-url-supply.inc
+
+            # Nginx 문법 검사
+            echo "🔍 Nginx 설정 문법 검사..."
+            sudo nginx -t
+
+            # reload
             sudo nginx -s reload
+
+            echo "🔍 Nginx 전환 후 헬스체크 확인..."
+            sleep 2
+            code=$(curl -s -o /dev/null -w "%{http_code}" https://api.sofly.co.kr/actuator/health || echo "000")
+            echo "📡 https://api.sofly.co.kr/actuator/health → HTTP $code"
+
             echo "✅ Nginx → supply-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
             # ── 9. 이전 컨테이너 종료 ────────────────────────
