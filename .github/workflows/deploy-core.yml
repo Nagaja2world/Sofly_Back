@@ -194,6 +194,13 @@ jobs:
               --format='{{.Config.Image}}' 2>/dev/null || echo "")
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
 
+            echo "👉🏻[3.5] Git pull latest code"
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
+
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.core"
             cat <<EOF > .env.core
