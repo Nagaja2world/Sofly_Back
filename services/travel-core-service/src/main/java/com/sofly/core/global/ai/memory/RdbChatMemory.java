@@ -32,19 +32,29 @@ public class RdbChatMemory implements ChatMemory {
     public void add(String conversationId, List<Message> messages) {
         Long chatRoomId = parseRoomId(conversationId);
 
-        messages.forEach(message -> {
-            ChatMessage.Role role = message.getMessageType() == MessageType.USER
-                    ? ChatMessage.Role.USER
-                    : ChatMessage.Role.ASSISTANT;
+        List<ChatMessage> chatMessages = messages.stream()
+                .map(message -> {
+                    ChatMessage.Role role = message.getMessageType() == MessageType.USER
+                            ? ChatMessage.Role.USER
+                            : ChatMessage.Role.ASSISTANT;
 
-            chatMessageRepository.save(ChatMessage.builder()
-                    .chatRoomId(chatRoomId)
-                    .role(role)
-                    .content(message.getText())
-                    .build());
-        });
+                    return ChatMessage.builder()
+                            .chatRoomId(chatRoomId)
+                            .role(role)
+                            .content(message.getText())
+                            .build();
+                })
+                .toList();
 
-        redisTemplate.delete(CACHE_PREFIX + conversationId);
+        chatMessageRepository.saveAll(chatMessages);
+
+        try{
+            //redisTemplate.delete()가 실패했을 때 예외가 터지면 저장은 됐는데 캐시 삭제가 안 되는 상황 때문
+            redisTemplate.delete(CACHE_PREFIX + conversationId);
+        }
+        catch(Exception e){
+            log.warn("Redis 캐시 삭제 실패 - chatRoomId: {}", chatRoomId);
+        }
         log.debug("ChatMemory saved - chatRoomId: {}", chatRoomId);
     }
 
