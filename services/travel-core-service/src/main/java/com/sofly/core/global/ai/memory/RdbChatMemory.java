@@ -9,6 +9,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -70,8 +71,8 @@ public class RdbChatMemory implements ChatMemory {
                 log.debug("ChatMemory cache hit - chatRoomId: {}", chatRoomId);
                 return cached;
             }
-        } catch (Exception e) {
-            log.warn("Redis 조회 실패, DB로 fallback - chatRoomId: {}", chatRoomId);
+        } catch (RedisSystemException e) {
+            log.warn("Redis 조회 실패, DB로 fallback - chatRoomId: {}", chatRoomId, e);
         }
 
         List<ChatMessage> dbMessages = chatMessageRepository
