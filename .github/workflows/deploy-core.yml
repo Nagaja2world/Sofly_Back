@@ -201,6 +201,13 @@ jobs:
             git checkout -B develop origin/develop
             git reset --hard origin/develop
 
+            # 동기화 확인
+            echo "📌 현재 브랜치: $(git branch --show-current)"
+            echo "📌 현재 커밋:   $(git rev-parse HEAD)"
+            echo "📌 커밋 메시지: $(git log -1 --pretty=format:'%s')"
+            echo "📌 커밋 시간:   $(git log -1 --pretty=format:'%ci')"
+            echo "📌 커밋 작성자: $(git log -1 --pretty=format:'%an')"
+
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.core"
             cat <<EOF > .env.core
