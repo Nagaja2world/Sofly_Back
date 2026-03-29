@@ -21,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatService {
 
+    private static final int LAST_MESSAGE_PREVIEW_LENGTH = 100;
+
     private final ChatClient chatClient;
     private final RdbChatMemory rdbChatMemory;
     private final ChatMessageRepository chatMessageRepository;
@@ -57,7 +59,7 @@ public class ChatService {
                 .call()
                 .content();
 
-        room.updateLastMessage(response.length() > 100 ? response.substring(0, 100) + "…" : response);
+        room.updateLastMessage(response.length() > LAST_MESSAGE_PREVIEW_LENGTH ? response.substring(0, LAST_MESSAGE_PREVIEW_LENGTH) + "…" : response);
 
         return new ChatResponse(
                 roomId,

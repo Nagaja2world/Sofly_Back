@@ -9,6 +9,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -76,7 +77,8 @@ public class RdbChatMemory implements ChatMemory {
         }
 
         List<ChatMessage> dbMessages = chatMessageRepository
-                .findTopNByChatRoomIdOrderByCreatedAtDesc(chatRoomId, WINDOW_SIZE);
+                .findByChatRoomIdOrderByCreatedAtDesc(chatRoomId, PageRequest.of(0, WINDOW_SIZE))
+                .getContent();
         Collections.reverse(dbMessages);
 
         List<Message> messages = dbMessages.stream()
