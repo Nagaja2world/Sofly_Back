@@ -2,7 +2,7 @@ name: Deploy travel-core-service
 
 on:
   push:
-    branches: [ "chore/21-cicd-multistage-build" ]
+    branches: [ "develop" ]
     paths:
       - 'services/travel-core-service/**'
       - '.github/workflows/deploy-core.yml'
