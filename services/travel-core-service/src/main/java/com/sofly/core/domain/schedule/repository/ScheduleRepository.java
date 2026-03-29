@@ -24,9 +24,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("SELECT s FROM Schedule s LEFT JOIN FETCH s.items WHERE s.id = :scheduleId")
     Optional<Schedule> findByIdWithItems(@Param("scheduleId") Long scheduleId);
 
-    // AI 채팅 세션으로 일정 조회
-    Optional<Schedule> findByAiChatSessionId(String aiChatSessionId);
-
     // 워크스페이스에 일정이 존재하는지 확인
     boolean existsByWorkspaceId(Long workspaceId);
 

@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +59,6 @@ public class ScheduleService {
                 .workspace(workspace)
                 .title(request.title() != null ? request.title() : nextVersion + "차 일정")
                 .version(nextVersion)
-                .aiChatSessionId(request.aiChatSessionId())
                 .build();
 
         // 아이템 생성 후 연관관계 설정
@@ -89,7 +86,6 @@ public class ScheduleService {
                 .workspace(origin.getWorkspace())
                 .title(newTitle != null ? newTitle : nextVersion + "차 일정")
                 .version(nextVersion)
-                .aiChatSessionId(origin.getAiChatSessionId())
                 .build();
 
         List<ScheduleItem> copiedItems = origin.getItems().stream()
@@ -129,9 +125,16 @@ public class ScheduleService {
     // 아이템 단건 수정 (visitTime, memo, category)
     @Transactional
     public ScheduleItemResponse updateItem(Long scheduleId, Long itemId, ScheduleItemUpdateRequest request) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
-        item.update(request.visitTime(), request.memo(), request.category());
+        item.update(
+                request.visitTime(),
+                request.memo(),
+                request.category(),
+                request.address(),
+                request.estimatedCost(),
+                request.name()
+        );
         return ScheduleItemResponse.from(item);
     }
 
@@ -164,38 +167,34 @@ public class ScheduleService {
         return ScheduleItemResponse.from(item);
     }
 
-    // D&D 순서 변경 (프론트에서 변경된 전체 순서를 한 번에 전송)
+    // D&D 단일 아이템 이동 (프론트는 itemId + targetDay + targetOrderIndex만 전송)
     @Transactional
-    public void reorderItems(Long scheduleId, ScheduleItemReorderRequest request) {
-        // 해당 일정 소속 아이템인지 검증
-        List<Long> itemIds = request.orders().stream()
-                .map(ScheduleItemReorderRequest.ItemOrder::itemId)
-                .toList();
+    public void moveItem(Long scheduleId, Long itemId, ScheduleItemMoveRequest request) {
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
+                .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
 
-        List<ScheduleItem> items = scheduleItemRepository.findAllById(itemIds);
+        int oldDay = item.getDay();
+        int oldIndex = item.getOrderIndex();
+        int newDay = request.targetDay();
+        int newIndex = request.targetOrderIndex();
 
-        if (items.size() != itemIds.size()) {
-            throw new EntityNotFoundException("일부 아이템을 찾을 수 없습니다.");
-        }
-
-        boolean hasUnauthorized = items.stream()
-                .anyMatch(item -> !item.getSchedule().getId().equals(scheduleId));
-        if (hasUnauthorized) {
-            throw new IllegalArgumentException("다른 일정의 아이템이 포함되어 있습니다.");
-        }
-
-        // 순서 업데이트 (더티 체킹)
-        Map<Long, ScheduleItem> itemMap = items.stream()
-                .collect(Collectors.toMap(ScheduleItem::getId, i -> i));
-
-        request.orders().forEach(order -> {
-            ScheduleItem item = itemMap.get(order.itemId());
-            item.updateOrder(order.orderIndex());
-            // day 변경도 지원 (다른 일차로 이동)
-            if (!item.getDay().equals(order.day())) {
-                item.moveToDay(order.day());
+        if (oldDay == newDay) {
+            if (oldIndex == newIndex) return;
+            if (oldIndex < newIndex) {
+                // 앞→뒤 이동: 사이 아이템들을 앞으로 당김
+                scheduleItemRepository.shiftOrderIndex(scheduleId, oldDay, oldIndex + 1, newIndex, -1);
+            } else {
+                // 뒤→앞 이동: 사이 아이템들을 뒤로 밀기
+                scheduleItemRepository.shiftOrderIndex(scheduleId, oldDay, newIndex, oldIndex - 1, +1);
             }
-        });
+        } else {
+            // day 간 이동
+            scheduleItemRepository.shiftOrderIndexFrom(scheduleId, oldDay, oldIndex + 1, -1);  // 원래 day 빈 자리 당기기
+            scheduleItemRepository.shiftOrderIndexFrom(scheduleId, newDay, newIndex, +1);       // 새 day 자리 만들기
+            item.moveToDay(newDay);
+        }
+
+        item.updateOrder(newIndex);
     }
 
     // ── 삭제 ────────────────────────────────────────────────
@@ -203,7 +202,7 @@ public class ScheduleService {
     // 아이템 단건 삭제
     @Transactional
     public void deleteItem(Long scheduleId, Long itemId) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         scheduleItemRepository.delete(item);
     }
@@ -220,7 +219,7 @@ public class ScheduleService {
 
     @Transactional
     public void trackDeepLinkClick(Long scheduleId, Long itemId) {
-        ScheduleItem item = scheduleItemRepository.findByIdAndScheduleId(scheduleId, itemId)
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.incrementDeepLinkClick();
     }

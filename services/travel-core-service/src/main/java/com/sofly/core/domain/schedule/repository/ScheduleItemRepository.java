@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface ScheduleItemRepository extends JpaRepository<ScheduleItem, Long> {
 
     //itemId과 scheduleId로 items 찾기
-    Optional<ScheduleItem> findByIdAndScheduleId(Long id, Long scheduleId);
+    Optional<ScheduleItem> findByScheduleIdAndId(Long scheduleId, Long id);
 
     // 특정 일정의 모든 아이템 (day, orderIndex 정렬)
     List<ScheduleItem> findByScheduleIdOrderByDayAscOrderIndexAsc(Long scheduleId);
@@ -25,7 +25,7 @@ public interface ScheduleItemRepository extends JpaRepository<ScheduleItem, Long
     @Query("SELECT COALESCE(MAX(i.orderIndex), 0) FROM ScheduleItem i WHERE i.schedule.id = :scheduleId AND i.day = :day")
     Integer findMaxOrderIndexByScheduleIdAndDay(@Param("scheduleId") Long scheduleId, @Param("day") Integer day);
 
-    // D&D 순서 변경: 특정 범위의 orderIndex를 일괄 +1 or -1
+    // D&D 순서 변경: 특정 범위의 orderIndex를 일괄 +1 or -1 (같은 day 내 이동)
     @Modifying
     @Query("UPDATE ScheduleItem i SET i.orderIndex = i.orderIndex + :delta " +
             "WHERE i.schedule.id = :scheduleId AND i.day = :day " +
@@ -35,6 +35,16 @@ public interface ScheduleItemRepository extends JpaRepository<ScheduleItem, Long
                          @Param("from") Integer from,
                          @Param("to") Integer to,
                          @Param("delta") int delta);
+
+    // D&D 순서 변경: from 이후의 모든 orderIndex를 일괄 +1 or -1 (day 간 이동)
+    @Modifying
+    @Query("UPDATE ScheduleItem i SET i.orderIndex = i.orderIndex + :delta " +
+            "WHERE i.schedule.id = :scheduleId AND i.day = :day " +
+            "AND i.orderIndex >= :from")
+    void shiftOrderIndexFrom(@Param("scheduleId") Long scheduleId,
+                              @Param("day") Integer day,
+                              @Param("from") Integer from,
+                              @Param("delta") int delta);
 
     // 카테고리별 필터링
     List<ScheduleItem> findByScheduleIdAndCategoryOrderByDayAscOrderIndexAsc(Long scheduleId, Category category);

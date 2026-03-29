@@ -6,6 +6,14 @@ spring:
   application:
     name: travel-core-service
 
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: gemini-2.5-flash
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sofly_db}
     username: ${SPRING_DATASOURCE_USERNAME:sofly_user}
@@ -14,7 +22,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
     properties:
       hibernate:

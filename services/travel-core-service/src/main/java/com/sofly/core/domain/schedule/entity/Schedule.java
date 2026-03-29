@@ -30,9 +30,6 @@ public class Schedule extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer version;            // 버전 번호
 
-    @Column(columnDefinition = "TEXT")
-    private String aiChatSessionId;     // AI 채팅 세션 ID
-
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("day ASC, orderIndex ASC")
     @Builder.Default

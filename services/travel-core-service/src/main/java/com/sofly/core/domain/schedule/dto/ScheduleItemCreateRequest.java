@@ -1,7 +1,10 @@
 package com.sofly.core.domain.schedule.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sofly.core.domain.schedule.entity.ScheduleItem.Category;
 import jakarta.validation.constraints.*;
+
+import java.time.LocalTime;
 
 // 일정 아이템 생성 (ScheduleCreateRequest 내부에서 사용)
 public record ScheduleItemCreateRequest(
@@ -12,7 +15,8 @@ public record ScheduleItemCreateRequest(
         @NotNull @Min(0)
         Integer orderIndex,
 
-        String visitTime,           // "HH:mm"
+        @JsonFormat(pattern = "HH:mm")
+        LocalTime visitTime,
 
         @NotNull
         Category category,
@@ -27,5 +31,5 @@ public record ScheduleItemCreateRequest(
 
         String memo,
         String deepLinkUrl,
-        Integer estimatedCost
+        Double estimatedCost
 ) {}

@@ -116,17 +116,17 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.updateItem(scheduleId, itemId, request));
     }
 
-    @Operation(summary = "일정 아이템 순서 변경 (D&D)", description = "변경된 전체 순서 목록을 한 번에 전송합니다.")
+    @Operation(summary = "일정 아이템 위치 이동 (D&D)", description = "아이템 하나를 목표 위치(day, orderIndex)로 이동합니다. 서버가 나머지 아이템 순서를 자동 조정합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "순서 변경 성공"),
-            @ApiResponse(responseCode = "400", description = "다른 일정의 아이템 포함"),
+            @ApiResponse(responseCode = "204", description = "이동 성공"),
             @ApiResponse(responseCode = "404", description = "아이템 없음")
     })
-    @PatchMapping("/{scheduleId}/items/reorder")
-    public ResponseEntity<Void> reorderItems(
+    @PatchMapping("/{scheduleId}/items/{itemId}/position")
+    public ResponseEntity<Void> moveItem(
             @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
-            @RequestBody @Valid ScheduleItemReorderRequest request) {
-        scheduleService.reorderItems(scheduleId, request);
+            @Parameter(description = "아이템 ID", required = true) @PathVariable Long itemId,
+            @RequestBody @Valid ScheduleItemMoveRequest request) {
+        scheduleService.moveItem(scheduleId, itemId, request);
         return ResponseEntity.noContent().build();
     }
 
