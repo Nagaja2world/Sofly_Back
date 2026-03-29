@@ -192,8 +192,6 @@ rollback() {
   sudo docker stop core-${TARGET_COLOR}
   sudo docker rm core-${TARGET_COLOR}
 
-  # 3. 기존 컨테이너(CURRENT)가 살아있으면 종료
-  #    없으면 이전 이미지(PREV_IMAGE)로 재기동
 }
 ```
 
