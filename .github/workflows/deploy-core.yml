@@ -19,21 +19,6 @@ jobs:
       - name: ✅ Checkout repository
         uses: actions/checkout@v4
 
-      - name: ☕ Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: 'gradle'
-
-      - name: 🔧 Grant Gradle permission
-        run: chmod +x services/travel-core-service/gradlew
-
-      - name: 🔄 Build without tests
-        run: |
-          cd services/travel-core-service
-          ./gradlew clean bootJar -x test --no-daemon
-
       - name: 🔧 Set image tag
         id: meta
         run: echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
@@ -136,18 +121,18 @@ jobs:
 
             # ── 롤백 함수 ──────────────────────────────────────
             rollback() {
-              echo "[ROLLBACK] 배포 실패 — 롤백 시작"
+              echo "⏱️[ROLLBACK] 배포 실패 — 롤백 시작"
               trap - ERR
 
               # 변수가 설정되지 않은 초기 단계 실패면 롤백할 게 없음
               if [ -z "$TARGET_COLOR" ] || [ -z "$CURRENT_COLOR" ]; then
-                echo "[ROLLBACK] 초기 단계 실패 — 롤백 생략"
+                echo "⏱️[ROLLBACK] 초기 단계 실패 — 롤백 생략"
                 return 0
               fi
 
               # Nginx가 이미 전환됐을 수 있으므로 기존 포트로 되돌림
-              echo "[ROLLBACK] Nginx를 $CURRENT_COLOR($CURRENT_PORT)로 복구"
-              echo "set \$core_url http://127.0.0.1:${CURRENT_PORT};" | \
+              echo "⏱️[ROLLBACK] Nginx를 $CURRENT_COLOR($CURRENT_PORT)로 복구"
+              echo "⏱️set \$core_url http://127.0.0.1:${CURRENT_PORT};" | \
                 sudo tee /etc/nginx/bluegreen/service-url-core.inc
               sudo nginx -s reload
 
@@ -157,21 +142,21 @@ jobs:
 
               # 기존 컨테이너(CURRENT)가 살아있으면 롤백 완료
               if sudo docker inspect core-${CURRENT_COLOR} > /dev/null 2>&1; then
-                echo "[ROLLBACK] 완료 — core-${CURRENT_COLOR}($CURRENT_PORT) 이미 서비스 중"
+                echo "⏱️[ROLLBACK] 완료 — core-${CURRENT_COLOR}($CURRENT_PORT) 이미 서비스 중"
                 return 0
               fi
 
               # 기존 컨테이너가 없을 때만 이전 이미지로 재기동
               if [ -n "$PREV_IMAGE" ]; then
-                echo "[ROLLBACK] core-${CURRENT_COLOR} 재기동 — $PREV_IMAGE"
+                echo "⏱️[ROLLBACK] core-${CURRENT_COLOR} 재기동 — $PREV_IMAGE"
                 export CORE_IMAGE=$PREV_IMAGE
                 export CORE_PORT=$CURRENT_PORT
                 export CORE_CONTAINER_NAME=core-${CURRENT_COLOR}
                 cd "$DEPLOY_PATH"
                 sudo -E docker compose up -d core
-                echo "[ROLLBACK] 완료"
+                echo "⏱️[ROLLBACK] 완료"
               else
-                echo "[ROLLBACK] 이전 이미지 없음 — 수동 복구 필요"
+                echo "⏱️[ROLLBACK] 이전 이미지 없음 — 수동 복구 필요"
               fi
             }
 
@@ -208,6 +193,20 @@ jobs:
             PREV_IMAGE=$(docker inspect core-${CURRENT_COLOR} \
               --format='{{.Config.Image}}' 2>/dev/null || echo "")
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
+
+            echo "👉🏻[3.5] Git pull latest code"
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
+
+            # 동기화 확인
+            echo "📌 현재 브랜치: $(git branch --show-current)"
+            echo "📌 현재 커밋:   $(git rev-parse HEAD)"
+            echo "📌 커밋 메시지: $(git log -1 --pretty=format:'%s')"
+            echo "📌 커밋 시간:   $(git log -1 --pretty=format:'%ci')"
+            echo "📌 커밋 작성자: $(git log -1 --pretty=format:'%an')"
 
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.core"
@@ -253,7 +252,9 @@ jobs:
               sudo docker logs core-${TARGET_COLOR} --tail=50
               # sudo docker stop core-${TARGET_COLOR} || true
               # sudo docker rm core-${TARGET_COLOR} || true
-            sudo docker compose -p "core-$TARGET_COLOR" down
+              echo "🛑 core-${TARGET_COLOR} 종료"
+              sudo docker compose -p "core-$TARGET_COLOR" down
+              rollback
               exit 1
             fi
 
@@ -261,7 +262,23 @@ jobs:
             echo "👉🏻[8] Switch Nginx Traffic"
             echo "set \$core_url http://127.0.0.1:${TARGET_PORT};" | \
               sudo tee /etc/nginx/bluegreen/service-url-core.inc
+
+            # 설정 파일 내용 확인
+            echo "📄 service-url-core.inc 내용:"
+            cat /etc/nginx/bluegreen/service-url-core.inc
+
+            # Nginx 문법 검사
+            echo "🔍 Nginx 설정 문법 검사..."
+            sudo nginx -t
+
+            # reload
             sudo nginx -s reload
+
+            echo "🔍 Nginx 전환 후 헬스체크 확인..."
+            sleep 2
+            code=$(curl -s -o /dev/null -w "%{http_code}" https://api.sofly.co.kr/actuator/health || echo "000")
+            echo "📡 https://api.sofly.co.kr/actuator/health → HTTP $code"
+
             echo "✅ Nginx → core-${TARGET_COLOR}:${TARGET_PORT} 전환 완료"
 
             # ── 9. 이전 컨테이너 종료 ────────────────────────

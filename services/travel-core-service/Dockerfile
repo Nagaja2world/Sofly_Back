@@ -4,8 +4,9 @@ COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
+RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+
 COPY src src
-RUN chmod +x ./gradlew
 RUN ./gradlew clean bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
