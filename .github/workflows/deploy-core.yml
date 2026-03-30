@@ -9,6 +9,10 @@ on:
       - 'docker-compose.yml'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
     name: 🧪 Build travel-core-service
@@ -195,6 +199,7 @@ jobs:
             echo "📦 PREV_IMAGE: $PREV_IMAGE"
 
             echo "👉🏻[3.5] Git pull latest code"
+            git remote prune origin 
             git reset --hard HEAD
             git clean -fd
             git fetch origin develop
