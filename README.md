@@ -1,55 +1,45 @@
 # Sofly BE
 
-> AI 기반 그룹 여행 플래닝 서비스 **Sofly**의 백엔드 레포지토리입니다.
+> AI 기반 그룹 여행 플래닝 서비스 Sofly의 백엔드 레포지토리
 
-| <img src="https://avatars.githubusercontent.com/u/88922405?v=4" width="100" height="100" alt="박상민 프로필"> | <img src="https://avatars.githubusercontent.com/u/168955357?v=4" width="100" height="100" alt="정세현 프로필"> |
-|:---:|:---:|
-| [박상민](https://github.com/sm010422) | [정세현](https://github.com/gitIt-sehyeon) |
-| Backend | Backend |
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)]()
+
+## 📋 Table of Contents
+
+1. [Demo](#demo)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Getting Started](#getting-started)
+   - [Prerequisites](#prerequisites)
+   - [Installation](#installation)
+5. [Environment Variables](#environment-variables)
+6. [Project Structure](#project-structure)
+7. [Git Convention](#git-convention)
+8. [Running Tests](#running-tests)
+9. [API Reference](#api-reference)
+10. [Screenshots](#screenshots)
+11. [Team Members](#team-members)
+12. [Contributing](#contributing)
+13. [License](#license)
 
 ---
 
-## 프로젝트 소개
+## 🎬 Demo
 
-Sofly는 그룹 여행을 함께 계획할 수 있는 협업 여행 플래닝 플랫폼입니다.
-AI 채팅을 통해 여행 일정을 추천받고, 항공권·호텔을 검색하며, 워크스페이스에서 팀원들과 실시간으로 일정을 공유할 수 있습니다.
-여행 후에는 앨범과 여행 로그로 기억을 남길 수 있습니다.
+## ✨ Features
 
-**주요 기능**
 - OAuth2 소셜 로그인 (Google, Kakao, Naver)
 - 워크스페이스 기반 그룹 여행 계획 및 초대 코드 공유
-- AI(Google Gemini) 여행 플래너 채팅 (3단계 맞춤 여행 추천)
+- AI(Google Gemini) 여행 플래너 채팅 — 3단계 맞춤 여행 추천
 - 일정표 생성 · 편집 · 포크(복제)
 - 항공권 · 호텔 실시간 검색 (Amadeus API + Google Places API)
 - Google Drive 연동 여행 앨범
-- Markdown 기반 여행 로그 (공개/멤버/비공개 설정)
+- Markdown 기반 여행 로그 (공개 / 멤버 / 비공개 설정)
 
 ---
 
-## 아키텍처
-
-본 프로젝트는 **두 개의 독립 Spring Boot 서비스**로 구성된 멀티 모듈 구조입니다.
-
-```
-Sofly_Back/
-├── services/
-│   ├── travel-core-service/    # 핵심 비즈니스 로직 (Port 8080)
-│   └── travel-supply-service/  # 항공·호텔 외부 API 연동 (Port 8081)
-```
-
-### travel-core-service
-
-사용자 인증, 워크스페이스, 일정, AI 채팅, 앨범, 여행 로그 등 핵심 도메인을 담당합니다.
-레이어드 아키텍처 기반으로 설계되었습니다.
-
-### travel-supply-service
-
-항공권·호텔 외부 공급자 API 연동을 담당합니다.
-헥사고날 아키텍처(Ports & Adapters)를 적용하여 공급자 교체에 유연합니다.
-
----
-
-## 기술 스택
+## 🛠 Tech Stack
 
 <table>
   <tr>
@@ -82,7 +72,7 @@ Sofly_Back/
   <tr>
     <td width="50%" valign="top">
       <b>External API</b><br><br>
-      <img src="https://img.shields.io/badge/Amadeus_API-1A1A2E?style=for-the-badge&logo=amadeus&logoColor=white" />
+      <img src="https://img.shields.io/badge/Amadeus_API-1A1A2E?style=for-the-badge&logoColor=white" />
       <img src="https://img.shields.io/badge/Google_Places_API-4285F4?style=for-the-badge&logo=googlemaps&logoColor=white" />
       <img src="https://img.shields.io/badge/Google_Drive_API-4285F4?style=for-the-badge&logo=googledrive&logoColor=white" />
     </td>
@@ -108,7 +98,99 @@ Sofly_Back/
 
 ---
 
-## 주요 API
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Java 21
+- Docker & Docker Compose
+- `.env` 파일 (환경변수 설정 필요)
+
+### Installation
+
+```bash
+# 레포지토리 클론
+git clone https://github.com/your-org/Sofly_Back.git
+cd Sofly_Back
+
+# 전체 서비스 실행
+docker compose up -d
+
+# 개별 서비스 실행
+./gradlew :services:travel-core-service:bootRun
+./gradlew :services:travel-supply-service:bootRun
+```
+
+---
+
+## ⚙️ Environment Variables
+
+---
+
+## 📁 Project Structure
+
+```
+Sofly_Back/
+├── services/
+│   ├── travel-core-service/    # 핵심 비즈니스 로직 (Port 8080)
+│   │   └── src/main/java/com/sofly/core/
+│   │       ├── auth/           # 인증 (OAuth2, JWT)
+│   │       ├── workspace/      # 워크스페이스
+│   │       ├── schedule/       # 여행 일정
+│   │       ├── chat/           # AI 채팅
+│   │       ├── album/          # 여행 앨범
+│   │       └── travellog/      # 여행 로그
+│   └── travel-supply-service/  # 항공·호텔 외부 API 연동 (Port 8081)
+│       └── src/main/java/com/sofly/supply/
+│           ├── flight/         # 항공권 검색 (Amadeus)
+│           └── hotel/          # 호텔 검색 (Amadeus + Google Places)
+```
+
+---
+
+## 🌿 Git Convention
+
+### Branch Strategy
+
+Git Flow 전략을 기반으로 운영합니다.
+
+| 브랜치 | 설명 |
+|--------|------|
+| `main` | 배포 가능한 상태 (Production) |
+| `develop` | 다음 배포를 위한 통합 브랜치 |
+| `feat/이슈번호-기능명` | 기능 개발 (`feat/12-social-login`) |
+| `fix/이슈번호-버그명` | 버그 수정 (`fix/34-websocket-error`) |
+| `hotfix/이슈번호-버그명` | 긴급 버그 수정 (main에서 분기) |
+
+### Commit Message
+
+```
+type(scope): subject
+```
+
+| 태그 | 설명 |
+|------|------|
+| `feat` | 새로운 기능 추가 |
+| `fix` | 버그 수정 |
+| `refactor` | 리팩토링 (기능 변화 없음) |
+| `chore` | 빌드 설정, 패키지 관리 등 |
+| `docs` | 문서 수정 |
+| `style` | 코드 포맷팅 (비즈니스 로직 변경 없음) |
+| `test` | 테스트 코드 추가/수정/삭제 |
+| `ci` | CI 구성 파일 및 스크립트 변경 |
+| `perf` | 성능 개선 |
+
+---
+
+## 🧪 Running Tests
+
+```bash
+./gradlew test
+```
+
+---
+
+## 📡 API Reference
 
 ### travel-core-service (`:8080`)
 
@@ -124,7 +206,7 @@ Sofly_Back/
 | AI 채팅 | `POST` | `/api/v1/chat/rooms/{roomId}` | AI에게 메시지 전송 |
 | AI 채팅 | `GET` | `/api/v1/chat/rooms/{roomId}/messages` | 대화 내역 조회 |
 
-API 문서: `GET /core-docs` (Swagger UI)
+Swagger UI: `GET /core-docs`
 
 ### travel-supply-service (`:8081`)
 
@@ -134,21 +216,25 @@ API 문서: `GET /core-docs` (Swagger UI)
 | 호텔 | `GET` | `/supply/hotels/offers` | 호텔 검색 |
 | 호텔 | `GET` | `/supply/hotels/place-info` | 호텔 상세 정보 (Google Places) |
 
-API 문서: `GET /swagger-ui` (Swagger UI)
+Swagger UI: `GET /swagger-ui`
 
 ---
 
-## 로컬 실행
+## 📸 Screenshots
 
-```bash
-# 전체 서비스 실행 (Docker Compose)
-docker compose up -d
+---
 
-# Core Service 단독 실행
-./gradlew :services:travel-core-service:bootRun
+## 👥 Team Members
 
-# Supply Service 단독 실행
-./gradlew :services:travel-supply-service:bootRun
-```
+| <img src="https://avatars.githubusercontent.com/u/88922405?v=4" width="100" height="100" alt="박상민 프로필"> | <img src="https://avatars.githubusercontent.com/u/168955357?v=4" width="100" height="100" alt="정세현 프로필"> |
+|:---:|:---:|
+| [박상민](https://github.com/sm010422) | [정세현](https://github.com/gitIt-sehyeon) |
+| Backend | Backend |
 
-필요한 환경 변수는 `.env` 파일 또는 환경변수로 주입합니다. (`.env.example` 참고)
+---
+
+## 🤝 Contributing
+
+---
+
+## 📄 License
