@@ -1,39 +1,93 @@
 # Sofly BE
 
+> AI 기반 그룹 여행 플래닝 서비스 **Sofly**의 백엔드 레포지토리입니다.
 
 | <img src="https://avatars.githubusercontent.com/u/88922405?v=4" width="100" height="100" alt="박상민 프로필"> | <img src="https://avatars.githubusercontent.com/u/168955357?v=4" width="100" height="100" alt="정세현 프로필"> |
 |:---:|:---:|
-| [박상민](https://github.com/sm010422) | [정세현](https://github.com/gitIt-sehyeon) | 
-| Backend<br> | Backend<br> |
+| [박상민](https://github.com/sm010422) | [정세현](https://github.com/gitIt-sehyeon) |
+| Backend | Backend |
 
+---
 
-## 🛠️ Tech Stacks
+## 프로젝트 소개
+
+Sofly는 그룹 여행을 함께 계획할 수 있는 협업 여행 플래닝 플랫폼입니다.
+AI 채팅을 통해 여행 일정을 추천받고, 항공권·호텔을 검색하며, 워크스페이스에서 팀원들과 실시간으로 일정을 공유할 수 있습니다.
+여행 후에는 앨범과 여행 로그로 기억을 남길 수 있습니다.
+
+**주요 기능**
+- OAuth2 소셜 로그인 (Google, Kakao, Naver)
+- 워크스페이스 기반 그룹 여행 계획 및 초대 코드 공유
+- AI(Google Gemini) 여행 플래너 채팅 (3단계 맞춤 여행 추천)
+- 일정표 생성 · 편집 · 포크(복제)
+- 항공권 · 호텔 실시간 검색 (Amadeus API + Google Places API)
+- Google Drive 연동 여행 앨범
+- Markdown 기반 여행 로그 (공개/멤버/비공개 설정)
+
+---
+
+## 아키텍처
+
+본 프로젝트는 **두 개의 독립 Spring Boot 서비스**로 구성된 멀티 모듈 구조입니다.
+
+```
+Sofly_Back/
+├── services/
+│   ├── travel-core-service/    # 핵심 비즈니스 로직 (Port 8080)
+│   └── travel-supply-service/  # 항공·호텔 외부 API 연동 (Port 8081)
+```
+
+### travel-core-service
+
+사용자 인증, 워크스페이스, 일정, AI 채팅, 앨범, 여행 로그 등 핵심 도메인을 담당합니다.
+레이어드 아키텍처 기반으로 설계되었습니다.
+
+### travel-supply-service
+
+항공권·호텔 외부 공급자 API 연동을 담당합니다.
+헥사고날 아키텍처(Ports & Adapters)를 적용하여 공급자 교체에 유연합니다.
+
+---
+
+## 기술 스택
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <b>🧩 Language & Framework</b><br><br>
+      <b>Language & Framework</b><br><br>
       <img src="https://img.shields.io/badge/Java_21-007396?style=for-the-badge&logo=java&logoColor=white" />
       <img src="https://img.shields.io/badge/Spring_Boot_3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
       <img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white" />
       <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" />
       <img src="https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=hibernate&logoColor=white" />
-      <img src="https://img.shields.io/badge/QueryDSL-07ADEE?style=for-the-badge&logo=querydsl&logoColor=white" />
     </td>
     <td width="50%" valign="top">
-      <b>🗄️ Database & Cache</b><br><br>
+      <b>Database & Cache</b><br><br>
       <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
       <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <b>🔐 Authentication</b><br><br>
+      <b>Authentication</b><br><br>
       <img src="https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
       <img src="https://img.shields.io/badge/OAuth2-EB5424?style=for-the-badge&logo=auth0&logoColor=white" />
     </td>
     <td width="50%" valign="top">
-      <b>☁️ Infra & Deployment</b><br><br>
+      <b>AI</b><br><br>
+      <img src="https://img.shields.io/badge/Spring_AI-6DB33F?style=for-the-badge&logo=spring&logoColor=white" />
+      <img src="https://img.shields.io/badge/Google_Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <b>External API</b><br><br>
+      <img src="https://img.shields.io/badge/Amadeus_API-1A1A2E?style=for-the-badge&logo=amadeus&logoColor=white" />
+      <img src="https://img.shields.io/badge/Google_Places_API-4285F4?style=for-the-badge&logo=googlemaps&logoColor=white" />
+      <img src="https://img.shields.io/badge/Google_Drive_API-4285F4?style=for-the-badge&logo=googledrive&logoColor=white" />
+    </td>
+    <td width="50%" valign="top">
+      <b>Infra & Deployment</b><br><br>
       <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
       <img src="https://img.shields.io/badge/AWS_Lightsail-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white" />
       <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" />
@@ -41,122 +95,60 @@
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <b>🔄 CI/CD</b><br><br>
+      <b>CI/CD</b><br><br>
       <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" />
     </td>
     <td width="50%" valign="top">
-      <b>🧪 Test</b><br><br>
+      <b>Build & Test</b><br><br>
+      <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white" />
       <img src="https://img.shields.io/badge/JUnit5-25A162?style=for-the-badge&logo=junit5&logoColor=white" />
     </td>
   </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <b>📦 Build Tool</b><br><br>
-      <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white" />
-    </td>
-    <td width="50%" valign="top">
-      </td>
-  </tr>
 </table>
 
-## 📢 Convention
+---
 
-본 프로젝트는 아래의 Git 및 협업 규칙을 따릅니다.
+## 주요 API
 
-## Git 규칙 (Commit Convention)
+### travel-core-service (`:8080`)
 
+| 분류 | Method | Endpoint | 설명 |
+|------|--------|----------|------|
+| 인증 | `POST` | `/api/auth/refresh` | 액세스 토큰 재발급 |
+| 인증 | `POST` | `/api/auth/logout` | 로그아웃 |
+| 일정 | `GET` | `/api/v1/schedules` | 워크스페이스 일정 목록 조회 |
+| 일정 | `POST` | `/api/v1/schedules` | 일정 생성 |
+| 일정 | `POST` | `/api/v1/schedules/{scheduleId}/fork` | 일정 복제 |
+| 일정 | `POST` | `/api/v1/schedules/{scheduleId}/items` | 일정 아이템 추가 |
+| AI 채팅 | `POST` | `/api/v1/chat/rooms` | 채팅방 생성 |
+| AI 채팅 | `POST` | `/api/v1/chat/rooms/{roomId}` | AI에게 메시지 전송 |
+| AI 채팅 | `GET` | `/api/v1/chat/rooms/{roomId}/messages` | 대화 내역 조회 |
 
-## 1. 커밋 메시지 구조
+API 문서: `GET /core-docs` (Swagger UI)
 
+### travel-supply-service (`:8081`)
 
-```
-type(scope): subject  <-- 제목 (필수)
-body                  <-- 본문 (선택: 자세한 설명이 필요할 때)
-footer                <-- 꼬리말 (선택: 이슈 번호 닫을 때)
-```
+| 분류 | Method | Endpoint | 설명 |
+|------|--------|----------|------|
+| 항공권 | `GET` | `/supply/flights/offers` | 항공권 검색 |
+| 호텔 | `GET` | `/supply/hotels/offers` | 호텔 검색 |
+| 호텔 | `GET` | `/supply/hotels/place-info` | 호텔 상세 정보 (Google Places) |
 
-
-### 1-1. Type (태그) 상세 정의
-
-가장 많이 쓰이는 표준(Conventional Commits)을 따릅니다.
-
-
-| 태그 | 설명           |
-| --- |--------------|
-|**feat**   | 새로운 기능 추가     |
-| **fix** | 버그 수정   |
-| **refactor** | 리팩토링 (기능 변화 없음) |
-| **chore**  |빌드 설정(Gradle/Maven), 패키지 매니저 설정, 단순 파일 이동 등    |
-|  **docs** | 문서 수정 (README.md, JavaDoc, Swagger 등)   |
-| **style**  | 코드 포맷팅, 세미콜론 누락, 들여쓰기 등 (비즈니스 로직 변경 없음)   |
-| **test**  | 테스트 코드 추가, 수정, 삭제 (비즈니스 로직 변경 없음)   |
-| **ci**  |CI 구성 파일 및 스크립트 변경    |
-| **perf**  | 성능 개선    |
-
-
-
-### 1-2. 작성 예시
-
-- **Good:** `feat(auth): 카카오 소셜 로그인 API 구현` (범위 명시, 명확한 행위)
-- **Bad:** `feat: 로그인` (너무 포괄적임)
+API 문서: `GET /swagger-ui` (Swagger UI)
 
 ---
 
-## 2. 브랜치 전략 (Git Flow + Naming)
+## 로컬 실행
 
-Git Flow 전략을 기반으로 운영합니다.
-브랜치명만 보고도 어떤 작업을 하는지 알 수 있도록 **이슈 번호**를 포함하는 것을 권장합니다.
+```bash
+# 전체 서비스 실행 (Docker Compose)
+docker compose up -d
 
-### 2-1. 주요 브랜치
+# Core Service 단독 실행
+./gradlew :services:travel-core-service:bootRun
 
-- **`main`**: 배포 가능한 상태의 코드 (Production)
-- **`develop`**: 다음 배포를 위해 개발 중인 코드 (Integration)
-
-### 2-2. 보조 브랜치 명명 규칙 (Naming Convention)
-
-`develop` 브랜치에서 분기하여 작업 후 PR을 보냅니다.
-
-- **Feature**: `feat/이슈번호-기능명`
-    - ex) `feat/12-social-login`
-- **Fix**: `fix/이슈번호-버그명`
-    - ex) `fix/34-websocket-error`
-- **Hotfix**: `hotfix/이슈번호-급한버그` (main에서 바로 분기 시)
-
----
-
-## 3. 이슈(Issue) 작성 규칙
-
-제목만으로는 작업 내용을 알 수 없습니다. 템플릿을 정해두는 것이 좋습니다.
-
-### 3-1. 이슈 제목
-
-- `[Feat] 기능명` : 새로운 기능
-- `[Fix] 버그명` : 버그 수정
-- `[Refactor] 대상` : 리팩토링
-- `[Chore] 작업명` : 기타 설정
-
-### 3-2. 이슈 본문 템플릿
-
-```
-## 💡 개요
-- (작업의 목적, 배경, 혹은 해결하려는 버그를 간략히 설명합니다.)
-
-## 📋 작업 상세 내용
-- [ ] 세부 작업 내용 1
-- [ ] 세부 작업 내용 2
-- [ ] 세부 작업 내용 3
-
-## 🔗 참고 사항
-- (Jira 티켓, 디자인 시안, 관련 링크 등)
-
+# Supply Service 단독 실행
+./gradlew :services:travel-supply-service:bootRun
 ```
 
----
-
-## 4. PR(Pull Request) 규칙
-
-- **제목:** `[Feat] 카카오 로그인 기능 구현 (#이슈번호)`
-- **내용:**
-    - 작업한 내용 요약
-    - 집중적으로 리뷰해줬으면 하는 부분
-    - 테스트 방법 (Postman 스크린샷 등)
+필요한 환경 변수는 `.env` 파일 또는 환경변수로 주입합니다. (`.env.example` 참고)
