@@ -243,7 +243,7 @@ jobs:
                                     echo "dummy")
             export SUPPLY_IMAGE=$EXISTING_SUPPLY_IMAGE
 
-            sudo -E docker compose -p "core$TARGET_COLOR" up -d --no-deps core
+            sudo -E docker compose -p "core-$TARGET_COLOR" up -d --no-deps core
 
             # ── 7. 헬스체크 ────────────────────────────────────
             echo "👉🏻[7] Health Check core-($TARGET_COLOR)"
