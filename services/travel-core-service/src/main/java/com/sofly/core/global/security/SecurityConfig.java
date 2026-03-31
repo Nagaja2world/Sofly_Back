@@ -81,6 +81,7 @@ public class SecurityConfig {
                         filterResponseUtils.sendUnauthorized(response,AuthErrorCode.EMPTY_AUTHENTICATION);
                     })
                 );
+        
     }
 
 }
