@@ -51,7 +51,7 @@ public class AuthService {
                 RefreshToken.builder()
                         .id(String.valueOf(userId))
                         .refreshToken(newRefreshToken)
-                        .expiration(jwtProperties.expiration().refresh() / 1000)
+                        .expiration(jwtProperties.expiration().refresh().getSeconds())
                         .build()
         );
 
