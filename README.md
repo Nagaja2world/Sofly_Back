@@ -1,6 +1,7 @@
 # Sofly BE
 
 > AI 기반 그룹 여행 플래닝 서비스 Sofly의 백엔드 레포지토리
+> 
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 [![Version](https://img.shields.io/badge/version-1.0.0-green.svg)]()
