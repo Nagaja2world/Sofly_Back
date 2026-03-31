@@ -19,7 +19,7 @@ public class FilterResponseUtils {
 
     public void sendUnauthorized(HttpServletResponse response, BaseErrorCode errorCode) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setStatus(errorCode.getStatus().value());
         // sofly ApiResponse 구조에 맞게 수정 필요
         ApiResponse<Object> errorResponse = ApiResponse.fail(errorCode);
         String json = objectMapper.writeValueAsString(errorResponse);
