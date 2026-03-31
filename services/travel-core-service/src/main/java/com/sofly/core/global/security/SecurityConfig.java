@@ -36,33 +36,19 @@ public class SecurityConfig {
         http
             // 요청 권한 설정
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            "/",
-                            "/index.html",
-                            "/login/oauth2/**",
-                            "/oauth2/**",
-                            "/api/auth/**",
-                            "/actuator/health",
-                            "/swagger-ui/**",
-                            "/core-docs",
-                            "/v3/api-docs/**"     
-                    ).permitAll()
-                    .anyRequest().authenticated()
-            );
-        return http.build();
-
-    }
-
-    private void configureCommonSecurity(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .requestMatchers(
+                        "/",
+                        "/index.html",
+                        "/login/oauth2/**",
+                        "/oauth2/**",
+                        "/api/auth/**",
+                        "/actuator/health",
+                        "/swagger-ui/**",
+                        "/core-docs",
+                        "/v3/api-docs/**"     
+                ).permitAll()
+                .anyRequest().authenticated()
                 )
-
                 // OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo ->
@@ -81,6 +67,21 @@ public class SecurityConfig {
                         filterResponseUtils.sendUnauthorized(response,AuthErrorCode.EMPTY_AUTHENTICATION);
                     })
                 );
+
+        return http.build();
+
+    }
+
+    private void configureCommonSecurity(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                );
+
         
     }
 
