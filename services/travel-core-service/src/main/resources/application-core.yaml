@@ -85,8 +85,8 @@ jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
     expiration:
-      access: 14400000       # 4시간
-      refresh: 1209600000    # 14일
+      access: PT4H       # 4시간
+      refresh: P14D    # 14일
 
 sofly:
   oauth2:

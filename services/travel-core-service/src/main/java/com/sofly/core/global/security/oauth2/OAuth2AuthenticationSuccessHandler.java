@@ -44,7 +44,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             RefreshToken.builder()
                 .id(String.valueOf(userId))        // key: refresh_token:{userId}
                 .refreshToken(refreshToken)
-                .expiration(jwtProperties.expiration().refresh() / 1000)
+                .expiration(jwtProperties.expiration().refresh().getSeconds())
                 .build()
         );
 

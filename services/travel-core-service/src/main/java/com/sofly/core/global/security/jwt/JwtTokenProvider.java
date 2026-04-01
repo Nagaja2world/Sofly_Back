@@ -1,16 +1,23 @@
 package com.sofly.core.global.security.jwt;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -33,22 +40,26 @@ public class JwtTokenProvider {
 
     // ── Access Token 생성 ────────────────────────────────
     public String generateAccessToken(Long userId) {
+        Instant now = Instant.now();
+
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("type", "access")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtProperties.expiration().access()))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(jwtProperties.expiration().access())))
                 .signWith(getSigningKey())
                 .compact();
     }
 
     // ── Refresh Token 생성 ───────────────────────────────
     public String generateRefreshToken(Long userId) {
+        Instant now = Instant.now();
+
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("type", "refresh")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtProperties.expiration().refresh()))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(jwtProperties.expiration().refresh())))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -58,6 +69,17 @@ public class JwtTokenProvider {
         return Long.parseLong(
                 parseClaims(token).getSubject()
         );
+    }
+
+    // 단순 토큰 유효 유무 확인 함수
+    public boolean isValid(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (JwtException e) {
+            log.warn("유효하지 않은 토큰: {}", e.getMessage());
+            return false;
+        }
     }
 
     // ── 토큰 유효성 검증 ─────────────────────────────────
@@ -78,9 +100,10 @@ public class JwtTokenProvider {
     }
 
     // ── Claims 파싱 ──────────────────────────────────────
-    private Claims parseClaims(String token) {
+    private Claims parseClaims(String token) throws JwtException {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
+                .clockSkewSeconds(30) // 시간 오차 허용 (네트워크 지연 등 대비)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
