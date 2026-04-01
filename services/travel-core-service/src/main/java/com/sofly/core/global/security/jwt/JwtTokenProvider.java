@@ -103,7 +103,7 @@ public class JwtTokenProvider {
     private Claims parseClaims(String token) throws JwtException {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
-                .clockSkewSeconds(60) // 시간 오차 허용 (네트워크 지연 등 대비)
+                .clockSkewSeconds(30) // 시간 오차 허용 (네트워크 지연 등 대비)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
