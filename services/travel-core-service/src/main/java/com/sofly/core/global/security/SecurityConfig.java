@@ -58,7 +58,7 @@ public class SecurityConfig {
                 )
                 // JWT 필터 등록
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider),
+                        new JwtAuthenticationFilter(jwtTokenProvider, filterResponseUtils),
                         UsernamePasswordAuthenticationFilter.class
                 )
                 // 토큰 없이 authenticated() 경로 접근 시 401
