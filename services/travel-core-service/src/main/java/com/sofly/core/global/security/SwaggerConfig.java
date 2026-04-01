@@ -1,12 +1,14 @@
 package com.sofly.core.global.security;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class SwaggerConfig {
@@ -16,6 +18,7 @@ public class SwaggerConfig {
         String jwtScheme = "bearerAuth";
 
         return new OpenAPI()
+                .addServersItem(new Server().url("/"))
                 .info(new Info()
                         .title("Sofly API")
                         .description("Sofly 백엔드 API 문서")
