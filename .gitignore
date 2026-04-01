@@ -41,3 +41,7 @@ out/
 .env.core
 .env.supply
 /services/travel-supply-service/.env
+
+### postman ###
+.postman
+/postman/
