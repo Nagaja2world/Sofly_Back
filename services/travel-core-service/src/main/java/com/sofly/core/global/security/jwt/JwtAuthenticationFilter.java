@@ -41,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (!jwtTokenProvider.validateToken(token)) {
                 // 유효하지 않은 토큰 → 즉시 401 반환, 필터 체인 중단
                 filterResponseUtils.sendUnauthorized(response, AuthErrorCode.INVALID_TOKEN);
-                return; // ← 핵심
+                return;
             }
 
             Long userId = jwtTokenProvider.getUserId(token);
