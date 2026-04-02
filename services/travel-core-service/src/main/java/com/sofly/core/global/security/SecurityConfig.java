@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/",
                         "/index.html",
+                        "/user-profile-test.html",
                         "/login/oauth2/**",
                         "/oauth2/**",
                         "/api/auth/refresh",

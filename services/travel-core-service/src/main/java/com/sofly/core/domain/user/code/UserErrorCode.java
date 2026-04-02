@@ -11,12 +11,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum UserErrorCode implements BaseErrorCode {
 
-    LOGIN_ID_REQUIRED(HttpStatus.BAD_REQUEST,"LOGIN_ID_REQUIRED","로그인 ID는 필수 입력값입니다."),
-    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "해당 사용자를 찾지 못했습니다."),
-    LOGIN_ID_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "ID_ALREADY_EXIST","이미 존재하는 ID입니다"),
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST,"INVALID_REQUEST","요청이 유효하지 않습니다")
-    ;
-
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
+    INVALID_BUDGET_RANGE(HttpStatus.BAD_REQUEST, "INVALID_BUDGET_RANGE", "최소 예산은 최대 예산보다 클 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
