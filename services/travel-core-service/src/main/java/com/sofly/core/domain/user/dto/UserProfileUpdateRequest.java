@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 /**
- * PUT /api/users/me/profile 요청 DTO
+ * PATCH /api/users/me/profile 요청 DTO
  */
 public record UserProfileUpdateRequest(
 
