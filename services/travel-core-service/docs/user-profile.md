@@ -67,7 +67,7 @@ global/security/util/
 
 | 항목 | 내용 |
 |------|------|
-| Method | `PUT` |
+| Method | `PATCH` |
 | URL | `/api/users/me/profile` |
 | 인증 | Bearer Token 필요 |
 
