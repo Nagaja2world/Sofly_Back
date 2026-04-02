@@ -2,6 +2,7 @@ package com.sofly.supply.adapter.outbound.amadeus.flights;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.adapter.outbound.amadeus.auth.AmadeusAuthClient;
+import com.sofly.supply.application.dto.FlightSearchRequest;
 import com.sofly.supply.application.port.outbound.FlightSupplierPort;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -23,17 +24,17 @@ public class AmadeusFlightSupplierAdapter implements FlightSupplierPort {
     }
 
     @Override
-    public JsonNode searchFlightOffers(String origin, String dest, String date, int adults, int max) {
+    public JsonNode searchFlightOffers(FlightSearchRequest request) {
         String token = authClient.getAccessToken();
 
         return amadeusWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/v2/shopping/flight-offers")
-                        .queryParam("originLocationCode", origin)
-                        .queryParam("destinationLocationCode", dest)
-                        .queryParam("departureDate", date)
-                        .queryParam("adults", adults)
-                        .queryParam("max", max)
+                        .queryParam("originLocationCode", request.getFromId())
+                        .queryParam("destinationLocationCode", request.getToId())
+                        .queryParam("departureDate", request.getDepartDate())
+                        .queryParam("adults", request.getAdults())
+                        .queryParam("max", request.getMax())
                         .build())
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
