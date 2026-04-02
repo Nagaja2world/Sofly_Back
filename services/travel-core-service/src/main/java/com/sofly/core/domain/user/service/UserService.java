@@ -36,14 +36,14 @@ public class UserService {
     public UserProfileResponse updateMyProfile(Long userId, UserProfileUpdateRequest request) {
         User user = findUserById(userId);
 
-        // 기본 정보 + 여행 성향 업데이트
+        // null이면 기존 값 유지
         user.updateProfile(
-                request.nickname(),
-                request.city(),
-                request.ageGroup(),
-                request.preferCompanionType(),
-                request.budgetMin(),
-                request.budgetMax()
+                request.nickname() != null ? request.nickname() : user.getNickname(),
+                request.city() != null ? request.city() : user.getCity(),
+                request.ageGroup() != null ? request.ageGroup() : user.getAgeGroup(),
+                request.preferCompanionType() != null ? request.preferCompanionType() : user.getPreferCompanionType(),
+                request.budgetMin() != null ? request.budgetMin() : user.getBudgetMin(),
+                request.budgetMax() != null ? request.budgetMax() : user.getBudgetMax()
         );
 
         // 선호 테마 (다중) 업데이트

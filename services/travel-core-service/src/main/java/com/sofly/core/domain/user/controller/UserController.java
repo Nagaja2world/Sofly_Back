@@ -2,7 +2,7 @@ package com.sofly.core.domain.user.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,7 +55,7 @@ public class UserController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
-    @PutMapping("/profile")
+    @PatchMapping("/profile")
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateMyProfile(
             @RequestBody @Valid UserProfileUpdateRequest request
     ) {
