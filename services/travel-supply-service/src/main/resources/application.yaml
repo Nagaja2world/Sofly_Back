@@ -1,6 +1,10 @@
 server:
   port: 8081
 
+logging:
+  level:
+    com.sofly.supply.adapter.outbound.rapidapi: DEBUG
+
 spring:
   application:
     name: travel-supply-service
