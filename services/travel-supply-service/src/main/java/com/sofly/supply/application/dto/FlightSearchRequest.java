@@ -32,7 +32,7 @@ public class FlightSearchRequest {
     private LocalDate returnDate;
     @Builder.Default
     @Schema(defaultValue = "2")
-    private int adults = 1;
+    private int adults = 2;
     @Schema(defaultValue = "KRW")
     private String currencyCode;
 
