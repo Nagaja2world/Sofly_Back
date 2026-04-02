@@ -45,10 +45,10 @@ public class UserController {
     }
 
     /**
-    /**
      * PATCH /api/users/me/profile
      * 내 프로필 등록 / 수정
      */
+    @Operation(summary = "프로필 등록/수정", description = "현재 로그인한 사용자의 프로필을 등록하거나 수정합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "등록/수정 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값이 유효하지 않음"),
