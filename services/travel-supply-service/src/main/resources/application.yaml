@@ -30,4 +30,9 @@ google:
 
 app:
   suppliers:
-    default: amadeus
+    default: booking
+
+rapidapi:
+  api-key: ${RAPIDAPI_KEY:}
+  host: ${RAPIDAPI_HOST:booking-com15.p.rapidapi.com}
+  base-url: ${RAPIDAPI_BASE_URL:https://booking-com15.p.rapidapi.com}
