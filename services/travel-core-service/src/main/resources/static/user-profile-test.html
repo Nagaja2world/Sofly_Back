@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile API Tester</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Pretendard:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #00e5a0;
+    --accent-dim: rgba(0, 229, 160, 0.1);
+    --text: #e8e8e8;
+    --text-dim: #666;
+    --error: #ff5f5f;
+    --warn: #ffb347;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Pretendard', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h1::before { content: '//'; opacity: 0.4; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .method-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .get { background: rgba(0, 180, 255, 0.15); color: #00b4ff; }
+  .patch { background: rgba(255, 179, 71, 0.15); color: var(--warn); }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 14px;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  select option { background: var(--surface); }
+
+  .token-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .token-row input { margin-bottom: 0; }
+
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip input[type=checkbox] { display: none; }
+  .chip.checked {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  btn, .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); opacity: 1; }
+
+  .response-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    min-height: 120px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 14px;
+    color: var(--text-dim);
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .response-box.success { color: var(--accent); border-color: rgba(0,229,160,0.3); }
+  .response-box.error { color: var(--error); border-color: rgba(255,95,95,0.3); }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .status-pill.ok { background: rgba(0,229,160,0.1); color: var(--accent); }
+  .status-pill.fail { background: rgba(255,95,95,0.1); color: var(--error); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row > div input, .field-row > div select { margin-bottom: 0; }
+  .field-row > div { margin-bottom: 14px; }
+
+  .token-section {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: -10px;
+    margin-bottom: 14px;
+    font-family: var(--mono);
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<h1>Profile API Tester &nbsp;—&nbsp; sofly</h1>
+
+<!-- Token -->
+<div class="token-section card">
+  <div class="card-title">🔑 JWT Token</div>
+  <div class="token-row">
+    <input type="text" id="token" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+    <button class="btn btn-ghost" onclick="clearToken()">Clear</button>
+  </div>
+  <div style="font-size:11px; color: var(--text-dim); font-family: var(--mono);">
+    Authorization: Bearer &lt;token&gt; 헤더로 자동 첨부됩니다.
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- GET -->
+  <div class="card">
+    <div class="card-title">
+      <span class="method-badge get">GET</span>
+      /api/users/me/profile
+    </div>
+    <p style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">
+      현재 로그인한 사용자의 프로필을 조회합니다. Request Body 없이 Token만 필요합니다.
+    </p>
+    <label>Base URL</label>
+    <input type="text" id="baseUrl" value="http://localhost:8080" />
+    <button class="btn" onclick="getProfile()">▶ 조회하기</button>
+    <div id="getStatus"></div>
+    <div class="response-box" id="getResponse">// 응답이 여기 표시됩니다.</div>
+  </div>
+
+  <!-- PATCH -->
+  <div class="card">
+    <div class="card-title">
+      <span class="method-badge patch">PATCH</span>
+      /api/users/me/profile
+    </div>
+    <p style="font-size:12px; color:var(--text-dim); margin-bottom:16px;">
+      null인 필드는 기존 값이 유지됩니다. 수정할 필드만 입력하세요.
+    </p>
+
+    <label>nickname</label>
+    <input type="text" id="nickname" placeholder="비워두면 기존 값 유지" maxlength="20" />
+
+    <label>city</label>
+    <input type="text" id="city" placeholder="예: 서울" />
+
+    <div class="field-row">
+      <div>
+        <label>ageGroup</label>
+        <select id="ageGroup">
+          <option value="">— 선택 안 함 —</option>
+          <option>TEENS</option>
+          <option>TWENTIES</option>
+          <option>THIRTIES</option>
+          <option>FORTIES_PLUS</option>
+        </select>
+      </div>
+      <div>
+        <label>preferCompanionType</label>
+        <select id="companionType">
+          <option value="">— 선택 안 함 —</option>
+          <option>SOLO</option>
+          <option>COUPLE</option>
+          <option>FRIENDS</option>
+          <option>FAMILY</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label>budgetMin (원)</label>
+        <input type="number" id="budgetMin" placeholder="예: 500000" min="0" />
+      </div>
+      <div>
+        <label>budgetMax (원)</label>
+        <input type="number" id="budgetMax" placeholder="예: 1500000" min="0" />
+      </div>
+    </div>
+
+    <label>preferThemes (복수 선택)</label>
+    <div class="checkbox-group" id="themes">
+      <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="RELAXATION">휴양 RELAXATION</label>
+      <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="SHOPPING">쇼핑 SHOPPING</label>
+      <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="CULTURE">문화 CULTURE</label>
+      <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="ACTIVITY">액티비티 ACTIVITY</label>
+      <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="FOOD">음식 FOOD</label>
+    </div>
+
+    <label>preferCities (쉼표로 구분)</label>
+    <input type="text" id="preferCities" placeholder="예: 제주, 부산, 강릉" />
+    <p class="hint">// 비워두면 기존 값 유지</p>
+
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="btn" onclick="patchProfile()">▶ 수정하기</button>
+      <button class="btn btn-ghost" onclick="resetForm()">Reset</button>
+    </div>
+
+    <div id="patchStatus"></div>
+    <div class="response-box" id="patchResponse">// 응답이 여기 표시됩니다.</div>
+  </div>
+
+</div>
+
+<script>
+  function toggleChip(el) {
+    const cb = el.querySelector('input[type=checkbox]');
+    cb.checked = !cb.checked;
+    el.classList.toggle('checked', cb.checked);
+  }
+
+  function clearToken() {
+    document.getElementById('token').value = '';
+  }
+
+  function resetForm() {
+    ['nickname','city','budgetMin','budgetMax','preferCities'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('ageGroup').value = '';
+    document.getElementById('companionType').value = '';
+    document.querySelectorAll('#themes .chip').forEach(chip => {
+      chip.querySelector('input').checked = false;
+      chip.classList.remove('checked');
+    });
+    document.getElementById('patchResponse').textContent = '// 응답이 여기 표시됩니다.';
+    document.getElementById('patchResponse').className = 'response-box';
+    document.getElementById('patchStatus').innerHTML = '';
+  }
+
+  function getHeaders() {
+    const token = document.getElementById('token').value.trim();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }
+
+  function getBaseUrl() {
+    return document.getElementById('baseUrl').value.trim().replace(/\/$/, '');
+  }
+
+  function renderStatus(elId, status) {
+    const el = document.getElementById(elId);
+    const ok = status >= 200 && status < 300;
+    el.innerHTML = `<div class="status-pill ${ok ? 'ok' : 'fail'}">${ok ? '✓' : '✗'} ${status}</div>`;
+  }
+
+  async function getProfile() {
+    const box = document.getElementById('getResponse');
+    const url = `${getBaseUrl()}/api/users/me/profile`;
+    box.textContent = '// 요청 중...';
+    box.className = 'response-box';
+    try {
+      const res = await fetch(url, { headers: getHeaders() });
+      renderStatus('getStatus', res.status);
+      const data = await res.json();
+      box.textContent = JSON.stringify(data, null, 2);
+      box.className = `response-box ${res.ok ? 'success' : 'error'}`;
+    } catch (e) {
+      box.textContent = `// 요청 실패: ${e.message}\n// CORS 또는 서버 미실행 확인`;
+      box.className = 'response-box error';
+      document.getElementById('getStatus').innerHTML = `<div class="status-pill fail">✗ Error</div>`;
+    }
+  }
+
+  async function patchProfile() {
+    const box = document.getElementById('patchResponse');
+    const url = `${getBaseUrl()}/api/users/me/profile`;
+    box.textContent = '// 요청 중...';
+    box.className = 'response-box';
+
+    const body = {};
+
+    const nickname = document.getElementById('nickname').value.trim();
+    if (nickname) body.nickname = nickname;
+
+    const city = document.getElementById('city').value.trim();
+    if (city) body.city = city;
+
+    const ageGroup = document.getElementById('ageGroup').value;
+    if (ageGroup) body.ageGroup = ageGroup;
+
+    const companionType = document.getElementById('companionType').value;
+    if (companionType) body.preferCompanionType = companionType;
+
+    const budgetMin = document.getElementById('budgetMin').value;
+    if (budgetMin !== '') body.budgetMin = Number(budgetMin);
+
+    const budgetMax = document.getElementById('budgetMax').value;
+    if (budgetMax !== '') body.budgetMax = Number(budgetMax);
+
+    const themes = [...document.querySelectorAll('#themes input:checked')].map(cb => cb.value);
+    if (themes.length > 0) body.preferThemes = themes;
+
+    const citiesRaw = document.getElementById('preferCities').value.trim();
+    if (citiesRaw) body.preferCities = citiesRaw.split(',').map(c => c.trim()).filter(Boolean);
+
+    try {
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(body)
+      });
+      renderStatus('patchStatus', res.status);
+      const data = await res.json();
+      box.textContent = JSON.stringify(data, null, 2);
+      box.className = `response-box ${res.ok ? 'success' : 'error'}`;
+    } catch (e) {
+      box.textContent = `// 요청 실패: ${e.message}\n// CORS 또는 서버 미실행 확인`;
+      box.className = 'response-box error';
+      document.getElementById('patchStatus').innerHTML = `<div class="status-pill fail">✗ Error</div>`;
+    }
+  }
+</script>
+</body>
+</html>
