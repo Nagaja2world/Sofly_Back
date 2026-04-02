@@ -8,7 +8,7 @@ import com.sofly.core.domain.user.entity.User.TravelTheme;
 import java.util.List;
 
 /**
- * GET / PUT /api/users/me/profile 응답 DTO
+ * GET / PATCH /api/users/me/profile 응답 DTO
  */
 public record UserProfileResponse(
         Long id,
