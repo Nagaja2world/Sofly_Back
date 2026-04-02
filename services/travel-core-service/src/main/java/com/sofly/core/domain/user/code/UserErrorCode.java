@@ -11,7 +11,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum UserErrorCode implements BaseErrorCode {
 
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
+    INVALID_BUDGET_RANGE(HttpStatus.BAD_REQUEST, "INVALID_BUDGET_RANGE", "최소 예산은 최대 예산보다 클 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

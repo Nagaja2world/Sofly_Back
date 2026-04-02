@@ -36,6 +36,9 @@ public class UserService {
     public UserProfileResponse updateMyProfile(Long userId, UserProfileUpdateRequest request) {
         User user = findUserById(userId);
 
+        // 예산 범위 검증
+        validateBudgetRange(request.budgetMin(), request.budgetMax());
+
         // null이면 기존 값 유지
         user.updateProfile(
                 request.nickname() != null ? request.nickname() : user.getNickname(),
@@ -74,5 +77,11 @@ public class UserService {
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    }
+
+    private void validateBudgetRange(Integer budgetMin, Integer budgetMax) {
+        if (budgetMin != null && budgetMax != null && budgetMin > budgetMax) {
+            throw new UserException(UserErrorCode.INVALID_BUDGET_RANGE);
+        }
     }
 }
