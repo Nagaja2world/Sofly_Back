@@ -1,5 +1,6 @@
 package com.sofly.supply.adapter.outbound.rapidapi.flights;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sofly.supply.application.dto.FlightSearchRequest;
@@ -13,6 +14,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Component
 @RequiredArgsConstructor
 public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final WebClient rapidApiWebClient;
 
@@ -62,8 +65,8 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
 
     private JsonNode parseJson(String response) {
         try {
-            return new ObjectMapper().readTree(response);
-        } catch (Exception e) {
+            return OBJECT_MAPPER.readTree(response);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException("Booking.com 응답 파싱 실패", e);
         }
     }
