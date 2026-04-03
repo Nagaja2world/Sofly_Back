@@ -95,9 +95,9 @@ sofly:
 
 springdoc:
   swagger-ui:
-    path: /core-docs
+    path: /core/swagger-ui
   api-docs:
-    path: /v3/api-docs/core
+    path: /core/v3/api-docs
 
 logging:
   exception-conversion-word: "%wEx{0}"
