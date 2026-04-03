@@ -48,7 +48,7 @@ public class FlightSearchController {
     @Operation(summary = "항공편 검색", description = "공급자(supplier)를 선택하여 항공편 오퍼를 검색합니다. 기본값: amadeus")
     @GetMapping("/offers")
     public JsonNode offers(
-            @Parameter(description = "공급자 키 (amadeus | booking)", example = "amadeus")
+            @Parameter(description = "공급자 키 (amadeus | booking)", example = "booking")
             @RequestParam(required = false) String supplier,
             @ParameterObject @ModelAttribute FlightSearchRequest request
     ) {
