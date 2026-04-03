@@ -5,6 +5,7 @@ on:
     branches: [ "infra/30-nginx-config" ]
     paths:
       - 'nginx/**'
+      - '.github/workflows/nginx.yml'
   workflow_dispatch:
 
 concurrency:
