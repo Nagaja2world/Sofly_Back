@@ -59,6 +59,8 @@ jobs:
 
             echo "👉🏻 [6] Nginx 문법 검사"
             sudo nginx -t
+            
+            cat $DEPLOY_PATH/nginx/sofly.conf
 
             echo "🔄 [7] Nginx reload"
             sudo nginx -s reload
