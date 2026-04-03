@@ -161,3 +161,4 @@ UserService
 
 `UserService.getProfileForAiSchedule(userId)`를 통해 AI 일정 서비스에서 사용자 프로필을 조회한다.
 `profileCompleted: false`인 경우 AI 서비스에서 프로필 입력을 유도하는 처리가 필요하다.
+
