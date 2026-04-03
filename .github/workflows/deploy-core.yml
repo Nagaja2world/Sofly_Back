@@ -2,7 +2,7 @@ name: Deploy travel-core-service
 
 on:
   push:
-    branches: [ "infra/30-nginx-config" ]
+    branches: [ "develop" ]
     paths:
       - 'services/travel-core-service/**'
       - '.github/workflows/deploy-core.yml'

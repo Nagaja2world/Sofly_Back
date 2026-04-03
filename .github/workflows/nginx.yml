@@ -2,7 +2,7 @@ name: Config nginx
 
 on:
   push:
-    branches: [ "infra/30-nginx-config" ]
+    branches: [ "develop" ]
     paths:
       - 'nginx/**'
       - '.github/workflows/nginx.yml'
@@ -30,13 +30,13 @@ jobs:
           script: |
 
             echo "👉🏻 [1] Git 최신화"
-            # cd "$DEPLOY_PATH"
-            # git remote prune origin
-            # git reset --hard HEAD
-            # git clean -fd
-            # git fetch origin develop
-            # git checkout -B develop origin/develop
-            # git reset --hard origin/develop
+            cd "$DEPLOY_PATH"
+            git remote prune origin
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
 
             echo "📌 현재 브랜치: $(git branch --show-current)"
             echo "📌 현재 커밋:   $(git rev-parse HEAD)"
