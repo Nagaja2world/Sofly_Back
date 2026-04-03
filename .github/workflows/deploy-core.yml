@@ -277,6 +277,7 @@ jobs:
             sudo nginx -t
 
             # reload
+            echo "🔄 Nginx 설정 reload 중..."
             sudo nginx -s reload
 
             echo "🔍 Nginx 전환 후 헬스체크 확인..."

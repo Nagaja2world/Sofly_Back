@@ -1,0 +1,70 @@
+name: Config nginx
+
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'nginx/**'
+      - '.github/workflows/nginx.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-nginx:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          envs: DEPLOY_PATH
+          script_stop: true
+          script: |
+
+            echo "👉🏻 [1] Git 최신화"
+            cd "$DEPLOY_PATH"
+            git remote prune origin
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
+
+            echo "📌 현재 브랜치: $(git branch --show-current)"
+            echo "📌 현재 커밋:   $(git rev-parse HEAD)"
+            echo "📌 커밋 메시지: $(git log -1 --pretty=format:'%s')"
+            echo "📌 커밋 시간:   $(git log -1 --pretty=format:'%ci')"
+            echo "📌 커밋 작성자: $(git log -1 --pretty=format:'%an')"
+
+            echo "👉🏻 [2] 기존 nginx 설정 파일 제거"
+            sudo rm /etc/nginx/conf.d/sofly.conf
+
+            echo "👉🏻 [3] 새 nginx 설정 파일 복사"
+            sudo cp "$DEPLOY_PATH/nginx/sofly.conf" /etc/nginx/conf.d/sofly.conf
+            ls -al /etc/nginx/conf.d/sofly.conf
+
+            echo "👉🏻 [4] 파일 권한 설정 (root:root 644)"
+            sudo chown root:root /etc/nginx/conf.d/sofly.conf
+            sudo chmod 644 /etc/nginx/conf.d/sofly.conf
+
+            echo "👉🏻 [5] 권한 확인"
+            ls -al /etc/nginx/conf.d/sofly.conf
+
+            echo "👉🏻 [6] Nginx 문법 검사"
+            sudo nginx -t
+
+            echo "👉🏻 [6] sofly.conf"
+            cat "$DEPLOY_PATH/nginx/sofly.conf"
+
+            echo "🔄 [8] Nginx reload"
+            sudo nginx -s reload
+
+            echo "✅ Nginx 배포 완료"
