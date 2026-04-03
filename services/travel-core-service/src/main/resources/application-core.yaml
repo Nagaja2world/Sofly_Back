@@ -6,6 +6,10 @@ spring:
   application:
     name: travel-core-service
 
+  web:
+    resource:
+      add-mappings: false
+      
   ai:
     google:
       genai:
