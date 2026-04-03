@@ -7,7 +7,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.sofly.core.global.response.ApiResponse;
 
@@ -48,9 +47,4 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
-
-    // @ExceptionHandler(NoResourceFoundException.class)
-    // protected ResponseEntity<?> handleNoResourceFoundException(NoResourceFoundException e) {
-    //     return ResponseEntity.notFound().build();
-    // }
 }
