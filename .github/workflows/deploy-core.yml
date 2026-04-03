@@ -2,7 +2,7 @@ name: Deploy travel-core-service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "infra/30-nginx-config" ]
     paths:
       - 'services/travel-core-service/**'
       - '.github/workflows/deploy-core.yml'
@@ -277,6 +277,7 @@ jobs:
             sudo nginx -t
 
             # reload
+            echo "🔄 Nginx 설정 reload 중..."
             sudo nginx -s reload
 
             echo "🔍 Nginx 전환 후 헬스체크 확인..."
