@@ -24,7 +24,6 @@ amadeus:
 springdoc:
   swagger-ui:
     path: /supply-docs
-    disable-swagger-default-url: true
   api-docs:
     path: /v3/api-docs/supply
 
