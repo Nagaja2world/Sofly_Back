@@ -96,6 +96,7 @@ sofly:
 springdoc:
   swagger-ui:
     path: /core-docs
+    disable-swagger-default-url: true
   api-docs:
     path: /v3/api-docs/core
 
