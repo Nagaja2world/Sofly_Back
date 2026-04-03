@@ -23,9 +23,9 @@ amadeus:
 
 springdoc:
   swagger-ui:
-    path: /swagger-ui
+    path: /supply/swagger-ui
   api-docs:
-    path: /v3/api-docs/supply
+    path: /supply/v3/api-docs
 
 google:
   places:
