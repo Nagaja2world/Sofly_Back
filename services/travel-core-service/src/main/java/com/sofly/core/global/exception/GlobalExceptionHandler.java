@@ -49,8 +49,8 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 
-    @ExceptionHandler(NoResourceFoundException.class)
-    protected ResponseEntity<?> handleNoResourceFoundException(NoResourceFoundException e) {
-        return ResponseEntity.notFound().build();
-    }
+    // @ExceptionHandler(NoResourceFoundException.class)
+    // protected ResponseEntity<?> handleNoResourceFoundException(NoResourceFoundException e) {
+    //     return ResponseEntity.notFound().build();
+    // }
 }
