@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.entity.User;
+import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
 import com.sofly.core.domain.workspace.dto.request.CreateWorkspaceRequest;
@@ -47,7 +49,7 @@ public class WorkspaceService {
     @Transactional
     public WorkspaceResponse createWorkspace(Long userId, CreateWorkspaceRequest request) {
         User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Workspace workspace = Workspace.builder()
                 .title(request.getTitle())
@@ -149,6 +151,7 @@ public class WorkspaceService {
     // ── 멤버 목록 조회 ─────────────────────────────────────────
 
     public List<WorkspaceMemberResponse> getMembers(Long userId, Long workspaceId) {
+        findWorkspaceById(workspaceId);
         validateMember(workspaceId, userId);
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
                 .map(WorkspaceMemberResponse::from)
@@ -223,6 +226,7 @@ public class WorkspaceService {
     // ── 항공편 목록 조회 ───────────────────────────────────────
 
     public List<SavedFlightResponse> getFlights(Long userId, Long workspaceId) {
+        findWorkspaceById(workspaceId);
         validateMember(workspaceId, userId);
         return savedFlightRepository.findAllByWorkspaceId(workspaceId).stream()
                 .map(SavedFlightResponse::from)
