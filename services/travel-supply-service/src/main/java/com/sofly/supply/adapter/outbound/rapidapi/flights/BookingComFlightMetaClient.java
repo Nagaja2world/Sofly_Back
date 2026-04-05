@@ -2,6 +2,7 @@ package com.sofly.supply.adapter.outbound.rapidapi.flights;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.application.dto.FlightDestination;
+import com.sofly.supply.application.port.outbound.FlightMetaPort;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class BookingComFlightMetaClient {
+public class BookingComFlightMetaClient implements FlightMetaPort {
     private static final Logger log = LoggerFactory.getLogger(BookingComFlightMetaClient.class);
 
     private final WebClient rapidApiWebClient;

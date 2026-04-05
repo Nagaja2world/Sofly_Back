@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.application.dto.HotelDestination;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
+import com.sofly.supply.application.port.outbound.HotelMetaPort;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
-public class BookingComHotelMetaClient {
+public class BookingComHotelMetaClient implements HotelMetaPort {
 
     private static final Logger log = LoggerFactory.getLogger(BookingComHotelMetaClient.class);
 

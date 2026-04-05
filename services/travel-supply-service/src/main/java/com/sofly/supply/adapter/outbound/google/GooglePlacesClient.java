@@ -1,6 +1,8 @@
 package com.sofly.supply.adapter.outbound.google;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.sofly.supply.application.dto.PlaceInfo;
+import com.sofly.supply.application.port.outbound.PlaceInfoPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class GooglePlacesClient {
+public class GooglePlacesClient implements PlaceInfoPort {
 
     private static final Logger log = LoggerFactory.getLogger(GooglePlacesClient.class);
     private static final int MAX_PHOTOS = 3;

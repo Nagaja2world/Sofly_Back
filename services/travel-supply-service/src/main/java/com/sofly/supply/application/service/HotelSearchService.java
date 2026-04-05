@@ -1,13 +1,13 @@
 package com.sofly.supply.application.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.sofly.supply.adapter.outbound.google.GooglePlacesClient;
-import com.sofly.supply.adapter.outbound.google.PlaceInfo;
-import com.sofly.supply.adapter.outbound.rapidapi.hotels.BookingComHotelMetaClient;
 import com.sofly.supply.application.dto.HotelDestination;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
+import com.sofly.supply.application.dto.PlaceInfo;
+import com.sofly.supply.application.port.outbound.HotelMetaPort;
+import com.sofly.supply.application.port.outbound.PlaceInfoPort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,14 +16,13 @@ import java.util.List;
 public class HotelSearchService {
 
     private final SupplierRouter router;
-    private final GooglePlacesClient googlePlacesClient;
-    private final BookingComHotelMetaClient destinationClient;
+    private final PlaceInfoPort placeInfoPort;
+    private final HotelMetaPort hotelMetaPort;
 
-    public HotelSearchService(SupplierRouter router, GooglePlacesClient googlePlacesClient,
-                               BookingComHotelMetaClient destinationClient) {
+    public HotelSearchService(SupplierRouter router, PlaceInfoPort placeInfoPort, HotelMetaPort hotelMetaPort) {
         this.router = router;
-        this.googlePlacesClient = googlePlacesClient;
-        this.destinationClient = destinationClient;
+        this.placeInfoPort = placeInfoPort;
+        this.hotelMetaPort = hotelMetaPort;
     }
 
     public JsonNode search(String supplier, HotelSearchRequest request) {
@@ -31,18 +30,18 @@ public class HotelSearchService {
     }
 
     public List<HotelDestination> searchDestination(String query) {
-        return destinationClient.searchDestination(query);
+        return hotelMetaPort.searchDestination(query);
     }
 
     public List<HotelSortOption> getSortBy(HotelOptionsRequest request) {
-        return destinationClient.getSortBy(request);
+        return hotelMetaPort.getSortBy(request);
     }
 
     public JsonNode getFilter(HotelOptionsRequest request) {
-        return destinationClient.getFilter(request);
+        return hotelMetaPort.getFilter(request);
     }
 
     public PlaceInfo getPlaceInfo(String hotelName, String cityCode) {
-        return googlePlacesClient.fetchPlaceInfo(hotelName, cityCode);
+        return placeInfoPort.fetchPlaceInfo(hotelName, cityCode);
     }
 }
