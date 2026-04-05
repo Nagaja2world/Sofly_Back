@@ -14,7 +14,7 @@ import java.time.LocalDate;
 public class HotelSearchRequest {
 
     @Schema(defaultValue = "267199", required = true)
-    private Float destId;
+    private String destId;
 
     @Schema(defaultValue = "LANDMARK", required = true)
     private String searchType;
@@ -77,7 +77,6 @@ public class HotelSearchRequest {
         private final String value;
 
         TemperatureUnit(String value) { this.value = value; }
-        TemperatureUnit() { this.value = this.name(); }
 
         public String getValue() { return value; }
     }

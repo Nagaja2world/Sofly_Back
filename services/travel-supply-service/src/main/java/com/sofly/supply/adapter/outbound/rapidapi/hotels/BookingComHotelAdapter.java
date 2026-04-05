@@ -67,6 +67,7 @@ public class BookingComHotelAdapter implements  HotelSupplierPort {
                 .bodyToMono(String.class)
                 .block();
 
+        if (response == null) return OBJECT_MAPPER.nullNode();
         return parseJson(response);
     }
 

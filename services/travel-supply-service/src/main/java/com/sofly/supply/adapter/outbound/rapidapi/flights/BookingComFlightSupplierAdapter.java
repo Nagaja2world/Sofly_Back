@@ -26,8 +26,6 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
 
     @Override
     public JsonNode searchFlightOffers(FlightSearchRequest request) {
-        //log.debug("BookingCom flight search - fromId={}, toId={}, departDate={}", request.getFromId(), request.getToId(), request.getDepartDate());
-
         String response = rapidApiWebClient.get()
                 .uri(uriBuilder -> {
                     var builder = uriBuilder
@@ -52,14 +50,13 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
                     if (request.getPageNo() != null)
                         builder.queryParam("pageNo", request.getPageNo());
 
-                    var uri = builder.build();
-                    //log.debug("BookingCom request URI: {}", uri);
-                    return uri;
+                    return builder.build();
                 })
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
 
+        if (response == null) return OBJECT_MAPPER.nullNode();
         return parseJson(response);
     }
 

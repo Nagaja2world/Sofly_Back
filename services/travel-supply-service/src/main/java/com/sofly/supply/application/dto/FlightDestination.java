@@ -11,7 +11,7 @@ public record FlightDestination(
         String country,
         String countryName,
         String countryNameShort,
-        String photoUrl,
+        String photoUri,
         DistanceToCity distanceToCity,
         String parent
 ){
