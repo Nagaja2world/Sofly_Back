@@ -1,6 +1,7 @@
 package com.sofly.supply.adapter.outbound.rapidapi.hotels;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.sofly.supply.adapter.outbound.rapidapi.RapidApiJsonUtils;
 import com.sofly.supply.application.dto.HotelDestination;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
@@ -45,17 +46,17 @@ public class BookingComHotelMetaClient implements HotelMetaPort {
 
             for (JsonNode item : response.get("data")) {
                 results.add(new HotelDestination(
-                        textOrNull(item, "dest_id"),
-                        textOrNull(item, "dest_type"),
-                        textOrNull(item, "name"),
-                        textOrNull(item, "label"),
-                        textOrNull(item, "city_name"),
-                        textOrNull(item, "country"),
-                        textOrNull(item, "region"),
-                        doubleOrNull(item, "latitude"),
-                        doubleOrNull(item, "longitude"),
-                        textOrNull(item, "image_url"),
-                        intOrNull(item, "hotels")
+                        RapidApiJsonUtils.textOrNull(item, "dest_id"),
+                        RapidApiJsonUtils.textOrNull(item, "dest_type"),
+                        RapidApiJsonUtils.textOrNull(item, "name"),
+                        RapidApiJsonUtils.textOrNull(item, "label"),
+                        RapidApiJsonUtils.textOrNull(item, "city_name"),
+                        RapidApiJsonUtils.textOrNull(item, "country"),
+                        RapidApiJsonUtils.textOrNull(item, "region"),
+                        RapidApiJsonUtils.doubleOrNull(item, "latitude"),
+                        RapidApiJsonUtils.doubleOrNull(item, "longitude"),
+                        RapidApiJsonUtils.textOrNull(item, "image_url"),
+                        RapidApiJsonUtils.intOrNull(item, "hotels")
                 ));
             }
 
@@ -83,8 +84,8 @@ public class BookingComHotelMetaClient implements HotelMetaPort {
 
             for (JsonNode item : response.get("data")) {
                 results.add(new HotelSortOption(
-                        textOrNull(item, "id"),
-                        textOrNull(item, "title")
+                        RapidApiJsonUtils.textOrNull(item, "id"),
+                        RapidApiJsonUtils.textOrNull(item, "title")
                 ));
             }
 
@@ -139,15 +140,4 @@ public class BookingComHotelMetaClient implements HotelMetaPort {
         };
     }
 
-    private String textOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText() : null;
-    }
-
-    private Double doubleOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asDouble() : null;
-    }
-
-    private Integer intOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asInt() : null;
-    }
 }

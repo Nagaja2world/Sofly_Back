@@ -1,8 +1,7 @@
 package com.sofly.supply.adapter.outbound.rapidapi.hotels;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sofly.supply.adapter.outbound.rapidapi.RapidApiJsonUtils;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.port.outbound.HotelSupplierPort;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 @RequiredArgsConstructor
-public class BookingComHotelAdapter implements  HotelSupplierPort {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+public class BookingComHotelAdapter implements HotelSupplierPort {
 
     private final WebClient rapidApiWebClient;
 
@@ -67,15 +64,7 @@ public class BookingComHotelAdapter implements  HotelSupplierPort {
                 .bodyToMono(String.class)
                 .block();
 
-        if (response == null) return OBJECT_MAPPER.nullNode();
-        return parseJson(response);
-    }
-
-    private JsonNode parseJson(String response) {
-        try {
-            return OBJECT_MAPPER.readTree(response);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Booking.com 응답 파싱 실패", e);
-        }
+        if (response == null) return RapidApiJsonUtils.nullNode();
+        return RapidApiJsonUtils.parseJson(response);
     }
 }

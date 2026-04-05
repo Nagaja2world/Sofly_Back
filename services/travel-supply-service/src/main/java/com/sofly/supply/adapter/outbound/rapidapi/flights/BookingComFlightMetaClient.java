@@ -1,6 +1,7 @@
 package com.sofly.supply.adapter.outbound.rapidapi.flights;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.sofly.supply.adapter.outbound.rapidapi.RapidApiJsonUtils;
 import com.sofly.supply.application.dto.FlightDestination;
 import com.sofly.supply.application.port.outbound.FlightMetaPort;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
 
             for (JsonNode item : response.get("data")) {
                 FlightDestination.DistanceToCity distanceToCity = null;
-                if (item.has("distanceToCity") && !item.get("distanceToCity").isNull()) {
+                if (item.hasNonNull("distanceToCity")) {
                     JsonNode d = item.get("distanceToCity");
                     distanceToCity = new FlightDestination.DistanceToCity(
                             d.get("value").asDouble(),
@@ -50,19 +51,19 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
                 }
 
                 results.add(new FlightDestination(
-                        textOrNull(item, "id"),
-                        textOrNull(item, "type"),
-                        textOrNull(item, "name"),
-                        textOrNull(item, "code"),
-                        textOrNull(item, "city"),
-                        textOrNull(item, "cityName"),
-                        textOrNull(item, "regionName"),
-                        textOrNull(item, "country"),
-                        textOrNull(item, "countryName"),
-                        textOrNull(item, "countryNameShort"),
-                        textOrNull(item, "photoUri"),
+                        RapidApiJsonUtils.textOrNull(item, "id"),
+                        RapidApiJsonUtils.textOrNull(item, "type"),
+                        RapidApiJsonUtils.textOrNull(item, "name"),
+                        RapidApiJsonUtils.textOrNull(item, "code"),
+                        RapidApiJsonUtils.textOrNull(item, "city"),
+                        RapidApiJsonUtils.textOrNull(item, "cityName"),
+                        RapidApiJsonUtils.textOrNull(item, "regionName"),
+                        RapidApiJsonUtils.textOrNull(item, "country"),
+                        RapidApiJsonUtils.textOrNull(item, "countryName"),
+                        RapidApiJsonUtils.textOrNull(item, "countryNameShort"),
+                        RapidApiJsonUtils.textOrNull(item, "photoUri"),
                         distanceToCity,
-                        textOrNull(item, "parent")
+                        RapidApiJsonUtils.textOrNull(item, "parent")
                 ));
             }
 
@@ -73,7 +74,4 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
         }
     }
 
-    private String textOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText() : null;
-    }
 }
