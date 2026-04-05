@@ -26,43 +26,42 @@ public class BookingComHotelAdapter implements  HotelSupplierPort {
     public JsonNode searchHotelsByCity(HotelSearchRequest request){
 
         String response = rapidApiWebClient.get()
-                .uri(urlBuilder ->{
+                .uri(urlBuilder -> {
                         var builder = urlBuilder
                                 .path("/api/v1/hotels/searchHotels")
-                                .queryParam("destId", request.getDestId())
-                                .queryParam("searchType", request.getSearchType())
-                                .queryParam("arrivalDate", request.getArrivalDate())
-                                .queryParam("departureDate", request.getDepartureDate());
+                                .queryParam("dest_id", request.getDestId())
+                                .queryParam("search_type", request.getSearchType())
+                                .queryParam("arrival_date", request.getArrivalDate())
+                                .queryParam("departure_date", request.getDepartureDate());
 
                                 if (request.getAdults() != null)
                                     builder.queryParam("adults", request.getAdults());
-                                if (request.getChildrenAge()!= null)
-                                    builder.queryParam("childrenAge", request.getChildrenAge());
+                                if (request.getChildrenAge() != null)
+                                    builder.queryParam("children_age", request.getChildrenAge());
                                 if (request.getRoomQty() != null)
-                                    builder.queryParam("roomQty", request.getRoomQty());
+                                    builder.queryParam("room_qty", request.getRoomQty());
                                 if (request.getPriceMin() != null)
-                                    builder.queryParam("priceMin", request.getPriceMin());
+                                    builder.queryParam("price_min", request.getPriceMin());
                                 if (request.getPriceMax() != null)
-                                    builder.queryParam("priceMax", request.getPriceMax());
+                                    builder.queryParam("price_max", request.getPriceMax());
                                 if (request.getSortBy() != null)
-                                    builder.queryParam("sortBy", request.getSortBy());
+                                    builder.queryParam("sort_by", request.getSortBy());
                                 if (request.getCategoriesFilter() != null)
-                                    builder.queryParam("categoriesFilter", request.getCategoriesFilter());
+                                    builder.queryParam("categories_filter", request.getCategoriesFilter());
                                 if (request.getPageNumber() != null)
-                                    builder.queryParam("pageNumber", request.getPageNumber());
+                                    builder.queryParam("page_number", request.getPageNumber());
                                 if (request.getUnits() != null)
-                                    builder.queryParam("units", request.getUnits());
+                                    builder.queryParam("units", request.getUnits().name().toLowerCase());
                                 if (request.getTemperatureUnit() != null)
-                                    builder.queryParam("temperatureUnit", request.getTemperatureUnit());
+                                    builder.queryParam("temperature_unit", request.getTemperatureUnit().getValue());
                                 if (request.getLanguageCode() != null)
-                                    builder.queryParam("languageCode", request.getLanguageCode());
+                                    builder.queryParam("languagecode", request.getLanguageCode());
                                 if (request.getCurrencyCode() != null)
-                                    builder.queryParam("currencyCode", request.getCurrencyCode());
+                                    builder.queryParam("currency_code", request.getCurrencyCode());
                                 if (request.getLocation() != null)
                                     builder.queryParam("location", request.getLocation());
 
-                                var uri = builder.build();
-                                return uri;
+                                return builder.build();
                 })
                 .retrieve()
                 .bodyToMono(String.class)

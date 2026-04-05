@@ -3,10 +3,13 @@ package com.sofly.supply.application.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.adapter.outbound.google.GooglePlacesClient;
 import com.sofly.supply.adapter.outbound.google.PlaceInfo;
-import com.sofly.supply.application.dto.HotelSearchResult;
+import com.sofly.supply.adapter.outbound.rapidapi.hotels.BookingComDestinationClient;
+import com.sofly.supply.application.dto.HotelDestination;
+import com.sofly.supply.application.dto.HotelOptionsRequest;
+import com.sofly.supply.application.dto.HotelSearchRequest;
+import com.sofly.supply.application.dto.HotelSortOption;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -14,35 +17,29 @@ public class HotelSearchService {
 
     private final SupplierRouter router;
     private final GooglePlacesClient googlePlacesClient;
+    private final BookingComDestinationClient destinationClient;
 
-    public HotelSearchService(SupplierRouter router, GooglePlacesClient googlePlacesClient) {
+    public HotelSearchService(SupplierRouter router, GooglePlacesClient googlePlacesClient,
+                               BookingComDestinationClient destinationClient) {
         this.router = router;
         this.googlePlacesClient = googlePlacesClient;
+        this.destinationClient = destinationClient;
     }
 
-    public List<HotelSearchResult> search(String supplier, String cityCode, java.time.LocalDate checkIn, java.time.LocalDate checkOut, int adults, int roomQuantity) {
-        JsonNode amadeusResponse = router.selectHotelSupplier(supplier).searchHotelsByCity(cityCode, checkIn, checkOut, adults, roomQuantity);
+    public JsonNode search(String supplier, HotelSearchRequest request) {
+        return router.selectHotelSupplier(supplier).searchHotelsByCity(request);
+    }
 
-        List<HotelSearchResult> results = new ArrayList<>();
+    public List<HotelDestination> searchDestination(String query) {
+        return destinationClient.searchDestination(query);
+    }
 
-        if (amadeusResponse == null || !amadeusResponse.has("data")) {
-            return results;
-        }
+    public List<HotelSortOption> getSortBy(HotelOptionsRequest request) {
+        return destinationClient.getSortBy(request);
+    }
 
-        for (JsonNode item : amadeusResponse.get("data")) {
-            JsonNode hotel = item.get("hotel");
-
-            String hotelId   = hotel.has("hotelId")   ? hotel.get("hotelId").asText()   : null;
-            String hotelName = hotel.has("name")       ? hotel.get("name").asText()       : null;
-            String city      = hotel.has("cityCode")   ? hotel.get("cityCode").asText()   : cityCode;
-            Double lat       = hotel.has("latitude")   ? hotel.get("latitude").asDouble() : null;
-            Double lng       = hotel.has("longitude")  ? hotel.get("longitude").asDouble(): null;
-            JsonNode offers  = item.get("offers");
-
-            results.add(new HotelSearchResult(hotelId, hotelName, city, lat, lng, offers));
-        }
-
-        return results;
+    public JsonNode getFilter(HotelOptionsRequest request) {
+        return destinationClient.getFilter(request);
     }
 
     public PlaceInfo getPlaceInfo(String hotelName, String cityCode) {

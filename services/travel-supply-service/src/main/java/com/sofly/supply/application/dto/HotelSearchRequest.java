@@ -13,10 +13,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class HotelSearchRequest {
 
-    @Schema(defaultValue = "-2092174", required = true)
+    @Schema(defaultValue = "267199", required = true)
     private Float destId;
 
-    @Schema(defaultValue = "CITY", required = true)
+    @Schema(defaultValue = "LANDMARK", required = true)
     private String searchType;
 
     @Schema(defaultValue = "2026-04-06", required = true)
@@ -45,8 +45,10 @@ public class HotelSearchRequest {
     @Schema(defaultValue = "0")
     private Float priceMax;
 
+    @Schema(defaultValue = "price")
     private String sortBy;
 
+    @Schema(defaultValue = "popular")
     private String categoriesFilter;
 
     @Schema(defaultValue = "METRIC")
@@ -55,7 +57,7 @@ public class HotelSearchRequest {
     @Schema(defaultValue = "Celsius")
     private TemperatureUnit temperatureUnit;
 
-    @Schema(defaultValue = "ko-kr")
+    @Schema(defaultValue = "ko")
     private String languageCode;
 
     @Schema(defaultValue = "KRW")
