@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.application.dto.HotelDestination;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -17,15 +18,12 @@ import java.util.List;
 import java.util.function.Function;
 
 @Component
-public class BookingComDestinationClient {
+@RequiredArgsConstructor
+public class BookingComHotelMetaClient {
 
-    private static final Logger log = LoggerFactory.getLogger(BookingComDestinationClient.class);
+    private static final Logger log = LoggerFactory.getLogger(BookingComHotelMetaClient.class);
 
     private final WebClient rapidApiWebClient;
-
-    public BookingComDestinationClient(WebClient rapidApiWebClient) {
-        this.rapidApiWebClient = rapidApiWebClient;
-    }
 
     public List<HotelDestination> searchDestination(String query) {
         try {
