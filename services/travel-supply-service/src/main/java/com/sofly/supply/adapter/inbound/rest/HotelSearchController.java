@@ -1,8 +1,8 @@
 package com.sofly.supply.adapter.inbound.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.sofly.supply.adapter.outbound.google.PlaceInfo;
 import com.sofly.supply.application.dto.HotelDestination;
+import com.sofly.supply.application.dto.PlaceInfo;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
@@ -76,6 +76,7 @@ public class HotelSearchController {
         return hotelSearchService.getFilter(request);
     }
 
+    @Operation(summary = "호텔 장소 정보 조회", description = "Google Places API로 호텔의 평점과 리뷰 수를 조회합니다.")
     @GetMapping("/place-info")
     public PlaceInfo placeInfo(
             @RequestParam String hotelName,
