@@ -44,7 +44,9 @@ public class SwaggerConfig {
                 new Tag().name("Workspace").description("워크스페이스 생성·관리"),
                 new Tag().name("Workspace Invite").description("워크스페이스 초대·공유"),
                 new Tag().name("Workspace Member").description("워크스페이스 멤버 관리"),
-                new Tag().name("Workspace Flight").description("워크스페이스 항공편 저장·조회")
+                new Tag().name("Workspace Flight").description("워크스페이스 항공편 저장·조회"),
+                new Tag().name("Chat").description("AI 여행 플래너 채팅"),
+                new Tag().name("Schedule").description("일정 관리 API")
         ));
     }
 }
