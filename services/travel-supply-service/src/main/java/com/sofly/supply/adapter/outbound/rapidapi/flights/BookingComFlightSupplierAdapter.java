@@ -6,6 +6,7 @@ import com.sofly.supply.application.dto.FlightSearchRequest;
 import com.sofly.supply.application.port.outbound.FlightSupplierPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -21,6 +22,7 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
         return "booking";
     }
 
+    @Cacheable(value = "bookingFlights", key = "#request")
     @Override
     public JsonNode searchFlightOffers(FlightSearchRequest request) {
         String response = rapidApiWebClient.get()
@@ -54,6 +56,6 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
                 .block();
 
         if (response == null) return RapidApiJsonUtils.nullNode();
-        return RapidApiJsonUtils.parseJson(response);
+        return BookingComFlightResponseFilter.filter(RapidApiJsonUtils.parseJson(response));
     }
 }
