@@ -73,13 +73,12 @@ public class WorkspaceService {
     // ── 내 워크스페이스 목록 조회 ──────────────────────────────
 
     public List<WorkspaceResponse> getMyWorkspaces(Long userId) {
-        return workspaceMemberRepository.findAllByUserId(userId).stream()
-                .map(WorkspaceMember::getWorkspace)
+        return workspaceRepository.findAllWithOwnerByUserId(userId).stream()
                 .map(WorkspaceResponse::from)
                 .toList();
     }
 
-    // ── 워크스페이스 단건 조회 ─────────────────────────────────
+    // ── 워크스페이스 상세 조회 ─────────────────────────────────
 
     public WorkspaceResponse getWorkspace(Long userId, Long workspaceId) {
         Workspace workspace = findWorkspaceById(workspaceId);
@@ -132,7 +131,7 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceResponse joinWorkspace(Long userId, String inviteCode) {
-        Workspace workspace = workspaceRepository.findByInviteCode(inviteCode)
+        Workspace workspace = workspaceRepository.findWithOwnerByInviteCode(inviteCode)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVALID_INVITE_CODE));
 
         if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), userId)) {
@@ -153,7 +152,7 @@ public class WorkspaceService {
     public List<WorkspaceMemberResponse> getMembers(Long userId, Long workspaceId) {
         findWorkspaceById(workspaceId);
         validateMember(workspaceId, userId);
-        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
+        return workspaceMemberRepository.findAllWithUserByWorkspaceId(workspaceId).stream()
                 .map(WorkspaceMemberResponse::from)
                 .toList();
     }
@@ -236,7 +235,7 @@ public class WorkspaceService {
     // ── 내부 헬퍼 ─────────────────────────────────────────────
 
     private Workspace findWorkspaceById(Long workspaceId) {
-        return workspaceRepository.findById(workspaceId)
+        return workspaceRepository.findWithOwnerById(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
     }
 
