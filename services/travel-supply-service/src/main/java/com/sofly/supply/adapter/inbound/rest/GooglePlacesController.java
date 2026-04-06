@@ -1,7 +1,7 @@
 package com.sofly.supply.adapter.inbound.rest;
 
 import com.sofly.supply.adapter.outbound.google.GooglePlacesClient;
-import com.sofly.supply.adapter.outbound.google.PlaceInfo;
+import com.sofly.supply.application.dto.PlaceInfo;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

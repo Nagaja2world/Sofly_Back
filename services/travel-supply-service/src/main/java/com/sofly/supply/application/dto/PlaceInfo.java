@@ -1,10 +1,7 @@
-package com.sofly.supply.adapter.outbound.google;
-
-import java.util.List;
+package com.sofly.supply.application.dto;
 
 public record PlaceInfo(
         String placeId,
         Double rating,
         Integer userRatingsTotal
-        //List<String> photoUrls
 ) {}
