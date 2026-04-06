@@ -215,23 +215,22 @@ jobs:
 
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.core"
-            cat <<EOF > .env.core
-            SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL
-            SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME
-            SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD
-            REDIS_HOST=$REDIS_HOST
-            REDIS_PORT=$REDIS_PORT
-            JWT_SECRET_KEY=$JWT_SECRET_KEY
-            GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
-            GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
-            KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID
-            KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET
-            NAVER_CLIENT_ID=$NAVER_CLIENT_ID
-            NAVER_CLIENT_SECRET=$NAVER_CLIENT_SECRET
-            OAUTH2_REDIRECT_URI=$OAUTH2_REDIRECT_URI
-            GEMINI_API_KEY=$GEMINI_API_KEY
-            SUPPLY_SERVICE_URL=$SUPPLY_SERVICE_URL
-            EOF
+            printf '%s\n' \
+              "SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL" \
+              "SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME" \
+              "SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD" \
+              "REDIS_HOST=$REDIS_HOST" \
+              "REDIS_PORT=$REDIS_PORT" \
+              "JWT_SECRET_KEY=$JWT_SECRET_KEY" \
+              "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+              "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" \
+              "KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID" \
+              "KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET" \
+              "NAVER_CLIENT_ID=$NAVER_CLIENT_ID" \
+              "NAVER_CLIENT_SECRET=$NAVER_CLIENT_SECRET" \
+              "OAUTH2_REDIRECT_URI=$OAUTH2_REDIRECT_URI" \
+              "GEMINI_API_KEY=$GEMINI_API_KEY" \
+              "SUPPLY_SERVICE_URL=$SUPPLY_SERVICE_URL" > .env.core
             chmod 600 .env.core
 
             # ── 5. Docker Hub 이미지 pull ──────────────────────
