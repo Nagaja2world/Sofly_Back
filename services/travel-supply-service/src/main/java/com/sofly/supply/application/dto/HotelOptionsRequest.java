@@ -11,6 +11,8 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class HotelOptionsRequest {
 
     @Schema(defaultValue = "-2092174", required = true)
