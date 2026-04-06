@@ -8,6 +8,10 @@ logging:
 spring:
   application:
     name: travel-supply-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   jackson:
     serialization:
       indent_output: true
