@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
+import com.sofly.core.domain.conquest.event.FlightSavedEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +42,7 @@ public class WorkspaceService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final SavedFlightRepository savedFlightRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${sofly.oauth2.redirect-uri}")
     private String baseUrl;
@@ -219,6 +222,19 @@ public class WorkspaceService {
                 .build();
 
         savedFlightRepository.save(flight);
+
+        // 정복 지도: 도착 국가/도시를 PLANNED 상태로 자동 반영
+        List<Long> memberIds = workspace.getMembers().stream()
+                .map(member -> member.getUser().getId())
+                .toList();
+        eventPublisher.publishEvent(new FlightSavedEvent(
+                memberIds,
+                workspace.getId(),
+                request.getDepartureAirport(),
+                request.getArrivalAirport(),
+                request.getDepartureTime()
+        ));
+
         return SavedFlightResponse.from(flight);
     }
 
