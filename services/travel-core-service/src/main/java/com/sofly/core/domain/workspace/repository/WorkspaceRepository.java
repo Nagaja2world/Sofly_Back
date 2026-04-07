@@ -21,4 +21,10 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
            "JOIN FETCH wm.workspace.owner " +
            "WHERE wm.user.id = :userId")
     List<Workspace> findAllWithOwnerByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT wm.workspace FROM WorkspaceMember wm " +
+           "JOIN FETCH wm.workspace.owner " +
+           "WHERE wm.user.id = :userId AND wm.workspace.countryCode = :countryCode")
+    List<Workspace> findAllByUserIdAndCountryCode(@Param("userId") Long userId,
+                                                  @Param("countryCode") String countryCode);
 }
