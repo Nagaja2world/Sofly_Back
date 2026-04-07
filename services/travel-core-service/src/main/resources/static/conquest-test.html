@@ -474,7 +474,7 @@ function setupLayers() {
   // Country fill (visual)
   map.addLayer({ id: 'c-fill', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
     filter: WV_FILTER,
-    paint: { 'fill-color': '#1e293b', 'fill-opacity': 0.55 }
+    paint: { 'fill-color': '#1e293b', 'fill-opacity': 0 }  // opacity 0으로
   });
   // Country outline
   map.addLayer({ id: 'c-line', type: 'line', source: 'cb', 'source-layer': 'country_boundaries',
@@ -630,16 +630,12 @@ async function loadAll() {
 function updateCountryLayer() {
   if (!map || !conquest) return;
   const countries = extract(conquest)?.countries || [];
-  // Mapbox 타일셋의 iso_3166_1_alpha_3 (3자리) 기준으로 색을 매핑한다.
-  // API의 countryCode는 alpha-2 이므로 A2_A3 테이블로 변환.
-  const expr = ['match', ['get', 'iso_3166_1_alpha_3']];
+  const expr = ['match', ['get', 'iso_3166_1']];
   for (const c of countries) {
-    const iso3 = A2_A3[c.countryCode];
-    if (!iso3) continue;
-    if (c.status === 'VISITED') { expr.push(iso3); expr.push('#8b5cf6'); }
-    else if (c.status === 'PLANNED') { expr.push(iso3); expr.push('#f59e0b'); }
+    if (c.status === 'VISITED') { expr.push(c.countryCode); expr.push('#8b5cf6'); }
+    else if (c.status === 'PLANNED') { expr.push(c.countryCode); expr.push('#f59e0b'); }
   }
-  expr.push('#1e293b');
+  expr.push('transparent');  // #1e293b → transparent
   map.setPaintProperty('c-fill', 'fill-color', expr);
   map.setPaintProperty('c-fill', 'fill-opacity', 0.72);
 }
