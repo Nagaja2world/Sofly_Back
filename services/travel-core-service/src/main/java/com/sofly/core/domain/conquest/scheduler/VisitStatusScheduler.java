@@ -17,7 +17,7 @@ public class VisitStatusScheduler {
 
     private final ConquestMapService conquestMapService;
 
-    @Scheduled(cron = "0 0 0 * * *")   // 매일 00:00
+    @Scheduled(fixedDelay = 1800000)  // 1800000ms = 30분
     public void promoteToVisited() {
         log.info("[ConquestScheduler] PLANNED → VISITED 자동 전환 시작");
         conquestMapService.promotePlannedToVisited();
