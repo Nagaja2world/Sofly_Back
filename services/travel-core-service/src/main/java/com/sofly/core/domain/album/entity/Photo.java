@@ -28,17 +28,28 @@ public class Photo extends BaseTimeEntity {
     private User uploadedBy;
 
     @Column(nullable = false)
-    private String thumbnailUrl;        // 썸네일 URL
+    private String s3Key;           // S3 객체 키 (삭제 시 사용)
 
     @Column(nullable = false)
-    private String originalUrl;         // 원본 URL (Drive 링크)
-
-    private String driveFileId;         // Google Drive 파일 ID
+    private String url;             // S3 접근 URL (또는 CloudFront URL)
 
     // EXIF 정보 (선택)
-    private LocalDate takenAt;          // 촬영 날짜
-    private Double latitude;            // 촬영 위치
+    private LocalDate takenAt;
+    private Double latitude;
     private Double longitude;
 
-    private Integer matchedDay;         // EXIF 기반 매칭된 여행 일차
+    private Integer matchedDay;     // EXIF 기반 매칭된 여행 일차
+
+    public static Photo of(Album album, User uploadedBy, String s3Key, String url,
+                           LocalDate takenAt, Double latitude, Double longitude) {
+        return Photo.builder()
+                .album(album)
+                .uploadedBy(uploadedBy)
+                .s3Key(s3Key)
+                .url(url)
+                .takenAt(takenAt)
+                .latitude(latitude)
+                .longitude(longitude)
+                .build();
+    }
 }
