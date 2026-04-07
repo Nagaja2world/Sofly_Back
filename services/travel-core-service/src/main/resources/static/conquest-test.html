@@ -431,12 +431,12 @@ function setupLayers() {
   });
   // Hover highlight
   map.addLayer({ id: 'c-hover', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
-    filter: ['==', ['get', 'iso_3166_1'], ''],
+    filter: ['==', ['get', 'iso_3166_1_alpha_3'], ''],
     paint: { 'fill-color': 'rgba(255,255,255,0.08)', 'fill-opacity': 1 }
   });
   // Selected outline
   map.addLayer({ id: 'c-sel', type: 'line', source: 'cb', 'source-layer': 'country_boundaries',
-    filter: ['==', ['get', 'iso_3166_1'], ''],
+    filter: ['==', ['get', 'iso_3166_1_alpha_3'], ''],
     paint: { 'line-color': '#a78bfa', 'line-width': 2 }
   });
   // Routes
@@ -477,20 +477,20 @@ function setupEvents() {
   map.on('mousemove', 'c-fill', e => {
     if (!e.features.length) return;
     map.getCanvas().style.cursor = 'pointer';
-    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1'], e.features[0].properties.iso_3166_1 || '']);
+    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], e.features[0].properties.iso_3166_1_alpha_3 || '']);
   });
   map.on('mouseleave', 'c-fill', () => {
     map.getCanvas().style.cursor = '';
-    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1'], '']);
+    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
   });
 
   // Country click → sidebar
   map.on('click', 'c-fill', async e => {
     if (!e.features.length) return;
-    const code = e.features[0].properties.iso_3166_1;
+    const code = e.features[0].properties.iso_3166_1_alpha_3;
     if (!code) return;
     selCountry = code;
-    map.setFilter('c-sel', ['==', ['get', 'iso_3166_1'], code]);
+    map.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], code]);
     await openCountrySidebar(code);
   });
 
@@ -533,7 +533,7 @@ function setupEvents() {
     const f = map.queryRenderedFeatures(e.point, { layers: ['c-fill', 'city-pt', 'cl-circle'] });
     if (!f.length) {
       selCountry = null;
-      map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1'], '']);
+      map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
     }
   });
 
@@ -573,7 +573,7 @@ async function loadAll() {
 function updateCountryLayer() {
   if (!map || !conquest) return;
   const countries = extract(conquest)?.countries || [];
-  const expr = ['match', ['get', 'iso_3166_1']];
+  const expr = ['match', ['get', 'iso_3166_1_alpha_3']];
   for (const c of countries) {
     if (c.status === 'VISITED') { expr.push(c.countryCode); expr.push('#8b5cf6'); }
     else if (c.status === 'PLANNED') { expr.push(c.countryCode); expr.push('#f59e0b'); }
@@ -731,7 +731,7 @@ async function openCountrySidebar(code) {
 function closeWsSidebar() {
   document.getElementById('wsSidebar').classList.remove('open');
   selCountry = null;
-  map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1'], '']);
+  map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
 }
 
 function hlRoute(wsId) {
