@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.sofly.core.domain.conquest.exception.ConquestException;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.global.response.ApiResponse;
@@ -33,6 +34,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WorkspaceException.class)
     public ResponseEntity<ApiResponse<Void>> handleWorkspaceException(WorkspaceException e) {
         log.warn("WorkspaceException: {}", e.getMessage());
+        BaseErrorCode errorCode = e.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(ConquestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConquestException(ConquestException e) {
+        log.warn("ConquestException: {}", e.getMessage());
         BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
