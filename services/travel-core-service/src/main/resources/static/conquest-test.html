@@ -339,6 +339,47 @@
 
 <script>
 // =====================================================
+// ISO 3166-1 alpha-2 ↔ alpha-3 lookup tables
+// 백엔드 API는 alpha-2(KR), Mapbox 타일셋은 iso_3166_1_alpha_3(KOR)을 사용하므로
+// 프론트엔드에서 변환한다. 백엔드 코드 변경 불필요.
+// =====================================================
+const A2_A3 = {
+  AF:'AFG',AX:'ALA',AL:'ALB',DZ:'DZA',AS:'ASM',AD:'AND',AO:'AGO',AI:'AIA',
+  AQ:'ATA',AG:'ATG',AR:'ARG',AM:'ARM',AW:'ABW',AU:'AUS',AT:'AUT',AZ:'AZE',
+  BS:'BHS',BH:'BHR',BD:'BGD',BB:'BRB',BY:'BLR',BE:'BEL',BZ:'BLZ',BJ:'BEN',
+  BM:'BMU',BT:'BTN',BO:'BOL',BQ:'BES',BA:'BIH',BW:'BWA',BV:'BVT',BR:'BRA',
+  IO:'IOT',BN:'BRN',BG:'BGR',BF:'BFA',BI:'BDI',CV:'CPV',KH:'KHM',CM:'CMR',
+  CA:'CAN',KY:'CYM',CF:'CAF',TD:'TCD',CL:'CHL',CN:'CHN',CX:'CXR',CC:'CCK',
+  CO:'COL',KM:'COM',CG:'COG',CD:'COD',CK:'COK',CR:'CRI',CI:'CIV',HR:'HRV',
+  CU:'CUB',CW:'CUW',CY:'CYP',CZ:'CZE',DK:'DNK',DJ:'DJI',DM:'DMA',DO:'DOM',
+  EC:'ECU',EG:'EGY',SV:'SLV',GQ:'GNQ',ER:'ERI',EE:'EST',SZ:'SWZ',ET:'ETH',
+  FK:'FLK',FO:'FRO',FJ:'FJI',FI:'FIN',FR:'FRA',GF:'GUF',PF:'PYF',TF:'ATF',
+  GA:'GAB',GM:'GMB',GE:'GEO',DE:'DEU',GH:'GHA',GI:'GIB',GR:'GRC',GL:'GRL',
+  GD:'GRD',GP:'GLP',GU:'GUM',GT:'GTM',GG:'GGY',GN:'GIN',GW:'GNB',GY:'GUY',
+  HT:'HTI',HM:'HMD',VA:'VAT',HN:'HND',HK:'HKG',HU:'HUN',IS:'ISL',IN:'IND',
+  ID:'IDN',IR:'IRN',IQ:'IRQ',IE:'IRL',IM:'IMN',IL:'ISR',IT:'ITA',JM:'JAM',
+  JP:'JPN',JE:'JEY',JO:'JOR',KZ:'KAZ',KE:'KEN',KI:'KIR',KP:'PRK',KR:'KOR',
+  KW:'KWT',KG:'KGZ',LA:'LAO',LV:'LVA',LB:'LBN',LS:'LSO',LR:'LBR',LY:'LBY',
+  LI:'LIE',LT:'LTU',LU:'LUX',MO:'MAC',MG:'MDG',MW:'MWI',MY:'MYS',MV:'MDV',
+  ML:'MLI',MT:'MLT',MH:'MHL',MQ:'MTQ',MR:'MRT',MU:'MUS',YT:'MYT',MX:'MEX',
+  FM:'FSM',MD:'MDA',MC:'MCO',MN:'MNG',ME:'MNE',MS:'MSR',MA:'MAR',MZ:'MOZ',
+  MM:'MMR',NA:'NAM',NR:'NRU',NP:'NPL',NL:'NLD',NC:'NCL',NZ:'NZL',NI:'NIC',
+  NE:'NER',NG:'NGA',NU:'NIU',NF:'NFK',MK:'MKD',MP:'MNP',NO:'NOR',OM:'OMN',
+  PK:'PAK',PW:'PLW',PS:'PSE',PA:'PAN',PG:'PNG',PY:'PRY',PE:'PER',PH:'PHL',
+  PN:'PCN',PL:'POL',PT:'PRT',PR:'PRI',QA:'QAT',RE:'REU',RO:'ROU',RU:'RUS',
+  RW:'RWA',BL:'BLM',SH:'SHN',KN:'KNA',LC:'LCA',MF:'MAF',PM:'SPM',VC:'VCT',
+  WS:'WSM',SM:'SMR',ST:'STP',SA:'SAU',SN:'SEN',RS:'SRB',SC:'SYC',SL:'SLE',
+  SG:'SGP',SX:'SXM',SK:'SVK',SI:'SVN',SB:'SLB',SO:'SOM',ZA:'ZAF',GS:'SGS',
+  SS:'SSD',ES:'ESP',LK:'LKA',SD:'SDN',SR:'SUR',SJ:'SJM',SE:'SWE',CH:'CHE',
+  SY:'SYR',TW:'TWN',TJ:'TJK',TZ:'TZA',TH:'THA',TL:'TLS',TG:'TGO',TK:'TKL',
+  TO:'TON',TT:'TTO',TN:'TUN',TR:'TUR',TM:'TKM',TC:'TCA',TV:'TUV',UG:'UGA',
+  UA:'UKR',AE:'ARE',GB:'GBR',US:'USA',UM:'UMI',UY:'URY',UZ:'UZB',VU:'VUT',
+  VE:'VEN',VN:'VNM',VG:'VGB',VI:'VIR',WF:'WLF',EH:'ESH',YE:'YEM',ZM:'ZMB',
+  ZW:'ZWE'
+};
+const A3_A2 = Object.fromEntries(Object.entries(A2_A3).map(([k,v])=>[v,k]));
+
+// =====================================================
 // STATE
 // =====================================================
 let map = null;
@@ -416,10 +457,21 @@ function setupSources() {
   map.addSource('routes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 }
 
-const WV_FILTER = ['any', ['==', ['get', 'worldview'], 'all'], ['==', ['get', 'worldview'], 'US']];
+// 시각 레이어용 worldview 필터 (Mapbox 공식 권장 방식)
+// 'all' + 'US' worldview를 사용해 분쟁지역 중복 없이 모든 국가를 표시
+const WV_FILTER = ['in', ['get', 'worldview'], ['literal', ['all', 'US']]];
 
 function setupLayers() {
-  // Country fill
+  // ── c-hit: 이벤트 전용 invisible 레이어 ──────────────────────────────
+  // worldview 필터 없이 모든 feature를 커버한다.
+  // 이렇게 하지 않으면 'all' worldview에 없는 분쟁 지역(크림반도, 포클랜드 등)
+  // 경계 근처에서 hover/click 이벤트가 발생하지 않는 "지리적 구멍"이 생긴다.
+  // fill-opacity:0 이어도 Mapbox는 geometry 기반으로 이벤트를 발생시킨다.
+  map.addLayer({ id: 'c-hit', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
+    filter: ['has', 'iso_3166_1_alpha_3'],
+    paint: { 'fill-opacity': 0 }
+  });
+  // Country fill (visual)
   map.addLayer({ id: 'c-fill', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
     filter: WV_FILTER,
     paint: { 'fill-color': '#1e293b', 'fill-opacity': 0.55 }
@@ -429,12 +481,12 @@ function setupLayers() {
     filter: WV_FILTER,
     paint: { 'line-color': 'rgba(255,255,255,0.07)', 'line-width': 0.5 }
   });
-  // Hover highlight
+  // Hover highlight (alpha-3 기준)
   map.addLayer({ id: 'c-hover', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
     filter: ['==', ['get', 'iso_3166_1_alpha_3'], ''],
     paint: { 'fill-color': 'rgba(255,255,255,0.08)', 'fill-opacity': 1 }
   });
-  // Selected outline
+  // Selected outline (alpha-3 기준)
   map.addLayer({ id: 'c-sel', type: 'line', source: 'cb', 'source-layer': 'country_boundaries',
     filter: ['==', ['get', 'iso_3166_1_alpha_3'], ''],
     paint: { 'line-color': '#a78bfa', 'line-width': 2 }
@@ -473,25 +525,30 @@ function setupLayers() {
 }
 
 function setupEvents() {
-  // Country hover
-  map.on('mousemove', 'c-fill', e => {
+  // ── 국가 hover / click은 c-hit 레이어에 달아야 한다 ──────────────────
+  // c-hit은 worldview 필터가 없어서 분쟁지역 경계 근방의 "지리적 구멍"이 없다.
+  // iso_3166_1_alpha_3 (3자리)를 기준으로 동작하며, API 호출은 A3_A2로 변환.
+
+  map.on('mousemove', 'c-hit', e => {
     if (!e.features.length) return;
     map.getCanvas().style.cursor = 'pointer';
-    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], e.features[0].properties.iso_3166_1_alpha_3 || '']);
+    const f = e.features.find(f => f.properties?.iso_3166_1_alpha_3?.length === 3);
+    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], f?.properties.iso_3166_1_alpha_3 || '']);
   });
-  map.on('mouseleave', 'c-fill', () => {
+  map.on('mouseleave', 'c-hit', () => {
     map.getCanvas().style.cursor = '';
     map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
   });
 
-  // Country click → sidebar
-  map.on('click', 'c-fill', async e => {
-    if (!e.features.length) return;
-    const code = e.features[0].properties.iso_3166_1_alpha_3;
-    if (!code) return;
-    selCountry = code;
-    map.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], code]);
-    await openCountrySidebar(code);
+  map.on('click', 'c-hit', async e => {
+    // c-hit feature 에서 alpha-3 코드 추출
+    // 같은 위치에 feature가 여러 개일 수 있으므로 유효한 것을 찾는다
+    const f = e.features.find(f => f.properties?.iso_3166_1_alpha_3?.length === 3);
+    const iso3 = f?.properties.iso_3166_1_alpha_3;
+    if (!iso3) return;
+    selCountry = iso3;
+    map.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], iso3]);
+    await openCountrySidebar(iso3);
   });
 
   // Cluster zoom
@@ -530,7 +587,7 @@ function setupEvents() {
 
   // Click on empty → deselect
   map.on('click', e => {
-    const f = map.queryRenderedFeatures(e.point, { layers: ['c-fill', 'city-pt', 'cl-circle'] });
+    const f = map.queryRenderedFeatures(e.point, { layers: ['c-hit', 'city-pt', 'cl-circle'] });
     if (!f.length) {
       selCountry = null;
       map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
@@ -573,10 +630,14 @@ async function loadAll() {
 function updateCountryLayer() {
   if (!map || !conquest) return;
   const countries = extract(conquest)?.countries || [];
+  // Mapbox 타일셋의 iso_3166_1_alpha_3 (3자리) 기준으로 색을 매핑한다.
+  // API의 countryCode는 alpha-2 이므로 A2_A3 테이블로 변환.
   const expr = ['match', ['get', 'iso_3166_1_alpha_3']];
   for (const c of countries) {
-    if (c.status === 'VISITED') { expr.push(c.countryCode); expr.push('#8b5cf6'); }
-    else if (c.status === 'PLANNED') { expr.push(c.countryCode); expr.push('#f59e0b'); }
+    const iso3 = A2_A3[c.countryCode];
+    if (!iso3) continue;
+    if (c.status === 'VISITED') { expr.push(iso3); expr.push('#8b5cf6'); }
+    else if (c.status === 'PLANNED') { expr.push(iso3); expr.push('#f59e0b'); }
   }
   expr.push('#1e293b');
   map.setPaintProperty('c-fill', 'fill-color', expr);
@@ -690,11 +751,14 @@ function toggleStats() {
 // =====================================================
 // WORKSPACE SIDEBAR
 // =====================================================
-async function openCountrySidebar(code) {
+// iso3: Mapbox의 iso_3166_1_alpha_3 코드 (예: 'KOR')
+// API 호출은 alpha-2(예: 'KR')로 변환한다.
+async function openCountrySidebar(iso3) {
+  const iso2 = A3_A2[iso3] || '';
   const countries = extract(conquest)?.countries || [];
-  const c = countries.find(x => x.countryCode === code);
+  const c = countries.find(x => x.countryCode === iso2);
   const status = c?.status || 'UNVISITED';
-  const name = c?.countryName || code;
+  const name = c?.countryName || iso3;
 
   document.getElementById('wsTitle').textContent = name;
   document.getElementById('wsMeta').innerHTML = `
@@ -702,15 +766,17 @@ async function openCountrySidebar(code) {
     ${c?.continentName ? `<span>${c.continentName}</span>` : ''}
     ${c?.visitCount > 0 ? `<span>${c.visitCount}회 방문</span>` : ''}
   `;
+  // openCountryModal 에는 alpha-2 를 전달 (API PUT 요청에 사용)
   document.getElementById('wsActions').innerHTML = `
-    <button class="btn btn-secondary btn-sm" onclick="openCountryModal('${code}','${status}','${esc(name)}')">상태 변경</button>
+    <button class="btn btn-secondary btn-sm" onclick="openCountryModal('${iso2}','${status}','${esc(name)}')">상태 변경</button>
     <button class="btn btn-secondary btn-sm" onclick="setRouteFilter('all');document.querySelectorAll('.ws-card').forEach(e=>e.classList.remove('hl'))">전체 경로</button>
   `;
   document.getElementById('wsBody').innerHTML = '<div class="empty"><div class="spin"></div></div>';
   document.getElementById('wsSidebar').classList.add('open');
 
   try {
-    const data = await api('GET', `/api/conquest/countries/${code}/workspaces`);
+    // API는 alpha-2 사용
+    const data = await api('GET', `/api/conquest/countries/${iso2}/workspaces`);
     const ws = extract(data) || data || [];
     if (!ws.length) {
       document.getElementById('wsBody').innerHTML = '<div class="empty">이 국가와 연결된 워크스페이스가 없습니다</div>';
