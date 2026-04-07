@@ -76,6 +76,10 @@ dependencies {
 
     //Gemini (Google AI)
     implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+
+    // AWS S3
+    implementation platform('software.amazon.awssdk:bom:2.25.0')
+    implementation 'software.amazon.awssdk:s3'
 }
 
 dependencyManagement {
