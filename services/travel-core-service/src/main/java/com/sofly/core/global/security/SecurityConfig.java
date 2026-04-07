@@ -40,6 +40,7 @@ public class SecurityConfig {
                         "/",
                         "/index.html",
                         "/user-profile-test.html",
+                        "/conquest-test.html",
                         "/login/oauth2/**",
                         "/oauth2/**",
                         "/api/auth/refresh",
