@@ -232,6 +232,7 @@ public class ConquestMapService {
     @Transactional
     public void promotePlannedToVisited() {
         LocalDateTime now = LocalDateTime.now();
+        // TODO: Join Query 성능 개선 필요
         List<VisitedCountry> plannedCountries = visitedCountryRepository.findByStatus(VisitStatus.PLANNED);
 
         for (VisitedCountry plannedCountry : plannedCountries) {
