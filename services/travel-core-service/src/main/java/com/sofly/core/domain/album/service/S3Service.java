@@ -4,9 +4,12 @@ import com.sofly.core.global.config.S3Config;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -15,6 +18,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3Service {
@@ -38,7 +42,7 @@ public class S3Service {
                     .build();
 
             return s3Presigner.presignPutObject(presignRequest).url().toString();
-        } catch (Exception e) {
+        } catch (SdkException e) {
             throw new SoflyException(ErrorCode.S3_UPLOAD_FAILED);
         }
     }
@@ -57,7 +61,7 @@ public class S3Service {
                     .build();
 
             return s3Presigner.presignGetObject(presignRequest).url().toString();
-        } catch (Exception e) {
+        } catch (SdkException e) {
             throw new SoflyException(ErrorCode.S3_DOWNLOAD_FAILED);
         }
     }
@@ -69,7 +73,9 @@ public class S3Service {
                     .bucket(s3Config.getS3().getBucket())
                     .key(s3Key)
                     .build());
-        } catch (Exception e) {
+        } catch (NoSuchKeyException e) {
+            log.warn("S3 객체가 이미 존재하지 않습니다: {}", s3Key);
+        } catch (SdkException e) {
             throw new SoflyException(ErrorCode.S3_DELETE_FAILED);
         }
     }
