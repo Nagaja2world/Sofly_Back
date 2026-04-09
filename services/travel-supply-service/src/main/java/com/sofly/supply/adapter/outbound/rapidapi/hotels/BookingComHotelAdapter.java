@@ -5,6 +5,7 @@ import com.sofly.supply.adapter.outbound.rapidapi.RapidApiJsonUtils;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.port.outbound.HotelSupplierPort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -19,6 +20,7 @@ public class BookingComHotelAdapter implements HotelSupplierPort {
         return "booking";
     }
 
+    @Cacheable(value = "bookingHotels", key = "#request")
     @Override
     public JsonNode searchHotelsByCity(HotelSearchRequest request){
 

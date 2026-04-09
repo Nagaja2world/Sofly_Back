@@ -6,6 +6,10 @@ import com.sofly.core.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "travel_logs")
 @Getter
@@ -18,6 +22,30 @@ public class TravelLog extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Integer day;
+
+    private LocalDate travelDate;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;             // Markdown
+
+    @Enumerated(EnumType.STRING)
+    private Weather weather;
+
+    @ElementCollection
+    @CollectionTable(name = "travel_log_photos", joinColumns = @JoinColumn(name = "travel_log_id"))
+    @Column(name = "url")
+    @Builder.Default
+    private List<String> photoUrls = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Visibility visibility = Visibility.PRIVATE;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)
     private Workspace workspace;
@@ -26,25 +54,11 @@ public class TravelLog extends BaseTimeEntity {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;             // Markdown
-
-    private String coverImageUrl;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private Visibility visibility = Visibility.PRIVATE;
-
     // ── 비즈니스 메서드 ──────────────────────────────────────
 
-    public void update(String title, String content, String coverImageUrl, Visibility visibility) {
+    public void update(String title, String content, Visibility visibility) {
         this.title = title;
         this.content = content;
-        this.coverImageUrl = coverImageUrl;
         this.visibility = visibility;
     }
 
@@ -56,5 +70,12 @@ public class TravelLog extends BaseTimeEntity {
         PRIVATE,    // 비공개
         MEMBERS,    // 멤버 공개
         PUBLIC      // 전체 공개
+    }
+
+    public enum Weather {
+        SUNNY,
+        CLOUDY,
+        RAINY,
+        SNOWY
     }
 }

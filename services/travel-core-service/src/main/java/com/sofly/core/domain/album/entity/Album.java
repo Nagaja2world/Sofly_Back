@@ -24,20 +24,13 @@ public class Album extends BaseTimeEntity {
     @JoinColumn(name = "workspace_id", nullable = false, unique = true)
     private Workspace workspace;
 
-    // Google Drive 연동 정보
-    private String driveFolderId;       // 연동된 Drive 폴더 ID
-    private String driveFolderName;     // 폴더 이름
-
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Photo> photos = new ArrayList<>();
 
-    public void connectDrive(String folderId, String folderName) {
-        this.driveFolderId = folderId;
-        this.driveFolderName = folderName;
-    }
-
-    public boolean isDriveConnected() {
-        return this.driveFolderId != null;
+    public static Album of(Workspace workspace) {
+        return Album.builder()
+                .workspace(workspace)
+                .build();
     }
 }

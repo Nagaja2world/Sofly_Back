@@ -31,6 +31,11 @@ public enum ErrorCode {
     // ── Album ────────────────────────────────────────────
     ALBUM_NOT_FOUND(HttpStatus.NOT_FOUND, "앨범을 찾을 수 없습니다."),
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "사진을 찾을 수 없습니다."),
+    UPLOAD_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "사진 업로드 권한이 없습니다."),
+    DELETE_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "사진 삭제 권한이 없습니다."),
+    S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 업로드 처리 중 오류가 발생했습니다."),
+    S3_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 다운로드 URL 생성 중 오류가 발생했습니다."),
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 파일 삭제 중 오류가 발생했습니다."),
 
     // ── TravelLog ────────────────────────────────────────
     TRAVEL_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "여행기를 찾을 수 없습니다."),

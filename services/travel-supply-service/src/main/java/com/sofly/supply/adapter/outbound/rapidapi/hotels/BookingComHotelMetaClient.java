@@ -9,6 +9,7 @@ import com.sofly.supply.application.port.outbound.HotelMetaPort;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -27,6 +28,7 @@ public class BookingComHotelMetaClient implements HotelMetaPort {
 
     private final WebClient rapidApiWebClient;
 
+    @Cacheable(value = "hotelDestinations", key = "#query")
     public List<HotelDestination> searchDestination(String query) {
         try {
             JsonNode response = rapidApiWebClient.get()
@@ -68,6 +70,7 @@ public class BookingComHotelMetaClient implements HotelMetaPort {
         }
     }
 
+    @Cacheable(value = "hotelSortBy", key = "#request")
     public List<HotelSortOption> getSortBy(HotelOptionsRequest request) {
         try {
             JsonNode response = rapidApiWebClient.get()
@@ -97,6 +100,7 @@ public class BookingComHotelMetaClient implements HotelMetaPort {
         }
     }
 
+    @Cacheable(value = "hotelFilter", key = "#request")
     public JsonNode getFilter(HotelOptionsRequest request) {
         try {
             JsonNode response = rapidApiWebClient.get()

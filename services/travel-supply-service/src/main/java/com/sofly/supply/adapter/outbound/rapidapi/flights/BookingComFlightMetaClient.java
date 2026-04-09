@@ -7,6 +7,7 @@ import com.sofly.supply.application.port.outbound.FlightMetaPort;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -21,6 +22,7 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
 
     private final WebClient rapidApiWebClient;
 
+    @Cacheable(value = "flightDestinations", key = "#query + ':' + #languageCode")
     public List<FlightDestination> searchDestinations(String query, String languageCode){
         try{
             JsonNode response = rapidApiWebClient.get()

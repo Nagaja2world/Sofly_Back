@@ -101,5 +101,14 @@ springdoc:
   api-docs:
     path: /core/v3/api-docs
 
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET:sofly-bucket}
+      region: ${AWS_REGION:ap-northeast-2}
+    credentials:
+      access-key: ${AWS_S3_ACCESS_KEY_ID}
+      secret-key: ${AWS_S3_SECRET_ACCESS_KEY}
+
 logging:
   exception-conversion-word: "%wEx{0}"
