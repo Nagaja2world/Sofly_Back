@@ -45,25 +45,33 @@ public class S3Service {
 
     /** 다운로드용 Presigned GET URL 발급 (5분) */
     public String generatePresignedDownloadUrl(String s3Key) {
-        GetObjectRequest getRequest = GetObjectRequest.builder()
-                .bucket(s3Config.getS3().getBucket())
-                .key(s3Key)
-                .build();
+        try {
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(s3Config.getS3().getBucket())
+                    .key(s3Key)
+                    .build();
 
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
-                .getObjectRequest(getRequest)
-                .build();
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(5))
+                    .getObjectRequest(getRequest)
+                    .build();
 
-        return s3Presigner.presignGetObject(presignRequest).url().toString();
+            return s3Presigner.presignGetObject(presignRequest).url().toString();
+        } catch (Exception e) {
+            throw new SoflyException(ErrorCode.S3_DOWNLOAD_FAILED);
+        }
     }
 
     /** S3 객체 삭제 */
     public void deleteObject(String s3Key) {
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(s3Config.getS3().getBucket())
-                .key(s3Key)
-                .build());
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(s3Config.getS3().getBucket())
+                    .key(s3Key)
+                    .build());
+        } catch (Exception e) {
+            throw new SoflyException(ErrorCode.S3_DELETE_FAILED);
+        }
     }
 
     /** S3 URL 생성 (업로드 완료 후 저장할 public URL) */

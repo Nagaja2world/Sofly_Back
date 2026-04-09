@@ -33,6 +33,7 @@ public class AlbumService {
     private final S3Service s3Service;
 
     /** 앨범 + 사진 목록 조회 */
+    @Transactional
     public AlbumResponse getAlbum(Long workspaceId, Long userId) {
         validateMember(workspaceId, userId);
         Album album = getOrCreateAlbum(workspaceId);
@@ -74,6 +75,10 @@ public class AlbumService {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.PHOTO_NOT_FOUND));
 
+        if (!photo.getAlbum().getWorkspace().getId().equals(workspaceId)) {
+            throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
+        }
+
         boolean isOwnerOrEditor = member.getRole() == MemberRole.OWNER || member.getRole() == MemberRole.EDITOR;
         boolean isUploader = photo.getUploadedBy().getId().equals(userId);
 
@@ -90,6 +95,11 @@ public class AlbumService {
         validateMember(workspaceId, userId);
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.PHOTO_NOT_FOUND));
+
+        if (!photo.getAlbum().getWorkspace().getId().equals(workspaceId)) {
+            throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
+        }
+
         String downloadUrl = s3Service.generatePresignedDownloadUrl(photo.getS3Key());
         return new DownloadUrlResponse(downloadUrl);
     }
@@ -111,7 +121,6 @@ public class AlbumService {
         }
     }
 
-    @Transactional
     private Album getOrCreateAlbum(Long workspaceId) {
         return albumRepository.findByWorkspaceId(workspaceId)
                 .orElseGet(() -> {
