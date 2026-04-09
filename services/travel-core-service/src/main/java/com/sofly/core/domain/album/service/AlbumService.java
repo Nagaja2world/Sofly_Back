@@ -1,6 +1,8 @@
 package com.sofly.core.domain.album.service;
 
-import com.sofly.core.domain.album.dto.*;
+import com.sofly.core.domain.album.dto.AlbumResponse;
+import com.sofly.core.domain.album.dto.DownloadUrlResponse;
+import com.sofly.core.domain.album.dto.PhotoResponse;
 import com.sofly.core.domain.album.entity.Album;
 import com.sofly.core.domain.album.entity.Photo;
 import com.sofly.core.domain.album.repository.AlbumRepository;
@@ -16,6 +18,7 @@ import com.sofly.core.global.exception.SoflyException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,28 +47,23 @@ public class AlbumService {
         return new AlbumResponse(album.getId(), workspaceId, photos);
     }
 
-    /** Presigned Upload URL 발급 */
-    public PresignedUrlResponse generateUploadUrl(Long workspaceId, Long userId, PresignedUrlRequest request) {
-        validateUploadPermission(workspaceId, userId);
-        String ext = extractExtension(request.fileName());
-        String s3Key = String.format("albums/%d/%s.%s", workspaceId, UUID.randomUUID(), ext);
-        String presignedUrl = s3Service.generatePresignedUploadUrl(s3Key, request.contentType());
-        return new PresignedUrlResponse(presignedUrl, s3Key);
-    }
-
-    /** 업로드 완료 후 DB 저장 */
+    /** 사진 업로드 (단건 또는 다건) */
     @Transactional
-    public PhotoResponse savePhoto(Long workspaceId, Long userId, PhotoSaveRequest request) {
+    public List<PhotoResponse> uploadPhotos(Long workspaceId, Long userId, List<MultipartFile> files) {
         validateUploadPermission(workspaceId, userId);
         Album album = getOrCreateAlbum(workspaceId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
 
-        String url = s3Service.buildObjectUrl(request.s3Key());
-        Photo photo = Photo.of(album, user, request.s3Key(), url,
-                request.takenAt(), request.latitude(), request.longitude());
-        photoRepository.save(photo);
-        return PhotoResponse.from(photo);
+        List<Photo> photos = files.stream().map(file -> {
+            String ext = extractExtension(file.getOriginalFilename());
+            String s3Key = String.format("albums/%d/%s.%s", workspaceId, UUID.randomUUID(), ext);
+            String url = s3Service.uploadFile(file, s3Key);
+            return Photo.of(album, user, s3Key, url, null, null, null);
+        }).toList();
+
+        photoRepository.saveAll(photos);
+        return photos.stream().map(PhotoResponse::from).toList();
     }
 
     /** 사진 삭제 (S3 + DB) */
@@ -131,6 +129,7 @@ public class AlbumService {
     }
 
     private String extractExtension(String fileName) {
+        if (fileName == null) return "jpg";
         int idx = fileName.lastIndexOf('.');
         return idx >= 0 ? fileName.substring(idx + 1).toLowerCase() : "jpg";
     }
