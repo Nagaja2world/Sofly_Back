@@ -1,6 +1,7 @@
 package com.sofly.core.domain.chat.controller;
 
-import com.sofly.core.domain.chat.dto.*;
+import com.sofly.core.domain.chat.dto.ChatRoomCreateRequest;
+import com.sofly.core.domain.chat.dto.ChatRoomSummaryResponse;
 import com.sofly.core.domain.chat.service.ChatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Chat", description = "AI 여행 플래너 채팅")
+@Tag(name = "Chat Room", description = "AI 채팅방 생성·조회 API")
 @RestController
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
@@ -33,22 +34,5 @@ public class ChatController {
             @PathVariable Long workspaceId
     ) {
         return ResponseEntity.ok(chatService.getChatRooms(workspaceId));
-    }
-
-    @Operation(summary = "ChatRoom 메시지 조회", description = "특정 ChatRoom의 전체 메시지를 반환합니다.")
-    @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<ChatHistoryResponse> getChatRoomMessages(
-            @PathVariable Long roomId
-    ) {
-        return ResponseEntity.ok(chatService.getChatRoomMessages(roomId));
-    }
-
-    @Operation(summary = "메시지 전송", description = "ChatRoom에 메시지를 보내고 AI 응답을 받습니다.")
-    @PostMapping("/rooms/{roomId}")
-    public ResponseEntity<ChatResponse> chat(
-            @PathVariable Long roomId,
-            @RequestBody @Valid ChatRequest request
-    ) {
-        return ResponseEntity.ok(chatService.chat(roomId, request));
     }
 }

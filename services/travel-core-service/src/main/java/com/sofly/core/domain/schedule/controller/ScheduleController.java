@@ -1,6 +1,8 @@
 package com.sofly.core.domain.schedule.controller;
 
-import com.sofly.core.domain.schedule.dto.*;
+import com.sofly.core.domain.schedule.dto.ScheduleCreateRequest;
+import com.sofly.core.domain.schedule.dto.ScheduleResponse;
+import com.sofly.core.domain.schedule.dto.ScheduleSummaryResponse;
 import com.sofly.core.domain.schedule.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Schedule", description = "일정 관리 API")
+@Tag(name = "Schedule", description = "일정 생성·조회·삭제 API")
 @RestController
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
@@ -90,46 +92,6 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.updateScheduleTitle(scheduleId, title));
     }
 
-    @Operation(summary = "일정 아이템 추가")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "추가 성공"),
-            @ApiResponse(responseCode = "404", description = "일정 없음")
-    })
-    @PostMapping("/{scheduleId}/items")
-    public ResponseEntity<ScheduleItemResponse> addItem(
-            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
-            @RequestBody @Valid ScheduleItemCreateRequest request) {
-        return ResponseEntity.ok(scheduleService.addItem(scheduleId, request));
-    }
-
-    @Operation(summary = "일정 아이템 수정")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "수정 성공"),
-            @ApiResponse(responseCode = "403", description = "다른 일정의 아이템"),
-            @ApiResponse(responseCode = "404", description = "아이템 없음")
-    })
-    @PatchMapping("/schedules/{scheduleId}/items/{itemId}")
-    public ResponseEntity<ScheduleItemResponse> updateItem(
-            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
-            @Parameter(description = "아이템 ID", required = true) @PathVariable Long itemId,
-            @RequestBody @Valid ScheduleItemUpdateRequest request) {
-        return ResponseEntity.ok(scheduleService.updateItem(scheduleId, itemId, request));
-    }
-
-    @Operation(summary = "일정 아이템 위치 이동 (D&D)", description = "아이템 하나를 목표 위치(day, orderIndex)로 이동합니다. 서버가 나머지 아이템 순서를 자동 조정합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "이동 성공"),
-            @ApiResponse(responseCode = "404", description = "아이템 없음")
-    })
-    @PatchMapping("/{scheduleId}/items/{itemId}/position")
-    public ResponseEntity<Void> moveItem(
-            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
-            @Parameter(description = "아이템 ID", required = true) @PathVariable Long itemId,
-            @RequestBody @Valid ScheduleItemMoveRequest request) {
-        scheduleService.moveItem(scheduleId, itemId, request);
-        return ResponseEntity.noContent().build();
-    }
-
     // ── 삭제 ────────────────────────────────────────────────
 
     @Operation(summary = "일정 삭제")
@@ -141,32 +103,6 @@ public class ScheduleController {
     public ResponseEntity<Void> deleteSchedule(
             @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "일정 아이템 삭제")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "403", description = "다른 일정의 아이템"),
-            @ApiResponse(responseCode = "404", description = "아이템 없음")
-    })
-    @DeleteMapping("/schedules/{scheduleId}/items/{itemId}")
-    public ResponseEntity<Void> deleteItem(
-            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
-            @Parameter(description = "아이템 ID", required = true) @PathVariable Long itemId) {
-        scheduleService.deleteItem(scheduleId, itemId);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ── 딥링크 ──────────────────────────────────────────────
-
-    @Operation(summary = "딥링크 클릭 추적", description = "아이템의 딥링크 클릭 이벤트를 기록합니다.")
-    @ApiResponse(responseCode = "204", description = "기록 성공")
-    @PostMapping("/schedules/{scheduleId}/items/{itemId}/deeplink-click")
-    public ResponseEntity<Void> trackDeepLinkClick(
-            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
-            @Parameter(description = "아이템 ID", required = true) @PathVariable Long itemId) {
-        scheduleService.trackDeepLinkClick(scheduleId, itemId);
         return ResponseEntity.noContent().build();
     }
 }
