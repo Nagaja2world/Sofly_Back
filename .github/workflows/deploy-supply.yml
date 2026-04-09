@@ -210,18 +210,17 @@ jobs:
 
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.supply"
-            cat <<EOF > .env.supply
-            AMADEUS_CLIENT_ID=$AMADEUS_CLIENT_ID
-            AMADEUS_CLIENT_SECRET=$AMADEUS_CLIENT_SECRET
-            AMADEUS_BASE_URL=$AMADEUS_BASE_URL
-            GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY
-            GOOGLE_PLACES_BASE_URL=$GOOGLE_PLACES_BASE_URL
-            RAPIDAPI_KEY=$RAPIDAPI_KEY
-            RAPIDAPI_HOST=$RAPIDAPI_HOST
-            RAPIDAPI_BASE_URL=$RAPIDAPI_BASE_URL
-            REDIS_HOST=$REDIS_HOST
-            REDIS_PORT=$REDIS_PORT
-            EOF
+            printf '%s\n' \
+              "AMADEUS_CLIENT_ID=$AMADEUS_CLIENT_ID" \
+              "AMADEUS_CLIENT_SECRET=$AMADEUS_CLIENT_SECRET" \
+              "AMADEUS_BASE_URL=$AMADEUS_BASE_URL" \
+              "GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY" \
+              "GOOGLE_PLACES_BASE_URL=$GOOGLE_PLACES_BASE_URL" \
+              "RAPIDAPI_KEY=$RAPIDAPI_KEY" \
+              "RAPIDAPI_HOST=$RAPIDAPI_HOST" \
+              "RAPIDAPI_BASE_URL=$RAPIDAPI_BASE_URL" \
+              "REDIS_HOST=$REDIS_HOST" \
+              "REDIS_PORT=$REDIS_PORT" > .env.supply
             chmod 600 .env.supply
 
             # ── 5. Docker Hub 이미지 pull ──────────────────────

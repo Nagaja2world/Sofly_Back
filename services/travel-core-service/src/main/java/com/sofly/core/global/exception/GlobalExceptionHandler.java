@@ -8,7 +8,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.sofly.core.domain.user.exception.UserException;
+import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.global.response.ApiResponse;
+import com.sofly.core.global.response.code.BaseErrorCode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +24,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleSoflyException(SoflyException e) {
         log.warn("SoflyException: {}", e.getMessage());
         ErrorCode errorCode = e.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getMessage()));
+    }
+
+    // GlobalExceptionHandler에 추가
+    @ExceptionHandler(WorkspaceException.class)
+    public ResponseEntity<ApiResponse<Void>> handleWorkspaceException(WorkspaceException e) {
+        log.warn("WorkspaceException: {}", e.getMessage());
+        BaseErrorCode errorCode = e.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(UserException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserProfileException(UserException e) {
+        log.warn("UserException: {}", e.getMessage());
+        BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getMessage()));

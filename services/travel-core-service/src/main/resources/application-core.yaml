@@ -96,6 +96,8 @@ sofly:
 springdoc:
   swagger-ui:
     path: /core/swagger-ui
+    tags-sorter: list
+    operations-sorter: list 
   api-docs:
     path: /core/v3/api-docs
 
