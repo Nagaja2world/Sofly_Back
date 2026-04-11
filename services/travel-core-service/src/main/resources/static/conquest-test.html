@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conquest Map — Sofly</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0c14;
+      --surface: rgba(15, 18, 30, 0.94);
+      --border: rgba(255,255,255,0.08);
+      --text: #e2e8f0;
+      --muted: #718096;
+      --visited: #8b5cf6;
+      --planned: #f59e0b;
+      --accent: #7c3aed;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      height: 100vh; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; backdrop-filter: blur(10px); z-index: 200;
+      flex-wrap: wrap;
+    }
+    .header-logo { font-size: 15px; font-weight: 700; color: #a78bfa; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+    .header-logo svg { width: 18px; height: 18px; }
+    .hdiv { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+    .hfield { display: flex; align-items: center; gap: 6px; }
+    .hfield label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .hfield input {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 9px; color: var(--text);
+      font-size: 12px; font-family: monospace;
+    }
+    .hfield input:focus { outline: none; border-color: var(--accent); }
+    .input-url { width: 160px; } .input-mapbox { width: 190px; } .input-jwt { width: 260px; }
+    .btn {
+      padding: 6px 13px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #6d28d9; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .btn-green { background: #059669; color: #fff; }
+    .btn-green:hover { background: #047857; }
+    .btn-green:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-sm { padding: 4px 9px; font-size: 11px; }
+
+    /* ── Map wrapper ── */
+    #mapWrap { position: relative; flex: 1; overflow: hidden; }
+    #map { width: 100%; height: 100%; }
+
+    /* ── Init overlay ── */
+    #initOverlay {
+      position: absolute; inset: 0; background: var(--bg); z-index: 5;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    }
+    #initOverlay.hidden { display: none; }
+    #initOverlay h2 { font-size: 22px; font-weight: 700; color: #a78bfa; }
+    #initOverlay p { font-size: 13px; color: var(--muted); text-align: center; max-width: 340px; line-height: 1.6; }
+
+    /* ── Floating panels ── */
+    .float-panel {
+      position: absolute; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; backdrop-filter: blur(16px); z-index: 10;
+    }
+    .panel-head {
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-head h3 { font-size: 12px; font-weight: 700; color: #a78bfa; }
+    .panel-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+    /* Stats panel */
+    #statsPanel { top: 14px; left: 14px; width: 252px; transition: transform 0.3s; }
+    #statsPanel.hidden { transform: translateX(-280px); }
+
+    .stat-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .stat-label { font-size: 11px; color: var(--muted); }
+    .stat-val { font-size: 15px; font-weight: 700; }
+    .stat-sub { font-size: 10px; color: var(--muted); font-weight: 400; }
+    .pbar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+    .pbar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #a78bfa); transition: width .5s; }
+    .sec-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 6px; }
+
+    .cont-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .cont-name { font-size: 11px; color: var(--text); width: 70px; flex-shrink: 0; }
+    .cont-track { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .cont-fill { height: 100%; background: var(--visited); border-radius: 3px; }
+    .cont-num { font-size: 10px; color: var(--muted); width: 18px; text-align: right; }
+
+    /* Legend */
+    #legend {
+      position: absolute; bottom: 60px; left: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; backdrop-filter: blur(16px); z-index: 10;
+      padding: 8px 12px; display: none; flex-direction: column; gap: 5px;
+    }
+    .leg-title { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 3px; }
+    .leg-item { display: flex; align-items: center; gap: 7px; font-size: 11px; }
+    .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* Route controls */
+    #routeBar {
+      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; backdrop-filter: blur(16px); z-index: 10;
+      display: none; align-items: center; gap: 3px; padding: 4px 6px;
+    }
+    .rbtn {
+      padding: 5px 13px; border-radius: 16px; font-size: 11px; font-weight: 500;
+      border: none; cursor: pointer; transition: all .15s; color: var(--muted); background: transparent;
+    }
+    .rbtn.active { background: rgba(124,58,237,0.2); color: #a78bfa; }
+    .rbtn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.05); }
+
+    /* Workspace sidebar */
+    #wsSidebar {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 310px;
+      background: var(--surface); border-left: 1px solid var(--border);
+      backdrop-filter: blur(16px); z-index: 20;
+      transform: translateX(310px); transition: transform .3s ease;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    #wsSidebar.open { transform: translateX(0); }
+    .ws-head {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .ws-title { font-size: 17px; font-weight: 700; }
+    .ws-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ws-actions { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; }
+    .ws-body { flex: 1; overflow-y: auto; padding: 10px; }
+
+    .ws-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 8px; padding: 11px; margin-bottom: 7px; cursor: pointer; transition: all .15s;
+    }
+    .ws-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(139,92,246,.3); }
+    .ws-card.hl { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.5); }
+    .ws-card-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .ws-card-sub { font-size: 11px; color: var(--muted); }
+
+    .closebtn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px; flex-shrink: 0; }
+    .closebtn:hover { color: var(--text); }
+
+    /* Badge */
+    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .badge-v { background: rgba(139,92,246,.2); color: #a78bfa; border: 1px solid rgba(139,92,246,.3); }
+    .badge-p { background: rgba(245,158,11,.2); color: #fbbf24; border: 1px solid rgba(245,158,11,.3); }
+    .badge-u { background: rgba(107,114,128,.2); color: #9ca3af; border: 1px solid rgba(107,114,128,.2); }
+
+    /* Status modal */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 100;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: #1a1d2e; border: 1px solid var(--border); border-radius: 12px;
+      padding: 22px; width: 300px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal h3 { font-size: 15px; font-weight: 700; }
+    .modal p { font-size: 12px; color: var(--muted); }
+    .stat-opts { display: flex; flex-direction: column; gap: 7px; }
+    .stat-opt {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px; border: 2px solid transparent;
+      cursor: pointer; transition: all .15s; background: rgba(255,255,255,0.03);
+    }
+    .stat-opt:hover { background: rgba(255,255,255,0.06); }
+    .stat-opt.sel { border-color: var(--accent); background: rgba(124,58,237,.1); }
+    .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .sdot-v { background: var(--visited); } .sdot-p { background: var(--planned); } .sdot-u { background: #374151; }
+    .opt-lbl { font-size: 12px; font-weight: 500; }
+    .opt-desc { font-size: 10px; color: var(--muted); }
+    .modal-foot { display: flex; gap: 7px; justify-content: flex-end; }
+
+    /* Popup */
+    .mapboxgl-popup-content {
+      background: #1a1d2e !important; border: 1px solid var(--border) !important;
+      border-radius: 8px !important; padding: 10px 13px !important;
+      color: var(--text) !important; font-size: 12px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,.5) !important; min-width: 160px;
+    }
+    .mapboxgl-popup-tip { display: none !important; }
+    .mapboxgl-popup-close-button { color: var(--muted) !important; font-size: 14px !important; top: 6px !important; right: 8px !important; }
+    .pu-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .pu-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
+    .pu-actions { display: flex; gap: 5px; margin-top: 8px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(16px);
+      background: #1e2235; border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 15px; font-size: 12px;
+      z-index: 300; opacity: 0; transition: all .3s; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.ok { border-color: rgba(16,185,129,.45); color: #6ee7b7; }
+    .toast.err { border-color: rgba(239,68,68,.4); color: #fca5a5; }
+
+    /* Empty / loading */
+    .empty { text-align: center; padding: 28px 14px; color: var(--muted); font-size: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.1); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    Conquest Map
+  </div>
+  <div class="hdiv"></div>
+  <div class="hfield">
+    <label>Mapbox Token</label>
+    <input id="mapboxToken" class="input-mapbox" type="text" placeholder="pk.eyJ1IjoiLi4uIn0..." />
+  </div>
+  <button class="btn btn-primary" id="loadMapBtn" onclick="initMap()">지도 로드</button>
+  <div class="hdiv"></div>
+  <div class="hfield">
+    <label>Base URL</label>
+    <input id="baseUrl" class="input-url" type="text" value="http://localhost:8080" />
+  </div>
+  <div class="hfield">
+    <label>JWT Token</label>
+    <input id="jwtToken" class="input-jwt" type="text" placeholder="eyJhbGci..." />
+  </div>
+  <button class="btn btn-green" id="loadDataBtn" onclick="loadAll()" disabled>데이터 로드</button>
+</header>
+
+<!-- ── Map ── -->
+<div id="mapWrap">
+  <div id="map"></div>
+
+  <!-- Init overlay -->
+  <div id="initOverlay">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    <h2>Conquest Map</h2>
+    <p>Mapbox 퍼블릭 토큰을 입력하고<br><strong>지도 로드</strong> 버튼을 눌러 시작하세요.</p>
+  </div>
+
+  <!-- Stats panel -->
+  <div class="float-panel" id="statsPanel">
+    <div class="panel-head">
+      <h3>📊 여행 통계</h3>
+      <button class="closebtn" onclick="toggleStats()" title="패널 닫기">✕</button>
+    </div>
+    <div class="panel-body" id="statsBody">
+      <div class="empty">데이터를 로드해주세요</div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div class="leg-title">방문 상태</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#8b5cf6"></div>방문 완료</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f59e0b"></div>방문 예정</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#374151"></div>미방문</div>
+    <div class="leg-item" style="margin-top:4px;"><div class="leg-dot" style="background:rgba(167,139,250,.5);height:3px;border-radius:1px;"></div>항공 경로</div>
+  </div>
+
+  <!-- Route bar -->
+  <div id="routeBar">
+    <button class="rbtn active" id="rb-all" onclick="setRouteFilter('all')">전체 경로</button>
+    <button class="rbtn" id="rb-none" onclick="setRouteFilter('none')">경로 숨김</button>
+  </div>
+
+  <!-- Workspace sidebar -->
+  <div id="wsSidebar">
+    <div class="ws-head">
+      <div>
+        <div class="ws-title" id="wsTitle">—</div>
+        <div class="ws-meta" id="wsMeta"></div>
+      </div>
+      <button class="closebtn" onclick="closeWsSidebar()">✕</button>
+    </div>
+    <div class="ws-actions" id="wsActions"></div>
+    <div class="ws-body" id="wsBody"></div>
+  </div>
+</div>
+
+<!-- ── Status Modal ── -->
+<div class="modal-bg" id="statusModal">
+  <div class="modal">
+    <div>
+      <h3 id="modalTitle">상태 변경</h3>
+      <p id="modalSub">방문 상태를 선택하세요</p>
+    </div>
+    <div class="stat-opts">
+      <div class="stat-opt" data-status="VISITED" onclick="selStatus('VISITED')">
+        <div class="sdot sdot-v"></div>
+        <div><div class="opt-lbl">방문 완료</div><div class="opt-desc">이미 방문한 곳</div></div>
+      </div>
+      <div class="stat-opt" data-status="PLANNED" onclick="selStatus('PLANNED')">
+        <div class="sdot sdot-p"></div>
+        <div><div class="opt-lbl">방문 예정</div><div class="opt-desc">항공권 보유 또는 계획 중</div></div>
+      </div>
+      <div class="stat-opt" data-status="UNVISITED" onclick="selStatus('UNVISITED')">
+        <div class="sdot sdot-u"></div>
+        <div><div class="opt-lbl">미방문</div><div class="opt-desc">아직 방문하지 않은 곳</div></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" id="modalOkBtn" onclick="confirmStatus()">변경</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// ISO 3166-1 alpha-2 ↔ alpha-3 lookup tables
+// 백엔드 API는 alpha-2(KR), Mapbox 타일셋은 iso_3166_1_alpha_3(KOR)을 사용하므로
+// 프론트엔드에서 변환한다. 백엔드 코드 변경 불필요.
+// =====================================================
+const A2_A3 = {
+  AF:'AFG',AX:'ALA',AL:'ALB',DZ:'DZA',AS:'ASM',AD:'AND',AO:'AGO',AI:'AIA',
+  AQ:'ATA',AG:'ATG',AR:'ARG',AM:'ARM',AW:'ABW',AU:'AUS',AT:'AUT',AZ:'AZE',
+  BS:'BHS',BH:'BHR',BD:'BGD',BB:'BRB',BY:'BLR',BE:'BEL',BZ:'BLZ',BJ:'BEN',
+  BM:'BMU',BT:'BTN',BO:'BOL',BQ:'BES',BA:'BIH',BW:'BWA',BV:'BVT',BR:'BRA',
+  IO:'IOT',BN:'BRN',BG:'BGR',BF:'BFA',BI:'BDI',CV:'CPV',KH:'KHM',CM:'CMR',
+  CA:'CAN',KY:'CYM',CF:'CAF',TD:'TCD',CL:'CHL',CN:'CHN',CX:'CXR',CC:'CCK',
+  CO:'COL',KM:'COM',CG:'COG',CD:'COD',CK:'COK',CR:'CRI',CI:'CIV',HR:'HRV',
+  CU:'CUB',CW:'CUW',CY:'CYP',CZ:'CZE',DK:'DNK',DJ:'DJI',DM:'DMA',DO:'DOM',
+  EC:'ECU',EG:'EGY',SV:'SLV',GQ:'GNQ',ER:'ERI',EE:'EST',SZ:'SWZ',ET:'ETH',
+  FK:'FLK',FO:'FRO',FJ:'FJI',FI:'FIN',FR:'FRA',GF:'GUF',PF:'PYF',TF:'ATF',
+  GA:'GAB',GM:'GMB',GE:'GEO',DE:'DEU',GH:'GHA',GI:'GIB',GR:'GRC',GL:'GRL',
+  GD:'GRD',GP:'GLP',GU:'GUM',GT:'GTM',GG:'GGY',GN:'GIN',GW:'GNB',GY:'GUY',
+  HT:'HTI',HM:'HMD',VA:'VAT',HN:'HND',HK:'HKG',HU:'HUN',IS:'ISL',IN:'IND',
+  ID:'IDN',IR:'IRN',IQ:'IRQ',IE:'IRL',IM:'IMN',IL:'ISR',IT:'ITA',JM:'JAM',
+  JP:'JPN',JE:'JEY',JO:'JOR',KZ:'KAZ',KE:'KEN',KI:'KIR',KP:'PRK',KR:'KOR',
+  KW:'KWT',KG:'KGZ',LA:'LAO',LV:'LVA',LB:'LBN',LS:'LSO',LR:'LBR',LY:'LBY',
+  LI:'LIE',LT:'LTU',LU:'LUX',MO:'MAC',MG:'MDG',MW:'MWI',MY:'MYS',MV:'MDV',
+  ML:'MLI',MT:'MLT',MH:'MHL',MQ:'MTQ',MR:'MRT',MU:'MUS',YT:'MYT',MX:'MEX',
+  FM:'FSM',MD:'MDA',MC:'MCO',MN:'MNG',ME:'MNE',MS:'MSR',MA:'MAR',MZ:'MOZ',
+  MM:'MMR',NA:'NAM',NR:'NRU',NP:'NPL',NL:'NLD',NC:'NCL',NZ:'NZL',NI:'NIC',
+  NE:'NER',NG:'NGA',NU:'NIU',NF:'NFK',MK:'MKD',MP:'MNP',NO:'NOR',OM:'OMN',
+  PK:'PAK',PW:'PLW',PS:'PSE',PA:'PAN',PG:'PNG',PY:'PRY',PE:'PER',PH:'PHL',
+  PN:'PCN',PL:'POL',PT:'PRT',PR:'PRI',QA:'QAT',RE:'REU',RO:'ROU',RU:'RUS',
+  RW:'RWA',BL:'BLM',SH:'SHN',KN:'KNA',LC:'LCA',MF:'MAF',PM:'SPM',VC:'VCT',
+  WS:'WSM',SM:'SMR',ST:'STP',SA:'SAU',SN:'SEN',RS:'SRB',SC:'SYC',SL:'SLE',
+  SG:'SGP',SX:'SXM',SK:'SVK',SI:'SVN',SB:'SLB',SO:'SOM',ZA:'ZAF',GS:'SGS',
+  SS:'SSD',ES:'ESP',LK:'LKA',SD:'SDN',SR:'SUR',SJ:'SJM',SE:'SWE',CH:'CHE',
+  SY:'SYR',TW:'TWN',TJ:'TJK',TZ:'TZA',TH:'THA',TL:'TLS',TG:'TGO',TK:'TKL',
+  TO:'TON',TT:'TTO',TN:'TUN',TR:'TUR',TM:'TKM',TC:'TCA',TV:'TUV',UG:'UGA',
+  UA:'UKR',AE:'ARE',GB:'GBR',US:'USA',UM:'UMI',UY:'URY',UZ:'UZB',VU:'VUT',
+  VE:'VEN',VN:'VNM',VG:'VGB',VI:'VIR',WF:'WLF',EH:'ESH',YE:'YEM',ZM:'ZMB',
+  ZW:'ZWE'
+};
+const A3_A2 = Object.fromEntries(Object.entries(A2_A3).map(([k,v])=>[v,k]));
+
+// =====================================================
+// STATE
+// =====================================================
+let map = null;
+let conquest = null;   // ConquestMapResponse
+let statsData = null;  // ConquestStatsResponse
+let routes = [];       // TripRouteResponse[]
+let selCountry = null; // currently selected country code
+let curPopup = null;
+let routeFilter = 'all';
+
+// Modal
+let mCtx = null;        // { type: 'country'|'city', id, name }
+let mStatus = null;     // selected status in modal
+
+// =====================================================
+// BOOT
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('mapboxToken').value = localStorage.getItem('cq_mb') || '';
+  document.getElementById('jwtToken').value    = localStorage.getItem('cq_jwt') || '';
+  document.getElementById('baseUrl').value     = localStorage.getItem('cq_url') || 'http://localhost:8080';
+  document.getElementById('mapboxToken').addEventListener('input', e => localStorage.setItem('cq_mb', e.target.value));
+  document.getElementById('jwtToken').addEventListener('input',    e => localStorage.setItem('cq_jwt', e.target.value));
+  document.getElementById('baseUrl').addEventListener('input',     e => localStorage.setItem('cq_url', e.target.value));
+});
+
+// =====================================================
+// MAP INIT
+// =====================================================
+function initMap() {
+  const token = document.getElementById('mapboxToken').value.trim();
+  if (!token) { toast('Mapbox 토큰을 입력해주세요', 'err'); return; }
+
+  mapboxgl.accessToken = token;
+  localStorage.setItem('cq_mb', token);
+
+  const btn = document.getElementById('loadMapBtn');
+  btn.disabled = true; btn.textContent = '로딩 중...';
+
+  if (map) { map.remove(); map = null; }
+
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [20, 15], zoom: 1.6, projection: 'mercator'
+  });
+
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+  map.on('load', () => {
+    setupSources();
+    setupLayers();
+    setupEvents();
+    document.getElementById('initOverlay').classList.add('hidden');
+    document.getElementById('loadDataBtn').disabled = false;
+    document.getElementById('legend').style.display = 'flex';
+    document.getElementById('routeBar').style.display = 'flex';
+    btn.disabled = false; btn.textContent = '지도 재로드';
+    toast('지도 로드 완료', 'ok');
+  });
+
+  map.on('error', e => {
+    toast('지도 오류: ' + (e.error?.message || '토큰을 확인하세요'), 'err');
+    btn.disabled = false; btn.textContent = '지도 로드';
+  });
+}
+
+function setupSources() {
+  map.addSource('cb', { type: 'vector', url: 'mapbox://mapbox.country-boundaries-v1' });
+  map.addSource('cities', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+    cluster: true, clusterMaxZoom: 8, clusterRadius: 38
+  });
+  map.addSource('routes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+}
+
+// 시각 레이어용 worldview 필터 (Mapbox 공식 권장 방식)
+// 'all' + 'US' worldview를 사용해 분쟁지역 중복 없이 모든 국가를 표시
+const WV_FILTER = ['in', ['get', 'worldview'], ['literal', ['all', 'US']]];
+
+function setupLayers() {
+  // ── c-hit: 이벤트 전용 invisible 레이어 ──────────────────────────────
+  // worldview 필터 없이 모든 feature를 커버한다.
+  // 이렇게 하지 않으면 'all' worldview에 없는 분쟁 지역(크림반도, 포클랜드 등)
+  // 경계 근처에서 hover/click 이벤트가 발생하지 않는 "지리적 구멍"이 생긴다.
+  // fill-opacity:0 이어도 Mapbox는 geometry 기반으로 이벤트를 발생시킨다.
+  map.addLayer({ id: 'c-hit', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
+    filter: ['has', 'iso_3166_1_alpha_3'],
+    paint: { 'fill-opacity': 0 }
+  });
+  // Country fill (visual)
+  map.addLayer({ id: 'c-fill', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
+    filter: WV_FILTER,
+    paint: { 'fill-color': '#1e293b', 'fill-opacity': 0 }  // opacity 0으로
+  });
+  // Country outline
+  map.addLayer({ id: 'c-line', type: 'line', source: 'cb', 'source-layer': 'country_boundaries',
+    filter: WV_FILTER,
+    paint: { 'line-color': 'rgba(255,255,255,0.07)', 'line-width': 0.5 }
+  });
+  // Hover highlight (alpha-3 기준)
+  map.addLayer({ id: 'c-hover', type: 'fill', source: 'cb', 'source-layer': 'country_boundaries',
+    filter: ['==', ['get', 'iso_3166_1_alpha_3'], ''],
+    paint: { 'fill-color': 'rgba(255,255,255,0.08)', 'fill-opacity': 1 }
+  });
+  // Selected outline (alpha-3 기준)
+  map.addLayer({ id: 'c-sel', type: 'line', source: 'cb', 'source-layer': 'country_boundaries',
+    filter: ['==', ['get', 'iso_3166_1_alpha_3'], ''],
+    paint: { 'line-color': '#a78bfa', 'line-width': 2 }
+  });
+  // Routes
+  map.addLayer({ id: 'rt-line', type: 'line', source: 'routes',
+    paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.65 },
+    layout: { 'line-cap': 'round', 'line-join': 'round' }
+  });
+  // Route glow
+  map.addLayer({ id: 'rt-glow', type: 'line', source: 'routes',
+    paint: { 'line-color': ['get', 'color'], 'line-width': 4, 'line-opacity': 0.12, 'line-blur': 3 }
+  });
+  // City clusters
+  map.addLayer({ id: 'cl-circle', type: 'circle', source: 'cities',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': '#7c3aed', 'circle-opacity': 0.85,
+      'circle-radius': ['step', ['get', 'point_count'], 13, 5, 17, 10, 21],
+      'circle-stroke-width': 2, 'circle-stroke-color': 'rgba(167,139,250,0.35)'
+    }
+  });
+  map.addLayer({ id: 'cl-count', type: 'symbol', source: 'cities',
+    filter: ['has', 'point_count'],
+    layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 11, 'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'] },
+    paint: { 'text-color': '#fff' }
+  });
+  // Individual city
+  map.addLayer({ id: 'city-pt', type: 'circle', source: 'cities',
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-color': ['get', 'color'], 'circle-radius': 6, 'circle-opacity': 0.9,
+      'circle-stroke-width': 2, 'circle-stroke-color': ['get', 'stroke']
+    }
+  });
+}
+
+function setupEvents() {
+  // ── 국가 hover / click은 c-hit 레이어에 달아야 한다 ──────────────────
+  // c-hit은 worldview 필터가 없어서 분쟁지역 경계 근방의 "지리적 구멍"이 없다.
+  // iso_3166_1_alpha_3 (3자리)를 기준으로 동작하며, API 호출은 A3_A2로 변환.
+
+  map.on('mousemove', 'c-hit', e => {
+    if (!e.features.length) return;
+    map.getCanvas().style.cursor = 'pointer';
+    const f = e.features.find(f => f.properties?.iso_3166_1_alpha_3?.length === 3);
+    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], f?.properties.iso_3166_1_alpha_3 || '']);
+  });
+  map.on('mouseleave', 'c-hit', () => {
+    map.getCanvas().style.cursor = '';
+    map.setFilter('c-hover', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
+  });
+
+  map.on('click', 'c-hit', async e => {
+    // c-hit feature 에서 alpha-3 코드 추출
+    // 같은 위치에 feature가 여러 개일 수 있으므로 유효한 것을 찾는다
+    const f = e.features.find(f => f.properties?.iso_3166_1_alpha_3?.length === 3);
+    const iso3 = f?.properties.iso_3166_1_alpha_3;
+    if (!iso3) return;
+    selCountry = iso3;
+    map.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], iso3]);
+    await openCountrySidebar(iso3);
+  });
+
+  // Cluster zoom
+  map.on('click', 'cl-circle', e => {
+    const f = map.queryRenderedFeatures(e.point, { layers: ['cl-circle'] });
+    map.getSource('cities').getClusterExpansionZoom(f[0].properties.cluster_id, (err, zoom) => {
+      if (!err) map.easeTo({ center: f[0].geometry.coordinates, zoom });
+    });
+    e.stopPropagation();
+  });
+
+  // City popup
+  map.on('click', 'city-pt', e => {
+    if (!e.features.length) return;
+    e.stopPropagation();
+    const p = e.features[0].properties;
+    const coords = [...e.features[0].geometry.coordinates];
+    if (curPopup) curPopup.remove();
+    const lbl = { VISITED: '방문 완료', PLANNED: '방문 예정', UNVISITED: '미방문' };
+    const cls = { VISITED: 'badge-v', PLANNED: 'badge-p', UNVISITED: 'badge-u' };
+    curPopup = new mapboxgl.Popup({ offset: 10, closeButton: true })
+      .setLngLat(coords)
+      .setHTML(`
+        <div class="pu-title">${esc(p.name)}</div>
+        <div class="pu-row">
+          <span style="color:var(--muted)">${p.cc}</span>
+          <span class="badge ${cls[p.status]}">${lbl[p.status]}</span>
+        </div>
+        ${p.vc > 0 ? `<div style="font-size:10px;color:var(--muted)">${p.vc}회 방문</div>` : ''}
+        <div class="pu-actions">
+          <button class="btn btn-primary btn-sm" onclick="openCityModal(${p.id},'${p.status}','${esc(p.name)}')">상태 변경</button>
+        </div>
+      `)
+      .addTo(map);
+  });
+
+  // Click on empty → deselect
+  map.on('click', e => {
+    const f = map.queryRenderedFeatures(e.point, { layers: ['c-hit', 'city-pt', 'cl-circle'] });
+    if (!f.length) {
+      selCountry = null;
+      map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
+    }
+  });
+
+  ['cl-circle', 'city-pt'].forEach(l => {
+    map.on('mouseenter', l, () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', l, () => map.getCanvas().style.cursor = '');
+  });
+}
+
+// =====================================================
+// DATA LOAD
+// =====================================================
+async function loadAll() {
+  const btn = document.getElementById('loadDataBtn');
+  btn.disabled = true; btn.textContent = '로딩 중...';
+  try {
+    [conquest, statsData, routes] = await Promise.all([
+      api('GET', '/api/conquest'),
+      api('GET', '/api/conquest/stats'),
+      api('GET', '/api/conquest/routes')
+    ]);
+    updateCountryLayer();
+    updateCityLayer();
+    updateRouteLayer();
+    updateStatsPanel();
+    toast('데이터 로드 완료', 'ok');
+  } catch (e) {
+    toast('로드 실패: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '데이터 재로드';
+  }
+}
+
+// =====================================================
+// MAP UPDATES
+// =====================================================
+function updateCountryLayer() {
+  if (!map || !conquest) return;
+  const countries = extract(conquest)?.countries || [];
+  const expr = ['match', ['get', 'iso_3166_1']];
+  for (const c of countries) {
+    if (c.status === 'VISITED') { expr.push(c.countryCode); expr.push('#8b5cf6'); }
+    else if (c.status === 'PLANNED') { expr.push(c.countryCode); expr.push('#f59e0b'); }
+  }
+  expr.push('transparent');  // #1e293b → transparent
+  map.setPaintProperty('c-fill', 'fill-color', expr);
+  map.setPaintProperty('c-fill', 'fill-opacity', 0.72);
+}
+
+function updateCityLayer() {
+  if (!map || !conquest) return;
+  const cities = extract(conquest)?.cities || [];
+  const features = cities.map(c => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [c.longitude, c.latitude] },
+    properties: {
+      id: c.id, name: c.cityName, cc: c.countryCode, status: c.status, vc: c.visitCount || 0,
+      color: c.status === 'VISITED' ? '#8b5cf6' : c.status === 'PLANNED' ? '#f59e0b' : '#374151',
+      stroke: c.status === 'VISITED' ? 'rgba(167,139,250,.5)' : c.status === 'PLANNED' ? 'rgba(251,191,36,.5)' : 'rgba(107,114,128,.3)'
+    }
+  }));
+  map.getSource('cities').setData({ type: 'FeatureCollection', features });
+}
+
+function updateRouteLayer() {
+  if (!map) return;
+  const list = extract(routes) || routes || [];
+  if (routeFilter === 'none' || !list.length) {
+    map.getSource('routes').setData({ type: 'FeatureCollection', features: [] });
+    return;
+  }
+  const filtered = routeFilter === 'all' ? list : list.filter(r => r.workspaceId == routeFilter);
+  const features = filtered.map(r => ({
+    type: 'Feature',
+    geometry: { type: 'LineString', coordinates: arc([r.departureLng, r.departureLat], [r.arrivalLng, r.arrivalLat]) },
+    properties: {
+      color: routeFilter === 'all' ? '#a78bfa' : '#f59e0b',
+      wsId: r.workspaceId, wsTitle: r.workspaceTitle || '',
+      dep: r.departureAirport, arr: r.arrivalAirport,
+      airline: r.airline || '', dist: Math.round(r.distanceKm || 0)
+    }
+  }));
+  map.getSource('routes').setData({ type: 'FeatureCollection', features });
+}
+
+function arc(from, to, n = 80) {
+  let [x1, y1] = from, [x2, y2] = to;
+  if (Math.abs(x2 - x1) > 180) x2 += x2 > x1 ? -360 : 360;
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  const d = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  const cy = my + d * 0.28;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, mt = 1 - t;
+    pts.push([mt * mt * x1 + 2 * mt * t * mx + t * t * x2,
+              mt * mt * y1 + 2 * mt * t * cy + t * t * y2]);
+  }
+  return pts;
+}
+
+// =====================================================
+// STATS PANEL
+// =====================================================
+function updateStatsPanel() {
+  const d = extract(statsData) || statsData;
+  if (!d) return;
+  const pct = +(d.visitedCountryPercentage || 0).toFixed(1);
+  const cs = d.continentStats || [];
+  const maxC = Math.max(...cs.map(c => c.visitedCountryCount), 1);
+
+  document.getElementById('statsBody').innerHTML = `
+    <div>
+      <div class="stat-row">
+        <span class="stat-label">방문 국가</span>
+        <span class="stat-val">${d.visitedCountryCount}<span class="stat-sub"> / ${d.totalCountryCount}</span></span>
+      </div>
+      <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:2px">${pct}%</div>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">방문 도시</span>
+      <span class="stat-val">${d.visitedCityCount}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">총 여행일</span>
+      <span class="stat-val">${d.totalTravelDays}<span class="stat-sub">일</span></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">총 이동거리</span>
+      <span class="stat-val">${Math.round(d.totalDistanceKm || 0).toLocaleString()}<span class="stat-sub">km</span></span>
+    </div>
+    ${cs.length ? `
+    <div style="border-top:1px solid var(--border);padding-top:9px">
+      <div class="sec-label">대륙별 방문</div>
+      ${cs.map(c => `
+        <div class="cont-row">
+          <div class="cont-name">${c.continentName}</div>
+          <div class="cont-track"><div class="cont-fill" style="width:${c.visitedCountryCount > 0 ? Math.max((c.visitedCountryCount / maxC) * 100, 6) : 0}%"></div></div>
+          <div class="cont-num">${c.visitedCountryCount}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+    <div style="border-top:1px solid var(--border);padding-top:9px;display:flex;gap:5px">
+      <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openBulk()">일괄 등록</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1" onclick="loadAll()">새로고침</button>
+    </div>
+  `;
+}
+
+function toggleStats() {
+  document.getElementById('statsPanel').classList.toggle('hidden');
+}
+
+// =====================================================
+// WORKSPACE SIDEBAR
+// =====================================================
+// iso3: Mapbox의 iso_3166_1_alpha_3 코드 (예: 'KOR')
+// API 호출은 alpha-2(예: 'KR')로 변환한다.
+async function openCountrySidebar(iso3) {
+  const iso2 = A3_A2[iso3] || '';
+  const countries = extract(conquest)?.countries || [];
+  const c = countries.find(x => x.countryCode === iso2);
+  const status = c?.status || 'UNVISITED';
+  const name = c?.countryName || iso3;
+
+  document.getElementById('wsTitle').textContent = name;
+  document.getElementById('wsMeta').innerHTML = `
+    <span class="badge ${sBadge(status)}">${sLabel(status)}</span>
+    ${c?.continentName ? `<span>${c.continentName}</span>` : ''}
+    ${c?.visitCount > 0 ? `<span>${c.visitCount}회 방문</span>` : ''}
+  `;
+  // openCountryModal 에는 alpha-2 를 전달 (API PUT 요청에 사용)
+  document.getElementById('wsActions').innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="openCountryModal('${iso2}','${status}','${esc(name)}')">상태 변경</button>
+    <button class="btn btn-secondary btn-sm" onclick="setRouteFilter('all');document.querySelectorAll('.ws-card').forEach(e=>e.classList.remove('hl'))">전체 경로</button>
+  `;
+  document.getElementById('wsBody').innerHTML = '<div class="empty"><div class="spin"></div></div>';
+  document.getElementById('wsSidebar').classList.add('open');
+
+  try {
+    // API는 alpha-2 사용
+    const data = await api('GET', `/api/conquest/countries/${iso2}/workspaces`);
+    const ws = extract(data) || data || [];
+    if (!ws.length) {
+      document.getElementById('wsBody').innerHTML = '<div class="empty">이 국가와 연결된 워크스페이스가 없습니다</div>';
+      return;
+    }
+    document.getElementById('wsBody').innerHTML = ws.map(w => `
+      <div class="ws-card" id="wc-${w.id}" onclick="hlRoute(${w.id})">
+        <div class="ws-card-title">${esc(w.title)}</div>
+        <div class="ws-card-sub">${esc(w.destination || '')} · 멤버 ${w.memberCount}명</div>
+        <div class="ws-card-sub">${w.startDate || ''} ~ ${w.endDate || ''}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('wsBody').innerHTML = `<div class="empty">로드 실패: ${esc(e.message)}</div>`;
+  }
+}
+
+function closeWsSidebar() {
+  document.getElementById('wsSidebar').classList.remove('open');
+  selCountry = null;
+  map?.setFilter('c-sel', ['==', ['get', 'iso_3166_1_alpha_3'], '']);
+}
+
+function hlRoute(wsId) {
+  setRouteFilter(wsId);
+  document.querySelectorAll('.ws-card').forEach(e => e.classList.remove('hl'));
+  document.getElementById(`wc-${wsId}`)?.classList.add('hl');
+}
+
+// =====================================================
+// ROUTE CONTROLS
+// =====================================================
+function setRouteFilter(f) {
+  routeFilter = f;
+  document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`rb-${f}`)?.classList.add('active');
+  updateRouteLayer();
+}
+
+// =====================================================
+// STATUS MODAL
+// =====================================================
+function openCountryModal(code, status, name) {
+  mCtx = { type: 'country', id: code };
+  document.getElementById('modalTitle').textContent = `${name} 상태 변경`;
+  document.getElementById('modalSub').textContent = `현재: ${sLabel(status)}`;
+  selStatus(status);
+  document.getElementById('statusModal').classList.add('open');
+}
+
+function openCityModal(id, status, name) {
+  mCtx = { type: 'city', id };
+  document.getElementById('modalTitle').textContent = `${name} 상태 변경`;
+  document.getElementById('modalSub').textContent = `현재: ${sLabel(status)}`;
+  selStatus(status);
+  document.getElementById('statusModal').classList.add('open');
+  curPopup?.remove(); curPopup = null;
+}
+
+function selStatus(s) {
+  mStatus = s;
+  document.querySelectorAll('.stat-opt').forEach(el => el.classList.toggle('sel', el.dataset.status === s));
+}
+
+function closeModal() {
+  document.getElementById('statusModal').classList.remove('open');
+  mCtx = null; mStatus = null;
+}
+
+async function confirmStatus() {
+  if (!mCtx || !mStatus) return;
+  const btn = document.getElementById('modalOkBtn');
+  btn.disabled = true; btn.textContent = '처리 중...';
+  try {
+    if (mCtx.type === 'country') await api('PUT', `/api/conquest/countries/${mCtx.id}/status`, { status: mStatus });
+    else await api('PUT', `/api/conquest/cities/${mCtx.id}/status`, { status: mStatus });
+    closeModal();
+    toast('상태가 변경되었습니다', 'ok');
+    const savedCountry = selCountry;
+    await loadAll();
+    if (mCtx?.type === 'country' && savedCountry) await openCountrySidebar(savedCountry);
+  } catch (e) {
+    toast('변경 실패: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '변경';
+  }
+}
+
+document.getElementById('statusModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// =====================================================
+// BULK IMPORT
+// =====================================================
+function openBulk() {
+  document.getElementById('bulkModal')?.remove();
+  const el = document.createElement('div');
+  el.id = 'bulkModal';
+  el.className = 'modal-bg open';
+  el.innerHTML = `
+    <div class="modal" style="width:460px">
+      <div><h3>과거 방문 일괄 등록</h3><p>JSON 형식으로 국가/도시를 한번에 등록합니다</p></div>
+      <textarea id="bulkJson" style="
+        background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;
+        padding:10px;color:var(--text);font-size:11px;font-family:monospace;
+        resize:vertical;min-height:190px;width:100%;outline:none;
+      ">{
+  "countries": [
+    { "countryCode": "JP", "status": "VISITED" },
+    { "countryCode": "FR", "status": "PLANNED" }
+  ],
+  "cities": [
+    { "cityName": "Tokyo", "countryCode": "JP", "latitude": 35.6762, "longitude": 139.6503, "status": "VISITED" },
+    { "cityName": "Seoul", "countryCode": "KR", "latitude": 37.5665, "longitude": 126.9780, "status": "VISITED" }
+  ]
+}</textarea>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" onclick="document.getElementById('bulkModal').remove()">취소</button>
+        <button class="btn btn-primary" onclick="submitBulk()">등록</button>
+      </div>
+    </div>
+  `;
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  document.body.appendChild(el);
+}
+
+async function submitBulk() {
+  let body;
+  try { body = JSON.parse(document.getElementById('bulkJson').value); }
+  catch (e) { toast('JSON 오류: ' + e.message, 'err'); return; }
+  try {
+    await api('POST', '/api/conquest/bulk-import', body);
+    document.getElementById('bulkModal')?.remove();
+    toast('일괄 등록 완료', 'ok');
+    await loadAll();
+  } catch (e) { toast('등록 실패: ' + e.message, 'err'); }
+}
+
+// =====================================================
+// API HELPER
+// =====================================================
+async function api(method, path, body) {
+  const base = document.getElementById('baseUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('jwtToken').value.trim();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(base + path, opts);
+  if (res.status === 204) return null;
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch { data = text; }
+  if (!res.ok) throw new Error(data?.message || data?.error || text || `HTTP ${res.status}`);
+  return data;
+}
+
+// =====================================================
+// UTILS
+// =====================================================
+function extract(r) {
+  if (r && typeof r === 'object' && 'data' in r) return r.data;
+  return r;
+}
+function sLabel(s) { return { VISITED: '방문 완료', PLANNED: '방문 예정', UNVISITED: '미방문' }[s] || s; }
+function sBadge(s) { return { VISITED: 'badge-v', PLANNED: 'badge-p', UNVISITED: 'badge-u' }[s] || 'badge-u'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

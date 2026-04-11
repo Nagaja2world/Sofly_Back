@@ -40,3 +40,6 @@ out/
 .env
 .env.core
 .env.supply
+
+### Claude ###
+.claude/**
