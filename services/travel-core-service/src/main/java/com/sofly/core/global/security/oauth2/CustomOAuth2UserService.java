@@ -51,17 +51,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // ── 신규 가입 or 기존 회원 반환 ──────────────────────
     private User saveOrUpdate(String registrationId, OAuth2UserInfo userInfo) {
         User.Provider provider = User.Provider.valueOf(registrationId.toUpperCase());
-
+        
         return userRepository.findByProviderAndProviderId(provider, userInfo.getProviderId())
-                .orElseGet(() -> userRepository.save(
-                        User.builder()
-                                .email(userInfo.getEmail())
-                                .nickname(userInfo.getNickname())
-                                .profileImageUrl(userInfo.getProfileImageUrl())
-                                .provider(provider)
-                                .providerId(userInfo.getProviderId())
-                                .role(User.Role.USER)
-                                .build()
-                ));
+                .orElseGet(() -> {
+                    if (userRepository.existsByEmail(userInfo.getEmail())) {
+                        throw new OAuth2AuthenticationException("이미 다른 소셜 계정으로 가입된 이메일입니다.");
+                    }
+                    return userRepository.save(User.builder()
+                            .email(userInfo.getEmail())
+                            .nickname(userInfo.getNickname())
+                            .profileImageUrl(userInfo.getProfileImageUrl())
+                            .provider(provider)
+                            .providerId(userInfo.getProviderId())
+                            .role(User.Role.USER)
+                            .build());
+                });
     }
 }
