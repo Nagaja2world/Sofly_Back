@@ -67,19 +67,26 @@ public class AlbumService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
 
+        List<Photo> photos = new ArrayList<>();
         List<String> uploadedKeys = new ArrayList<>();
         try {
-            List<Photo> photos = files.stream().map(file -> {
+            for (MultipartFile file : files) {
                 String s3Key = String.format("albums/%d/%s.%s", workspaceId, UUID.randomUUID(), resolveExtension(file));
                 s3Service.uploadFile(file, s3Key);
                 uploadedKeys.add(s3Key);
-                return Photo.of(album, user, s3Key, s3Service.buildObjectUrl(s3Key), null, null, null);
-            }).toList();
+                photos.add(Photo.of(album, user, s3Key, s3Service.buildObjectUrl(s3Key), null, null, null));
+            }
 
             photoRepository.saveAll(photos);
             return photos.stream().map(PhotoResponse::from).toList();
-        } catch (Exception e) {
-            uploadedKeys.forEach(s3Service::deleteObject);
+        } catch (RuntimeException e) {
+            for (String key : uploadedKeys) {
+                try {
+                    s3Service.deleteObject(key);
+                } catch (RuntimeException ex) {
+                    // 정리 작업 중 오류는 무시하여 원래 예외가 유실되지 않도록 함
+                }
+            }
             throw e;
         }
     }
@@ -88,12 +95,10 @@ public class AlbumService {
     @Transactional
     public void deletePhoto(Long workspaceId, Long userId, Long photoId) {
         WorkspaceMember member = validateMember(workspaceId, userId);
-        Photo photo = photoRepository.findByIdWithUploader(photoId)
+        Photo photo = photoRepository.findByIdWithDetails(photoId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.PHOTO_NOT_FOUND));
 
-        Long photoWorkspaceId = photoRepository.findWorkspaceIdByPhotoId(photoId)
-                .orElseThrow(() -> new SoflyException(ErrorCode.PHOTO_NOT_FOUND));
-        if (!photoWorkspaceId.equals(workspaceId)) {
+        if (!photo.getAlbum().getWorkspace().getId().equals(workspaceId)) {
             throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
         }
 
@@ -111,12 +116,10 @@ public class AlbumService {
     /** 다운로드 Presigned URL 발급 */
     public DownloadUrlResponse generateDownloadUrl(Long workspaceId, Long userId, Long photoId) {
         validateMember(workspaceId, userId);
-        Photo photo = photoRepository.findById(photoId)
+        Photo photo = photoRepository.findByIdWithDetails(photoId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.PHOTO_NOT_FOUND));
 
-        Long photoWorkspaceId = photoRepository.findWorkspaceIdByPhotoId(photoId)
-                .orElseThrow(() -> new SoflyException(ErrorCode.PHOTO_NOT_FOUND));
-        if (!photoWorkspaceId.equals(workspaceId)) {
+        if (!photo.getAlbum().getWorkspace().getId().equals(workspaceId)) {
             throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
         }
 
