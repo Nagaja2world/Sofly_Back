@@ -256,3 +256,4 @@ sudo nginx -t && sudo systemctl reload nginx
 | `invalid variable name "\$core_url"` | .inc 파일에 백슬래시(`\$`) 포함 | 홑따옴표로 파일 재작성 |
 | `systemclt: command not found` | 오타 (systemclt) | `systemctl`로 수정 |
 | `502 Bad Gateway` | 앱이 해당 포트에서 미실행 | 앱 기동 후 재시도 |
+
