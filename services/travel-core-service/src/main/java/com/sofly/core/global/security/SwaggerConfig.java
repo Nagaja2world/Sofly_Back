@@ -42,11 +42,16 @@ public class SwaggerConfig {
                 new Tag().name("Auth").description("인증 관련 API"),
                 new Tag().name("UserProfile").description("프로필"),
                 new Tag().name("Workspace").description("워크스페이스 생성·관리"),
-                new Tag().name("Workspace Invite").description("워크스페이스 초대·공유"),
                 new Tag().name("Workspace Member").description("워크스페이스 멤버 관리"),
+                new Tag().name("Workspace Invite").description("워크스페이스 초대·공유"),
                 new Tag().name("Workspace Flight").description("워크스페이스 항공편 저장·조회"),
-                new Tag().name("Chat").description("AI 여행 플래너 채팅"),
-                new Tag().name("Schedule").description("일정 관리 API")
+                new Tag().name("Schedule").description("일정 생성·조회·삭제 API"),
+                new Tag().name("Schedule Item").description("일정 아이템 추가·수정·이동·삭제 API"),
+                new Tag().name("Chat Room").description("AI 채팅방 생성·조회 API"),
+                new Tag().name("Chat Message").description("AI 채팅 메시지 전송·조회 API"),
+                new Tag().name("Album").description("워크스페이스 앨범 조회 API"),
+                new Tag().name("Album Photo").description("앨범 사진 업로드·삭제·다운로드 API"),
+                new Tag().name("TravelLog").description("여행기 API")
         ));
     }
 }
