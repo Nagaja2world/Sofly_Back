@@ -41,9 +41,8 @@ public class S3Service {
 
             s3Client.putObject(putRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             return buildObjectUrl(s3Key);
-        } catch (IOException e) {
-            throw new SoflyException(ErrorCode.S3_UPLOAD_FAILED);
-        } catch (SdkException e) {
+        } catch (IOException | SdkException e) {
+            log.error("S3 업로드 실패. key={}, error={}", s3Key, e.getMessage(), e);
             throw new SoflyException(ErrorCode.S3_UPLOAD_FAILED);
         }
     }
@@ -63,6 +62,7 @@ public class S3Service {
 
             return s3Presigner.presignGetObject(presignRequest).url().toString();
         } catch (SdkException e) {
+            log.error("S3 Presigned URL 생성 실패. key={}, error={}", s3Key, e.getMessage(), e);
             throw new SoflyException(ErrorCode.S3_DOWNLOAD_FAILED);
         }
     }
@@ -77,6 +77,7 @@ public class S3Service {
         } catch (NoSuchKeyException e) {
             log.warn("S3 객체가 이미 존재하지 않습니다: {}", s3Key);
         } catch (SdkException e) {
+            log.error("S3 삭제 실패. key={}, error={}", s3Key, e.getMessage(), e);
             throw new SoflyException(ErrorCode.S3_DELETE_FAILED);
         }
     }

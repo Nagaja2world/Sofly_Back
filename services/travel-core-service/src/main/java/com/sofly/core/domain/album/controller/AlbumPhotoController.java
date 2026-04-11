@@ -34,12 +34,12 @@ public class AlbumPhotoController {
 
     @Operation(summary = "사진 삭제", description = "사진을 S3와 DB에서 삭제합니다.")
     @DeleteMapping("/{photoId}")
-    public ResponseEntity<ApiResponse<Void>> deletePhoto(
+    public ResponseEntity<Void> deletePhoto(
             @PathVariable Long workspaceId,
             @PathVariable Long photoId) {
         Long userId = SecurityUtils.getCurrentUserId();
         albumService.deletePhoto(workspaceId, userId, photoId);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "다운로드 URL 발급", description = "사진 다운로드를 위한 Presigned GET URL을 발급합니다. (5분 유효)")
