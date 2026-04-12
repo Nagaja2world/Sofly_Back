@@ -57,13 +57,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         return userRepository.findByProviderAndProviderId(provider, userInfo.getProviderId())
                 .orElseGet(() -> {
-                    if (userRepository.existsByEmail(userInfo.getEmail())) {
+                    String email = userInfo.getEmail();
+                    if(email == null || email.isBlank()){
+                        throw new OAuth2AuthenticationException(
+                            new OAuth2Error("missing_email", "소셜 계정에서 이메일 정보를 가져올 수 없습니다.", null)
+                        );
+                    }
+                    if (userRepository.existsByEmail(email)) {
                         throw new OAuth2AuthenticationException(
                             new OAuth2Error("duplicate_email", "이미 다른 소셜 계정으로 가입된 이메일입니다.", null)
                         );
                     }
                     return userRepository.save(User.builder()
-                            .email(userInfo.getEmail())
+                            .email(email)
                             .nickname(userInfo.getNickname())
                             .profileImageUrl(userInfo.getProfileImageUrl())
                             .provider(provider)
