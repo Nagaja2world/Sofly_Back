@@ -1,17 +1,21 @@
 package com.sofly.core.global.auth.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sofly.core.global.auth.dto.RefreshTokenRequest;
 import com.sofly.core.global.auth.dto.TokenResponse;
-import com.sofly.core.global.exception.SoflyException;
 import com.sofly.core.global.exception.ErrorCode;
+import com.sofly.core.global.exception.SoflyException;
 import com.sofly.core.global.security.jwt.JwtProperties;
 import com.sofly.core.global.security.jwt.JwtTokenProvider;
 import com.sofly.core.global.security.oauth2.RefreshToken;
 import com.sofly.core.global.security.oauth2.RefreshTokenRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -62,5 +66,6 @@ public class AuthService {
     @Transactional
     public void logout(Long userId) {
         refreshTokenRepository.deleteById(String.valueOf(userId));
+        log.info("OAuth2 로그아웃 - userId: {}", userId);
     }
 }

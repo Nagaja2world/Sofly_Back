@@ -638,7 +638,9 @@
 
     if (error) {
       panel.className = 'response-panel error';
-      panel.textContent = '로그인 실패: ' + error;
+      panel.textContent = '로그인 실패: ' + decodeURIComponent(error);
+      window.history.replaceState({}, '', '/');
+      setTimeout(() => toast('로그인 실패: ' + decodeURIComponent(error)), 100);
       return;
     }
 

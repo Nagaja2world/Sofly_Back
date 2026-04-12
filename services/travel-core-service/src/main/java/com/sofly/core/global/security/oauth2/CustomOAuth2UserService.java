@@ -1,19 +1,22 @@
 package com.sofly.core.global.security.oauth2;
 
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.global.security.oauth2.userinfo.GoogleUserInfo;
 import com.sofly.core.global.security.oauth2.userinfo.KakaoUserInfo;
 import com.sofly.core.global.security.oauth2.userinfo.NaverUserInfo;
 import com.sofly.core.global.security.oauth2.userinfo.OAuth2UserInfo;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -51,17 +54,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // ── 신규 가입 or 기존 회원 반환 ──────────────────────
     private User saveOrUpdate(String registrationId, OAuth2UserInfo userInfo) {
         User.Provider provider = User.Provider.valueOf(registrationId.toUpperCase());
-
+        
         return userRepository.findByProviderAndProviderId(provider, userInfo.getProviderId())
-                .orElseGet(() -> userRepository.save(
-                        User.builder()
-                                .email(userInfo.getEmail())
-                                .nickname(userInfo.getNickname())
-                                .profileImageUrl(userInfo.getProfileImageUrl())
-                                .provider(provider)
-                                .providerId(userInfo.getProviderId())
-                                .role(User.Role.USER)
-                                .build()
-                ));
+                .orElseGet(() -> {
+                    String email = userInfo.getEmail();
+                    if(email == null || email.isBlank()){
+                        throw new OAuth2AuthenticationException(
+                            new OAuth2Error("missing_email", "소셜 계정에서 이메일 정보를 가져올 수 없습니다.", null)
+                        );
+                    }
+                    if (userRepository.existsByEmail(email)) {
+                        throw new OAuth2AuthenticationException(
+                            new OAuth2Error("duplicate_email", "이미 다른 소셜 계정으로 가입된 이메일입니다.", null)
+                        );
+                    }
+                    return userRepository.save(User.builder()
+                            .email(email)
+                            .nickname(userInfo.getNickname())
+                            .profileImageUrl(userInfo.getProfileImageUrl())
+                            .provider(provider)
+                            .providerId(userInfo.getProviderId())
+                            .role(User.Role.USER)
+                            .build());
+                });
     }
 }
