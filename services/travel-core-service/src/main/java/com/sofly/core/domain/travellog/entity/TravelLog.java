@@ -1,5 +1,7 @@
 package com.sofly.core.domain.travellog.entity;
 
+import com.sofly.core.domain.album.entity.Photo;
+import com.sofly.core.domain.travellog.dto.TravellogUpdateRequest;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.global.entity.BaseTimeEntity;
@@ -35,16 +37,19 @@ public class TravelLog extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Weather weather;
 
-    @ElementCollection
-    @CollectionTable(name = "travel_log_photos", joinColumns = @JoinColumn(name = "travel_log_id"))
-    @Column(name = "url")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "travel_log_photos",
+            joinColumns = @JoinColumn(name = "travel_log_id"),
+            inverseJoinColumns = @JoinColumn(name = "photo_id")
+    )
     @Builder.Default
-    private List<String> photoUrls = new ArrayList<>();
+    private List<Photo> photos = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private Visibility visibility = Visibility.PRIVATE;
+//    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+//    @Builder.Default
+//    private Visibility visibility = Visibility.PRIVATE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)
@@ -56,14 +61,24 @@ public class TravelLog extends BaseTimeEntity {
 
     // ── 비즈니스 메서드 ──────────────────────────────────────
 
-    public void update(String title, String content, Visibility visibility) {
-        this.title = title;
-        this.content = content;
-        this.visibility = visibility;
+    public void update(TravellogUpdateRequest request) {
+        if (request.day() != null) this.day = request.day();
+        if (request.travelDate() != null) this.travelDate = request.travelDate();
+        if (request.title() != null) this.title = request.title();
+        if (request.content() != null) this.content = request.content();
+        if (request.weather() != null) this.weather = request.weather();
     }
 
     public boolean isAuthor(Long userId) {
         return this.author.getId().equals(userId);
+    }
+
+    public void addPhoto(Photo photo) {
+        this.photos.add(photo);
+    }
+
+    public void removePhoto(Photo photo) {
+        this.photos.remove(photo);
     }
 
     public enum Visibility {
