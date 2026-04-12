@@ -26,7 +26,8 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                         AuthenticationException exception) throws IOException {
         String errorMessage = (exception instanceof OAuth2AuthenticationException oauthEx)
                 ? oauthEx.getError().getDescription()
-                : exception.getMessage();
+                : "인증 처리 중 오류가 발생했습니다.";
+        if (errorMessage == null) errorMessage = "알 수 없는 인증 오류가 발생했습니다.";
 
         log.error("OAuth2 로그인 실패: {}", errorMessage);
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
