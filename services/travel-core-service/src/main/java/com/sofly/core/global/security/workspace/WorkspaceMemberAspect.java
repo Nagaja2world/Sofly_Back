@@ -15,6 +15,12 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Parameter;
 
+/**
+ * {@link RequireWorkspaceMember} 애노테이션이 붙은 메서드에 대해 워크스페이스 멤버 권한을 검증하는 Aspect.
+ *
+ * <p><b>주의:</b> 적용 대상 메서드는 반드시 {@code workspaceId}라는 이름의 {@code Long} 파라미터를 포함해야 합니다.
+ * 해당 파라미터가 없으면 런타임에 {@link IllegalStateException}이 발생합니다.
+ */
 @Aspect
 @Component
 @RequiredArgsConstructor

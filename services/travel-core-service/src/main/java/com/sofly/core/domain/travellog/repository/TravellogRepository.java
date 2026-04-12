@@ -9,8 +9,17 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TravellogRepository extends JpaRepository<TravelLog, Long> {
-    List<TravelLog> findByWorkspaceIdOrderByTravelDateAsc(Long workspaceId);
 
-    @Query("SELECT t FROM TravelLog t LEFT JOIN FETCH t.photos WHERE t.id = :id")
+    @Query("""
+            SELECT t FROM TravelLog t
+            LEFT JOIN FETCH t.photos
+            JOIN FETCH t.workspace
+            JOIN FETCH t.author
+            WHERE t.workspace.id = :workspaceId
+            ORDER BY t.travelDate ASC
+            """)
+    List<TravelLog> findAllByWorkspaceIdWithDetails(@Param("workspaceId") Long workspaceId);
+
+    @Query("SELECT t FROM TravelLog t LEFT JOIN FETCH t.photos JOIN FETCH t.workspace JOIN FETCH t.author WHERE t.id = :id")
     Optional<TravelLog> findByIdWithPhotos(@Param("id") Long id);
 }

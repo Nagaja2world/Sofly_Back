@@ -2,6 +2,7 @@ package com.sofly.core.domain.travellog.controller;
 
 import com.sofly.core.domain.travellog.dto.TravellogCreateRequest;
 import com.sofly.core.domain.travellog.dto.TravellogResponse;
+import com.sofly.core.domain.travellog.dto.TravellogSummaryResponse;
 import com.sofly.core.domain.travellog.dto.TravellogUpdateRequest;
 import com.sofly.core.domain.travellog.service.TravellogService;
 import com.sofly.core.global.response.ApiResponse;
@@ -24,9 +25,9 @@ public class TravellogController {
 
     private final TravellogService travellogService;
 
-    @Operation(summary = "여행기 목록 조회", description = "워크스페이스의 여행기 목록을 여행 날짜 오름차순으로 조회합니다.")
+    @Operation(summary = "여행기 목록 조회", description = "워크스페이스의 여행기 목록을 여행 날짜 오름차순으로 조회합니다. content는 포함되지 않습니다.")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TravellogResponse>>> getTravelLogs(@PathVariable Long workspaceId) {
+    public ResponseEntity<ApiResponse<List<TravellogSummaryResponse>>> getTravelLogs(@PathVariable Long workspaceId) {
         return ResponseEntity.ok(ApiResponse.success(travellogService.getTravelLogs(workspaceId)));
     }
 
@@ -53,7 +54,7 @@ public class TravellogController {
     public ResponseEntity<ApiResponse<TravellogResponse>> updateTravelLog(
             @PathVariable Long workspaceId,
             @PathVariable Long logId,
-            @RequestBody TravellogUpdateRequest request) {
+            @RequestBody @Valid TravellogUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(travellogService.updateTravelLog(workspaceId, logId, request)));
     }
 

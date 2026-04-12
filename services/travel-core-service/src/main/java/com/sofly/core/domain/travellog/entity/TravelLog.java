@@ -46,6 +46,7 @@ public class TravelLog extends BaseTimeEntity {
     @Builder.Default
     private List<Photo> photos = new ArrayList<>();
 
+    // TODO: 공개 범위 기능 구현 예정 (PRIVATE / MEMBERS / PUBLIC)
 //    @Enumerated(EnumType.STRING)
 //    @Column(nullable = false)
 //    @Builder.Default
@@ -69,6 +70,9 @@ public class TravelLog extends BaseTimeEntity {
         if (request.weather() != null) this.weather = request.weather();
     }
 
+    // TODO: 수정/삭제 권한 정책 결정 필요
+    //  - 작성자 본인만 가능: isAuthor(userId) 체크를 서비스에 추가
+    //  - 워크스페이스 EDITOR 이상이면 모두 가능: isAuthor 메서드 제거
     public boolean isAuthor(Long userId) {
         return this.author.getId().equals(userId);
     }

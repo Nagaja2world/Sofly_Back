@@ -6,6 +6,7 @@ import com.sofly.core.domain.album.repository.PhotoRepository;
 import com.sofly.core.domain.album.service.AlbumService;
 import com.sofly.core.domain.travellog.dto.TravellogCreateRequest;
 import com.sofly.core.domain.travellog.dto.TravellogResponse;
+import com.sofly.core.domain.travellog.dto.TravellogSummaryResponse;
 import com.sofly.core.domain.travellog.dto.TravellogUpdateRequest;
 import com.sofly.core.domain.travellog.entity.TravelLog;
 import com.sofly.core.domain.travellog.repository.TravellogRepository;
@@ -23,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,9 +48,9 @@ public class TravellogService {
     }
 
     @RequireWorkspaceMember
-    public List<TravellogResponse> getTravelLogs(Long workspaceId) {
-        return travellogRepository.findByWorkspaceIdOrderByTravelDateAsc(workspaceId).stream()
-                .map(TravellogResponse::from)
+    public List<TravellogSummaryResponse> getTravelLogs(Long workspaceId) {
+        return travellogRepository.findAllByWorkspaceIdWithDetails(workspaceId).stream()
+                .map(TravellogSummaryResponse::from)
                 .toList();
     }
 
@@ -79,7 +82,7 @@ public class TravellogService {
     @Transactional
     @RequireWorkspaceMember(minRole = WorkspaceMember.MemberRole.EDITOR)
     public TravellogResponse updateTravelLog(Long workspaceId, Long logId, TravellogUpdateRequest request) {
-        TravelLog travelLog = travellogRepository.findById(logId)
+        TravelLog travelLog = travellogRepository.findByIdWithPhotos(logId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND));
 
         travelLog.update(request);
@@ -91,6 +94,9 @@ public class TravellogService {
     @Transactional
     @RequireWorkspaceMember(minRole = WorkspaceMember.MemberRole.EDITOR)
     public void deleteTravelLog(Long workspaceId, Long logId) {
+        if (!travellogRepository.existsById(logId)) {
+            throw new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND);
+        }
         travellogRepository.deleteById(logId);
     }
 
@@ -120,12 +126,17 @@ public class TravellogService {
         TravelLog travelLog = travellogRepository.findByIdWithPhotos(logId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND));
 
-        List<Photo> photos = photoRepository.findAllById(photoIds);
+        Set<Long> attachedPhotoIds = travelLog.getPhotos().stream()
+                .map(Photo::getId)
+                .collect(Collectors.toSet());
 
-        if (photos.size() != photoIds.size()) {
-            throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
+        for (Long requestedId : photoIds) {
+            if (!attachedPhotoIds.contains(requestedId)) {
+                throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
+            }
         }
 
+        List<Photo> photos = photoRepository.findAllById(photoIds);
         photos.forEach(travelLog::removePhoto);
         return TravellogResponse.from(travelLog);
     }
