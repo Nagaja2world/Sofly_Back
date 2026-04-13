@@ -29,4 +29,5 @@ public record PhotoResponse(
                 photo.getCreatedAt()
         );
     }
+
 }

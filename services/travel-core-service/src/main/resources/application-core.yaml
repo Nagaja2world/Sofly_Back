@@ -6,6 +6,11 @@ spring:
   application:
     name: travel-core-service
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
   ai:
     google:
       genai:
@@ -22,7 +27,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
     properties:
       hibernate:

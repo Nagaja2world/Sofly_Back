@@ -51,7 +51,8 @@ public class SwaggerConfig {
                 new Tag().name("Chat Message").description("AI 채팅 메시지 전송·조회 API"),
                 new Tag().name("Album").description("워크스페이스 앨범 조회 API"),
                 new Tag().name("Album Photo").description("앨범 사진 업로드·삭제·다운로드 API"),
-                new Tag().name("TravelLog").description("여행기 API")
+                new Tag().name("TravelLog").description("여행 기록 API"),
+                new Tag().name("TravelLog Photo").description("여행 기록 사진 첨부·해제 API")
         ));
     }
 }
