@@ -49,9 +49,7 @@ public class TravellogService {
 
     @RequireWorkspaceMember
     public List<TravellogSummaryResponse> getTravelLogs(Long workspaceId) {
-        return travellogRepository.findAllByWorkspaceIdWithDetails(workspaceId).stream()
-                .map(TravellogSummaryResponse::from)
-                .toList();
+        return travellogRepository.findAllSummaryByWorkspaceId(workspaceId);
     }
 
     // ── 생성 ─────────────────────────────────────────────────
