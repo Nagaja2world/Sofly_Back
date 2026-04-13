@@ -17,4 +17,8 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     /** 권한 확인 및 상세 조회용: uploader, album, workspace를 한 번에 로드 */
     @Query("SELECT p FROM Photo p JOIN FETCH p.uploadedBy JOIN FETCH p.album a JOIN FETCH a.workspace WHERE p.id = :photoId")
     Optional<Photo> findByIdWithDetails(@Param("photoId") Long photoId);
+
+    /** 주어진 photoIds 중 해당 workspace 앨범에 속한 사진 수 반환 (workspace 소속 검증용) */
+    @Query("SELECT COUNT(p) FROM Photo p WHERE p.id IN :photoIds AND p.album.workspace.id = :workspaceId")
+    long countByIdsAndWorkspaceId(@Param("photoIds") List<Long> photoIds, @Param("workspaceId") Long workspaceId);
 }
