@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "TravelLog", description = "여행기 CRUD API")
+@Tag(name = "TravelLog", description = "여행 기록 API")
 @RestController
 @RequestMapping("/api/workspaces/{workspaceId}/travellogs")
 @RequiredArgsConstructor

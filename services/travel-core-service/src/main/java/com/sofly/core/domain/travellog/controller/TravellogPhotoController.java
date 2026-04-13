@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@Tag(name = "TravelLog Photo", description = "여행기 사진 첨부·해제 API")
+@Tag(name = "TravelLog Photo", description = "여행 기록 사진 첨부·해제 API")
 @RestController
 @RequestMapping("/api/workspaces/{workspaceId}/travellogs/{logId}/photos")
 @RequiredArgsConstructor
