@@ -162,8 +162,14 @@ public class TravellogService {
         TravelLog travelLog = travellogRepository.findByIdWithPhotos(logId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND));
 
+        Set<Long> existingPhotoIds = travelLog.getPhotos().stream()
+                .map(Photo::getId)
+                .collect(Collectors.toSet());
+
         List<Photo> photos = photoRepository.findAllById(photoIds);
-        photos.forEach(travelLog::addPhoto);
+        photos.stream()
+                .filter(p -> !existingPhotoIds.contains(p.getId()))
+                .forEach(travelLog::addPhoto);
 
         return TravellogResponse.from(travelLog);
     }
