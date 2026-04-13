@@ -128,6 +128,10 @@ public class TravellogService {
     @Transactional
     @RequireWorkspaceMember(minRole = WorkspaceMember.MemberRole.EDITOR)
     public TravellogResponse attachAlbumPhotos(Long workspaceId, Long logId, List<Long> photoIds) {
+        long validCount = photoRepository.countByIdsAndWorkspaceId(photoIds, workspaceId);
+        if (validCount != photoIds.size()) {
+            throw new SoflyException(ErrorCode.PHOTO_NOT_FOUND);
+        }
         return addPhotosToTravelLog(logId, photoIds);
     }
 
