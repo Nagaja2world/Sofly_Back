@@ -44,6 +44,11 @@ public class TravellogService {
     public TravellogResponse getTravelLog(Long workspaceId, Long logId) {
         TravelLog travelLog = travellogRepository.findByIdWithPhotos(logId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND));
+
+        if (!travelLog.getWorkspace().getId().equals(workspaceId)) {
+            throw new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND);
+        }
+
         return TravellogResponse.from(travelLog);
     }
 
@@ -83,6 +88,10 @@ public class TravellogService {
         TravelLog travelLog = travellogRepository.findByIdWithPhotos(logId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND));
 
+        if (!travelLog.getWorkspace().getId().equals(workspaceId)) {
+            throw new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND);
+        }
+
         travelLog.update(request);
         return TravellogResponse.from(travelLog);
     }
@@ -92,10 +101,14 @@ public class TravellogService {
     @Transactional
     @RequireWorkspaceMember(minRole = WorkspaceMember.MemberRole.EDITOR)
     public void deleteTravelLog(Long workspaceId, Long logId) {
-        if (!travellogRepository.existsById(logId)) {
+        TravelLog travelLog = travellogRepository.findById(logId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND));
+
+        if (!travelLog.getWorkspace().getId().equals(workspaceId)) {
             throw new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND);
         }
-        travellogRepository.deleteById(logId);
+
+        travellogRepository.delete(travelLog);
     }
 
     // ── 사진 연결 ─────────────────────────────────────────────
