@@ -45,7 +45,22 @@ public class GooglePlacesClient implements PlaceInfoPort {
             PlacesResponse response = googlePlacesWebClient.post()
                     .uri("/v1/places:searchText")
                     .header("X-Goog-Api-Key", props.apiKey())
-                    .header("X-Goog-FieldMask", "places.id,places.displayName,places.primaryType,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.editorialSummary,places.websiteUri,places.nationalPhoneNumber,places.googleMapsUri,places.businessStatus,places.priceLevel,places.photos")
+                    .header("X-Goog-FieldMask",
+                            "places.id," +
+                                    "places.displayName," +
+                                    "places.primaryType," +
+                                    "places.formattedAddress," +
+                                    "places.location," +
+                                    "places.rating," +
+                                    "places.userRatingCount," +
+                                    "places.editorialSummary," +
+                                    "places.websiteUri," +
+                                    "places.nationalPhoneNumber," +
+                                    "places.googleMapsUri," +
+                                    "places.businessStatus," +
+                                    "places.priceLevel," +
+                                    "places.photos"
+                    )
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of(
                             "textQuery", text,

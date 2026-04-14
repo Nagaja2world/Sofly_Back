@@ -26,7 +26,7 @@ public class GooglePlacesController {
         this.googlePlacesClient = googlePlacesClient;
     }
 
-    @Operation(summary = "장소 검색", description = "텍스트로 Google Places를 검색합니다. displayName, formattedAddress, priceLevel을 반환합니다.")
+    @Operation(summary = "장소 검색", description = "텍스트로 Google Places를 검색합니다.")
     @GetMapping
     public Optional<PlacesResponse> search(
             @Parameter(description = "검색 텍스트", example = "Lotte Hotel Seoul")
