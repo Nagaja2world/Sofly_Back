@@ -2,10 +2,12 @@ version: '3.8'
 services:
   kafka:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: kafka
+    container_name: sofly-kafka
     restart: unless-stopped
     ports:
       - "9092:9092"
+    networks:
+      - sofly-net
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -18,3 +20,10 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 24
       KAFKA_HEAP_OPTS: "-Xmx384m -Xms256m"
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+networks:
+  sofly-net:
+    external: true
+
+# Docker Command
+# docker compose -f docker-compose.kafka.yml up -d
