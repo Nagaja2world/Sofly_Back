@@ -42,6 +42,29 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx384m -Xms256m"
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
 
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: sofly-kafka-ui
+    ports:
+      - "8989:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: sofly-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+
+  # Redis UI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sofly-redis-ui
+    ports:
+      - "8085:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+
 volumes:
   postgres_data:
   redis_data:
