@@ -367,3 +367,5 @@ type(scope): subject
 ---
 
 ## 📄 License
+
+This project is licensed under the MIT License.
