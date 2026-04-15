@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [Team Members](#team-members)
 2. [Features](#features)
@@ -21,7 +21,7 @@
 10. [Running Tests](#running-tests)
 ---
 
-## 👥 Team Members
+##  Team Members
 
 | <img src="https://avatars.githubusercontent.com/u/88922405?v=4" width="100" height="100" alt="박상민 프로필"> | <img src="https://avatars.githubusercontent.com/u/168955357?v=4" width="100" height="100" alt="정세현 프로필"> |
 |:---:|:---:|
@@ -30,7 +30,7 @@
 
 ---
 
-## ✨ Features
+##  Features
 
 - **OAuth2 소셜 로그인** — Google, Kakao, Naver 연동 / JWT 기반 Stateless 인증
 - **그룹 여행 워크스페이스** — 초대 코드로 멤버 초대, 항공권 저장 및 공유
@@ -44,7 +44,7 @@
 
 ---
 
-## 🏗 Architecture
+##  Architecture
 
 이 프로젝트는 두 개의 독립적으로 배포되는 Spring Boot 서비스로 구성된 **멀티 모듈 모노레포**입니다.
 
@@ -80,7 +80,7 @@
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 <table>
   <tr>
@@ -139,7 +139,7 @@
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -177,7 +177,7 @@ docker compose up -d
 
 ---
 
-## ⚙️ Environment Variables
+##  Environment Variables
 
 각 서비스 루트에 `.env` 파일을 생성합니다 (`me.paulschwarz:spring-dotenv`로 자동 로드됩니다).
 
@@ -235,7 +235,7 @@ REDIS_PORT=6379
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Sofly_Back/
@@ -281,7 +281,7 @@ Sofly_Back/
 
 ---
 
-## 📡 API Reference
+##  API Reference
 
 ### travel-core-service (`:8080`)
 
@@ -315,7 +315,7 @@ Swagger UI: `http://localhost:8081/supply/swagger-ui`
 
 ---
 
-## 🌿 Git Convention
+##  Git Convention
 
 ### Branch Strategy
 
@@ -349,7 +349,7 @@ type(scope): subject
 
 ---
 
-## 🧪 Running Tests
+##  Running Tests
 
 ```bash
 # 전체 테스트
@@ -366,6 +366,6 @@ type(scope): subject
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License.
