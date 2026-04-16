@@ -1,0 +1,55 @@
+name: Deploy Dozzle Monitoring
+
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'monitoring/**'
+      - '.github/workflows/dozzle.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dozzle-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Dozzle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOZZLE_USERNAME: ${{ secrets.DOZZLE_USERNAME }}
+          DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          envs: DOZZLE_USERNAME,DOZZLE_PASSWORD,DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -e
+
+            # ── 1. 배포 경로 이동 ────────────────────────────
+            echo "👉🏻[1] Move to deploy path"
+            mkdir -p "$DEPLOY_PATH/monitoring"
+            cd "$DEPLOY_PATH/monitoring"
+
+            # ── 2. .env 생성 ─────────────────────────────────
+            echo "👉🏻[2] Create .env"
+            printf '%s\n' \
+              "DOZZLE_USERNAME=$DOZZLE_USERNAME" \
+              "DOZZLE_PASSWORD=$DOZZLE_PASSWORD" > .env
+            chmod 600 .env
+
+            # ── 3. Dozzle 실행 ───────────────────────────────
+            echo "👉🏻[3] Deploy Dozzle"
+            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.dozzle.yml" pull
+            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.dozzle.yml" up -d
+
+            # ── 4. 실행 확인 ─────────────────────────────────
+            echo "👉🏻[4] Check Dozzle status"
+            sudo docker ps | grep dozzle && echo "✅ Dozzle is UP" || echo "❌ Dozzle is DOWN"
