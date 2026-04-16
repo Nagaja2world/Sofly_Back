@@ -33,4 +33,12 @@ public class FlightService {
             throw new SoflyException(ErrorCode.SUPPLY_SERVICE_ERROR, e.getMessage());
         }
     }
+
+    public JsonNode getFlightDetails(String supplier, String token, String currencyCode) {
+        try {
+            return supplyClient.getFlightDetails(supplier, token, currencyCode);
+        } catch (FeignException e) {
+            throw new SoflyException(ErrorCode.SUPPLY_SERVICE_ERROR, e.getMessage());
+        }
+    }
 }

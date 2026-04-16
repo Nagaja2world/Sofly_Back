@@ -27,6 +27,13 @@ public interface SupplyClient {
             @RequestParam String languageCode
     );
 
+    @GetMapping("/supply/flights/details")
+    JsonNode getFlightDetails(
+            @RequestParam(required = false) String supplier,
+            @RequestParam String token,
+            @RequestParam(required = false, defaultValue = "KRW") String currencyCode
+    );
+
     // ── 호텔 ────────────────────────────────────────────────────────────
 
     @GetMapping("/supply/hotels/offers")
