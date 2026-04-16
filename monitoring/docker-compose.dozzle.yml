@@ -12,4 +12,5 @@ services:
     environment:
       DOZZLE_NO_ANALYTICS: "true"
       DOZZLE_LEVEL: "info"      # 로그 레벨
+      DOZZLE_BASE: "/monitor"
     restart: unless-stopped
