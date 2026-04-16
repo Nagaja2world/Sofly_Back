@@ -7,6 +7,7 @@ import com.sofly.core.domain.chat.repository.ChatMessageRepository;
 import com.sofly.core.domain.chat.repository.ChatRoomRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.ai.memory.RdbChatMemory;
+import com.sofly.core.global.ai.tools.PlaceVerificationTools;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -28,6 +29,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final PlaceVerificationTools placeVerificationTools;
 
     // ChatRoom 생성 (Workspace당 여러 개 가능)
     @Transactional
@@ -56,6 +58,7 @@ public class ChatService {
                 .advisors(MessageChatMemoryAdvisor.builder(rdbChatMemory)
                         .conversationId(conversationId)
                         .build())
+                .tools(placeVerificationTools)
                 .call()
                 .content();
 
