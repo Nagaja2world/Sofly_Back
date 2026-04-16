@@ -1,21 +1,31 @@
 package com.sofly.core.domain.chat.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sofly.core.domain.chat.dto.*;
 import com.sofly.core.domain.chat.entity.ChatMessage;
 import com.sofly.core.domain.chat.entity.ChatRoom;
 import com.sofly.core.domain.chat.repository.ChatMessageRepository;
 import com.sofly.core.domain.chat.repository.ChatRoomRepository;
+import com.sofly.core.domain.schedule.dto.ScheduleCreateRequest;
+import com.sofly.core.domain.schedule.dto.ScheduleItemCreateRequest;
+import com.sofly.core.domain.schedule.dto.ScheduleResponse;
+import com.sofly.core.domain.schedule.service.ScheduleService;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.ai.memory.RdbChatMemory;
 import com.sofly.core.global.ai.tools.PlaceVerificationTools;
+import com.sofly.core.global.exception.ErrorCode;
+import com.sofly.core.global.exception.SoflyException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -30,6 +40,8 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final WorkspaceRepository workspaceRepository;
     private final PlaceVerificationTools placeVerificationTools;
+    private final ScheduleService scheduleService;
+    private final ObjectMapper objectMapper;
 
     // ChatRoom 생성 (Workspace당 여러 개 가능)
     @Transactional
@@ -79,6 +91,68 @@ public class ChatService {
                 .stream()
                 .map(ChatRoomSummaryResponse::from)
                 .toList();
+    }
+
+    // 메시지 스트리밍 (SSE용) — 청크 단위 Flux<String> 반환
+    public Flux<String> chatStream(Long roomId, ChatRequest request) {
+        chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        String conversationId = "room:" + roomId;
+
+        return chatClient.prompt()
+                .user(request.message())
+                .advisors(MessageChatMemoryAdvisor.builder(rdbChatMemory)
+                        .conversationId(conversationId)
+                        .build())
+                .tools(placeVerificationTools)
+                .stream()
+                .content();
+    }
+
+    // 스트리밍 완료 후 ChatRoom 마지막 메시지 업데이트 (컨트롤러 onComplete 콜백에서 호출)
+    @Transactional
+    public void finalizeStream(Long roomId, String fullResponse) {
+        chatRoomRepository.findById(roomId).ifPresent(room ->
+                room.updateLastMessage(fullResponse.length() > LAST_MESSAGE_PREVIEW_LENGTH
+                        ? fullResponse.substring(0, LAST_MESSAGE_PREVIEW_LENGTH) + "…"
+                        : fullResponse)
+        );
+    }
+
+    // AI 확정 JSON → Schedule 저장
+    @Transactional
+    public ScheduleResponse saveScheduleFromChat(Long roomId, Long workspaceId) {
+        ChatMessage lastAssistantMessage = chatMessageRepository
+                .findTopByChatRoomIdAndRoleOrderByCreatedAtDesc(roomId, ChatMessage.Role.ASSISTANT)
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_MESSAGE_NOT_FOUND));
+
+        AiScheduleOutput output;
+        try {
+            output = objectMapper.readValue(lastAssistantMessage.getContent(), AiScheduleOutput.class);
+        } catch (JsonProcessingException e) {
+            throw new SoflyException(ErrorCode.INVALID_AI_RESPONSE);
+        }
+
+        List<ScheduleItemCreateRequest> items = output.days().stream()
+                .flatMap(day -> day.items().stream()
+                        .map(item -> new ScheduleItemCreateRequest(
+                                day.day(),
+                                item.orderIndex(),
+                                item.visitTime() != null ? LocalTime.parse(item.visitTime()) : null,
+                                item.category(),
+                                item.name(),
+                                item.address(),
+                                item.latitude(),
+                                item.longitude(),
+                                item.memo(),
+                                item.deepLinkUrl(),
+                                item.estimatedCost()
+                        ))
+                )
+                .toList();
+
+        return scheduleService.createSchedule(new ScheduleCreateRequest(workspaceId, null, items));
     }
 
     // 특정 ChatRoom의 메시지 전체 (채팅창 진입 시)

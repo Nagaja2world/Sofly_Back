@@ -4,12 +4,19 @@ import com.sofly.core.domain.chat.dto.ChatHistoryResponse;
 import com.sofly.core.domain.chat.dto.ChatRequest;
 import com.sofly.core.domain.chat.dto.ChatResponse;
 import com.sofly.core.domain.chat.service.ChatService;
+import com.sofly.core.domain.schedule.dto.ScheduleResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Tag(name = "Chat Message", description = "AI 채팅 메시지 전송·조회 API")
 @RestController
@@ -34,5 +41,52 @@ public class ChatMessageController {
             @RequestBody @Valid ChatRequest request
     ) {
         return ResponseEntity.ok(chatService.chat(roomId, request));
+    }
+
+    @Operation(
+            summary = "메시지 전송 (스트리밍)",
+            description = "ChatRoom에 메시지를 보내고 AI 응답을 SSE(text/event-stream)로 청크 단위 수신합니다. "
+                    + "긴 일정 생성 시 체감 응답 속도가 개선됩니다."
+    )
+    @PostMapping(value = "/{roomId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStream(
+            @PathVariable Long roomId,
+            @RequestBody @Valid ChatRequest request
+    ) {
+        SseEmitter emitter = new SseEmitter(180_000L);
+        AtomicReference<String> collector = new AtomicReference<>("");
+
+        chatService.chatStream(roomId, request)
+                .subscribe(
+                        chunk -> {
+                            try {
+                                emitter.send(SseEmitter.event().data(chunk));
+                                collector.updateAndGet(prev -> prev + chunk);
+                            } catch (IOException e) {
+                                emitter.completeWithError(e);
+                            }
+                        },
+                        emitter::completeWithError,
+                        () -> {
+                            chatService.finalizeStream(roomId, collector.get());
+                            emitter.complete();
+                        }
+                );
+
+        return emitter;
+    }
+
+    @Operation(
+            summary = "AI 확정 일정 저장",
+            description = "AI가 확정 JSON을 반환한 후 호출합니다. "
+                    + "마지막 AI 메시지의 JSON을 파싱해 Schedule로 저장합니다."
+    )
+    @PostMapping("/{roomId}/save-schedule")
+    public ResponseEntity<ScheduleResponse> saveSchedule(
+            @PathVariable Long roomId,
+            @Parameter(description = "저장할 워크스페이스 ID", required = true)
+            @RequestParam Long workspaceId
+    ) {
+        return ResponseEntity.ok(chatService.saveScheduleFromChat(roomId, workspaceId));
     }
 }
