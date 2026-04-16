@@ -78,9 +78,6 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
-          AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
-          AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
-          AMADEUS_BASE_URL: ${{ secrets.AMADEUS_BASE_URL }}
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           GOOGLE_PLACES_BASE_URL: ${{ secrets.GOOGLE_PLACES_BASE_URL }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
@@ -94,7 +91,7 @@ jobs:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          envs: AMADEUS_CLIENT_ID,AMADEUS_CLIENT_SECRET,AMADEUS_BASE_URL,GOOGLE_PLACES_API_KEY,GOOGLE_PLACES_BASE_URL,REDIS_HOST,REDIS_PORT,DEPLOY_PATH,RAPIDAPI_KEY,RAPIDAPI_HOST,RAPIDAPI_BASE_URL,IMAGE_TAG
+          envs: GOOGLE_PLACES_API_KEY,GOOGLE_PLACES_BASE_URL,REDIS_HOST,REDIS_PORT,DEPLOY_PATH,RAPIDAPI_KEY,RAPIDAPI_HOST,RAPIDAPI_BASE_URL,IMAGE_TAG
           script_stop: true
           script: |
             set -e
@@ -211,9 +208,6 @@ jobs:
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.supply"
             printf '%s\n' \
-              "AMADEUS_CLIENT_ID=$AMADEUS_CLIENT_ID" \
-              "AMADEUS_CLIENT_SECRET=$AMADEUS_CLIENT_SECRET" \
-              "AMADEUS_BASE_URL=$AMADEUS_BASE_URL" \
               "GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY" \
               "GOOGLE_PLACES_BASE_URL=$GOOGLE_PLACES_BASE_URL" \
               "RAPIDAPI_KEY=$RAPIDAPI_KEY" \
