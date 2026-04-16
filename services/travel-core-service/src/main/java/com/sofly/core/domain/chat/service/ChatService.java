@@ -16,7 +16,6 @@ import com.sofly.core.global.ai.memory.RdbChatMemory;
 import com.sofly.core.global.ai.tools.PlaceVerificationTools;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -47,7 +46,7 @@ public class ChatService {
     @Transactional
     public ChatRoomSummaryResponse createChatRoom(ChatRoomCreateRequest request) {
         workspaceRepository.findById(request.workspaceId())
-                .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + request.workspaceId()));
+                .orElseThrow(() -> new SoflyException(ErrorCode.WORKSPACE_NOT_FOUND));
 
         ChatRoom room = ChatRoom.builder()
                 .workspaceId(request.workspaceId())
@@ -61,7 +60,7 @@ public class ChatService {
     @Transactional
     public ChatResponse chat(Long roomId, ChatRequest request) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("ChatRoom not found: " + roomId));
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         String conversationId = "room:" + roomId;
 
@@ -134,6 +133,10 @@ public class ChatService {
             throw new SoflyException(ErrorCode.INVALID_AI_RESPONSE);
         }
 
+        if (output.days() == null || output.days().isEmpty()) {
+            throw new SoflyException(ErrorCode.INVALID_AI_RESPONSE);
+        }
+
         List<ScheduleItemCreateRequest> items = output.days().stream()
                 .flatMap(day -> day.items().stream()
                         .map(item -> new ScheduleItemCreateRequest(
@@ -159,7 +162,7 @@ public class ChatService {
     @Transactional(readOnly = true)
     public ChatHistoryResponse getChatRoomMessages(Long roomId) {
         chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("ChatRoom not found: " + roomId));
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         return new ChatHistoryResponse(
                 roomId,

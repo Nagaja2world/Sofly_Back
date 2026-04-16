@@ -17,16 +17,20 @@ public class PlaceVerificationTools {
     public String verifyPlace(
             @ToolParam(description = "검색할 장소명 (예: '경복궁', 'Eiffel Tower')") String placeName
     ) {
-        PlacesResponse response = supplyClient.searchPlace(placeName);
-        if (response.places() == null || response.places().isEmpty()) {
-            return "'" + placeName + "'에 해당하는 장소를 찾을 수 없습니다.";
+        try {
+            PlacesResponse response = supplyClient.searchPlace(placeName);
+            if (response.places() == null || response.places().isEmpty()) {
+                return "'" + placeName + "'에 해당하는 장소를 찾을 수 없습니다.";
+            }
+            PlacesResponse.Place place = response.places().get(0);
+            return String.format("장소 확인됨: %s | 주소: %s | 유형: %s | 평점: %s",
+                    place.displayName().text(),
+                    place.formattedAddress(),
+                    place.primaryType(),
+                    place.rating() != null ? place.rating() : "없음"
+            );
+        } catch (Exception e) {
+            return "장소 확인 서비스에 일시적인 오류가 발생했습니다. 장소명: " + placeName;
         }
-        PlacesResponse.Place place = response.places().get(0);
-        return String.format("장소 확인됨: %s | 주소: %s | 유형: %s | 평점: %s",
-                place.displayName().text(),
-                place.formattedAddress(),
-                place.primaryType(),
-                place.rating() != null ? place.rating() : "없음"
-        );
     }
 }

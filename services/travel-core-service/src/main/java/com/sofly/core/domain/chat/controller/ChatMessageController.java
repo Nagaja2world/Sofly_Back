@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @Tag(name = "Chat Message", description = "AI 채팅 메시지 전송·조회 API")
 @RestController
@@ -54,21 +57,39 @@ public class ChatMessageController {
             @RequestBody @Valid ChatRequest request
     ) {
         SseEmitter emitter = new SseEmitter(180_000L);
-        AtomicReference<String> collector = new AtomicReference<>("");
+        StringBuilder collector = new StringBuilder();
+
+        // nginx/LB idle timeout 방지용 heartbeat (15초 간격)
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ScheduledFuture<?> heartbeat = scheduler.scheduleAtFixedRate(() -> {
+            try {
+                emitter.send(SseEmitter.event().comment("keep-alive"));
+            } catch (IOException e) {
+                scheduler.shutdown();
+            }
+        }, 15, 15, TimeUnit.SECONDS);
+
+        emitter.onCompletion(() -> { heartbeat.cancel(true); scheduler.shutdown(); });
+        emitter.onError(t -> { heartbeat.cancel(true); scheduler.shutdown(); });
 
         chatService.chatStream(roomId, request)
                 .subscribe(
                         chunk -> {
                             try {
                                 emitter.send(SseEmitter.event().data(chunk));
-                                collector.updateAndGet(prev -> prev + chunk);
+                                collector.append(chunk);
                             } catch (IOException e) {
                                 emitter.completeWithError(e);
                             }
                         },
-                        emitter::completeWithError,
+                        error -> {
+                            try {
+                                emitter.send(SseEmitter.event().name("error").data(error.getMessage()));
+                            } catch (IOException ignored) {}
+                            emitter.completeWithError(error);
+                        },
                         () -> {
-                            chatService.finalizeStream(roomId, collector.get());
+                            chatService.finalizeStream(roomId, collector.toString());
                             emitter.complete();
                         }
                 );
