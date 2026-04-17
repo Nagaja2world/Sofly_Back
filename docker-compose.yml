@@ -32,7 +32,9 @@ services:
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-sofly-redis}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
     networks:
-      - sofly-net
+      sofly-net:
+        aliases:
+          - supply
     restart: unless-stopped
     healthcheck:
       # test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
