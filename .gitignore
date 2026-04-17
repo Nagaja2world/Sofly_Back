@@ -40,6 +40,8 @@ out/
 .env
 .env.core
 .env.supply
+.env.dozzle
+.env.monitoring
 /services/travel-supply-service/.env
 
 ### postman ###

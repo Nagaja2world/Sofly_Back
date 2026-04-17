@@ -39,7 +39,6 @@ jobs:
             cd "$DEPLOY_PATH/monitoring"
 
             echo "👉🏻 [2] Git 최신화"
-            cd "$DEPLOY_PATH"
             git remote prune origin
             git reset --hard HEAD
             git clean -fd
