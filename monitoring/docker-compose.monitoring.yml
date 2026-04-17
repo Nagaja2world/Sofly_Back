@@ -63,7 +63,9 @@ services:
     ports:
       - "9121:9121"
     environment:
-      REDIS_ADDR: redis:6379
+      REDIS_ADDR: redis://sofly-redis:6379
+    networks:
+      - sofly-net
     restart: unless-stopped
 
   cadvisor:
