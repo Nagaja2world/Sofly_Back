@@ -6,10 +6,12 @@ services:
     ports:
       - "8085:8081"
     environment:
-      REDIS_HOSTS: local:redis:6379
+      REDIS_HOSTS: local:sofly-redis:6379
       HTTP_USER: ${REDIS_UI_USER}
       HTTP_PASSWORD: ${REDIS_UI_PASSWORD}
     env_file: .env.monitoring
+    networks:
+      - sofly-net
     restart: unless-stopped
 
   kafka-ui:
