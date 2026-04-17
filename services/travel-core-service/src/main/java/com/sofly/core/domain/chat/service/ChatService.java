@@ -25,6 +25,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
@@ -128,7 +129,14 @@ public class ChatService {
 
         AiScheduleOutput output;
         try {
-            output = objectMapper.readValue(lastAssistantMessage.getContent(), AiScheduleOutput.class);
+            String content = lastAssistantMessage.getContent();
+            // AI가 마크다운 코드 블록(```json ... ```)이나 앞뒤 텍스트를 포함할 경우 JSON만 추출
+            if (content.contains("```json")) {
+                content = content.substring(content.indexOf("```json") + 7, content.lastIndexOf("```")).trim();
+            } else if (content.contains("{") && content.contains("}")) {
+                content = content.substring(content.indexOf("{"), content.lastIndexOf("}") + 1).trim();
+            }
+            output = objectMapper.readValue(content, AiScheduleOutput.class);
         } catch (JsonProcessingException e) {
             throw new SoflyException(ErrorCode.INVALID_AI_RESPONSE);
         }
@@ -142,7 +150,7 @@ public class ChatService {
                         .map(item -> new ScheduleItemCreateRequest(
                                 day.day(),
                                 item.orderIndex(),
-                                item.visitTime() != null ? LocalTime.parse(item.visitTime()) : null,
+                                parseVisitTime(item.visitTime()),
                                 item.category(),
                                 item.name(),
                                 item.address(),
@@ -156,6 +164,15 @@ public class ChatService {
                 .toList();
 
         return scheduleService.createSchedule(new ScheduleCreateRequest(workspaceId, null, items));
+    }
+
+    private LocalTime parseVisitTime(String visitTime) {
+        if (visitTime == null) return null;
+        try {
+            return LocalTime.parse(visitTime);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     // 특정 ChatRoom의 메시지 전체 (채팅창 진입 시)

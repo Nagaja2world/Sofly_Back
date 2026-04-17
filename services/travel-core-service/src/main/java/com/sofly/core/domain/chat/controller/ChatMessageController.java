@@ -27,6 +27,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class ChatMessageController {
 
+    // SSE heartbeat용 공용 스레드 풀 — 요청마다 생성하지 않고 애플리케이션 전체에서 공유
+    private static final ScheduledExecutorService HEARTBEAT_SCHEDULER =
+            Executors.newScheduledThreadPool(10);
+
     private final ChatService chatService;
 
     @Operation(summary = "ChatRoom 메시지 조회", description = "특정 ChatRoom의 전체 메시지를 반환합니다.")
@@ -60,17 +64,16 @@ public class ChatMessageController {
         StringBuilder collector = new StringBuilder();
 
         // nginx/LB idle timeout 방지용 heartbeat (15초 간격)
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        ScheduledFuture<?> heartbeat = scheduler.scheduleAtFixedRate(() -> {
+        ScheduledFuture<?> heartbeat = HEARTBEAT_SCHEDULER.scheduleAtFixedRate(() -> {
             try {
                 emitter.send(SseEmitter.event().comment("keep-alive"));
             } catch (IOException e) {
-                scheduler.shutdown();
+                Thread.currentThread().interrupt();
             }
         }, 15, 15, TimeUnit.SECONDS);
 
-        emitter.onCompletion(() -> { heartbeat.cancel(true); scheduler.shutdown(); });
-        emitter.onError(t -> { heartbeat.cancel(true); scheduler.shutdown(); });
+        emitter.onCompletion(() -> heartbeat.cancel(true));
+        emitter.onError(t -> heartbeat.cancel(true));
 
         chatService.chatStream(roomId, request)
                 .subscribe(
