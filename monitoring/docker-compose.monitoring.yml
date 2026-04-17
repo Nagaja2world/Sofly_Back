@@ -83,3 +83,8 @@ services:
 volumes:
   prometheus-data:
   grafana-data:
+
+networks:
+  sofly-net:
+    external: true
+    name: sofly-net

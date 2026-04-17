@@ -4,7 +4,8 @@ on:
   push:
     branches: [ "develop" ]
     paths:
-      - 'monitoring/**'
+      - 'monitoring/prometheus'
+      - 'monitoring/docker-compose.monitoring.yml'
       - '!monitoring/docker-compose.dozzle.yml'
       - '.github/workflows/monitoring.yml'
   workflow_dispatch:
