@@ -4,11 +4,11 @@ global:
 scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['localhost:8086']
+      - targets: ['cadvisor:8080']  # localhost 아니라 컨테이너 이름
 
   - job_name: 'redis'
     static_configs:
-      - targets: ['localhost:6379']
+      - targets: ['redis-exporter:9121']
 
   - job_name: 'prometheus'
     static_configs:
