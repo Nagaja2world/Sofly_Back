@@ -23,7 +23,7 @@ public class VisitStatusScheduler {
     // TODO: PLANNED status change to VISITED time setting 
     // 10초마다 실행으로 임시 변경
     // @Scheduled(fixedDelay = 10000)
-    @Scheduled(fixedDelay = 1800000)  // 1800000ms = 30분
+    @Scheduled(fixedDelay = 14400000)  // 14400000ms = 4시간
     public void promoteToVisited() {
         log.info("[ConquestScheduler] PLANNED → VISITED 자동 전환 시작");
         conquestMapService.promotePlannedToVisited();
