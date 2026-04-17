@@ -68,8 +68,8 @@ jobs:
             chmod 600 .env.monitoring
 
             echo "👉🏻[4] Deploy Monitoring Stack"
-            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.monitoring.yml" pull
-            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.monitoring.yml" up -d
+            sudo docker compose --env-file ./.env.monitoring -f docker-compose.monitoring.yml pull
+            sudo docker compose --env-file ./.env.monitoring -f docker-compose.monitoring.yml up -d
 
             echo "👉🏻[5] Check status"
             sudo docker ps | grep -E "redis-ui|kafka-ui|prometheus|grafana|cadvisor" && echo "✅ Monitoring Stack is UP" || echo "❌ Some containers are DOWN"
