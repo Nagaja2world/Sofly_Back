@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "develop" ]
     paths:
-      - 'monitoring/**'
+      - 'monitoring/docker-compose.dozzle.yml'
       - '.github/workflows/dozzle.yml'
   workflow_dispatch:
 
