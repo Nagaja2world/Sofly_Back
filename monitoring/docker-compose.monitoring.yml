@@ -9,7 +9,7 @@ services:
       REDIS_HOSTS: local:redis:6379
       HTTP_USER: ${REDIS_UI_USER}
       HTTP_PASSWORD: ${REDIS_UI_PASSWORD}
-    env_file: ./.env.monitoring
+    env_file: .env.monitoring
     restart: unless-stopped
 
   kafka-ui:
@@ -23,7 +23,7 @@ services:
       AUTH_TYPE: LOGIN_FORM
       SPRING_SECURITY_USER_NAME: ${KAFKA_UI_USER}
       SPRING_SECURITY_USER_PASSWORD: ${KAFKA_UI_PASSWORD}
-    env_file: ./.env.monitoring
+    env_file: .env.monitoring
     restart: unless-stopped
 
   prometheus:
@@ -50,7 +50,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
       GF_SERVER_ROOT_URL: https://api.sofly.co.kr/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
-    env_file: ./.env.monitoring
+    env_file: .env.monitoring
     volumes:
       - grafana-data:/var/lib/grafana
     depends_on:
