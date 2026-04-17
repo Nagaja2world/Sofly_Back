@@ -1,0 +1,64 @@
+name: Deploy Monitoring Stack
+
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'monitoring/**'
+      - '!monitoring/docker-compose.dozzle.yml'
+      - '.github/workflows/monitoring.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-monitoring-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Monitoring Stack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          REDIS_UI_USER: ${{ secrets.REDIS_UI_USER }}
+          REDIS_UI_PASSWORD: ${{ secrets.REDIS_UI_PASSWORD }}
+          KAFKA_UI_USER: ${{ secrets.KAFKA_UI_USER }}
+          KAFKA_UI_PASSWORD: ${{ secrets.KAFKA_UI_PASSWORD }}
+          GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
+          GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          envs: REDIS_UI_USER,REDIS_UI_PASSWORD,KAFKA_UI_USER,KAFKA_UI_PASSWORD,GRAFANA_USER,GRAFANA_PASSWORD,DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -e
+            echo "👉🏻[1] Move to deploy path"
+            mkdir -p "$DEPLOY_PATH/monitoring"
+            cd "$DEPLOY_PATH/monitoring"
+
+            echo "👉🏻[2] Create .env"
+            printf '%s\n' \
+              "REDIS_UI_USER=$REDIS_UI_USER" \
+              "REDIS_UI_PASSWORD=$REDIS_UI_PASSWORD" \
+              "KAFKA_UI_USER=$KAFKA_UI_USER" \
+              "KAFKA_UI_PASSWORD=$KAFKA_UI_PASSWORD" \
+              "GRAFANA_USER=$GRAFANA_USER" \
+              "GRAFANA_PASSWORD=$GRAFANA_PASSWORD" > .env.monitoring
+            chmod 600 .env.monitoring
+
+            echo "👉🏻[3] Copy config files"
+            cp $DEPLOY_PATH/monitoring/prometheus.yml ./prometheus.yml
+
+            echo "👉🏻[4] Deploy Monitoring Stack"
+            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.monitoring.yml" pull
+            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.monitoring.yml" up -d
+
+            echo "👉🏻[5] Check status"
+            sudo docker ps | grep -E "redis-ui|kafka-ui|prometheus|grafana|cadvisor" && echo "✅ Monitoring Stack is UP" || echo "❌ Some containers are DOWN"

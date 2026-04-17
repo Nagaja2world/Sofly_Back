@@ -42,8 +42,8 @@ jobs:
             echo "👉🏻[2] Create .env"
             printf '%s\n' \
               "DOZZLE_USERNAME=$DOZZLE_USERNAME" \
-              "DOZZLE_PASSWORD=$DOZZLE_PASSWORD" > .env
-            chmod 600 .env
+              "DOZZLE_PASSWORD=$DOZZLE_PASSWORD" > .env.dozzle
+            chmod 600 .env.dozzle
 
             # ── 3. Dozzle 실행 ───────────────────────────────
             echo "👉🏻[3] Deploy Dozzle"
