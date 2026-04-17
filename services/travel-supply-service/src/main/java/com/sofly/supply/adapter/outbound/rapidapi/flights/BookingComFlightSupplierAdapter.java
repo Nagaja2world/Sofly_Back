@@ -58,4 +58,26 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
         if (response == null) return RapidApiJsonUtils.nullNode();
         return BookingComFlightResponseFilter.filter(RapidApiJsonUtils.parseJson(response));
     }
+
+    @Cacheable(value = "bookingFlightDetails", key = "#token + ':' + #currencyCode")
+    @Override
+    public JsonNode getFlightDetails(String token, String currencyCode) {
+        String response = rapidApiWebClient.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/api/v1/flights/getFlightDetails")
+                            .queryParam("token", token);
+
+                    if (currencyCode != null && !currencyCode.isBlank())
+                        builder.queryParam("currency_code", currencyCode);
+
+                    return builder.build();
+                })
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        if (response == null) return RapidApiJsonUtils.nullNode();
+        return RapidApiJsonUtils.parseJson(response);
+    }
 }

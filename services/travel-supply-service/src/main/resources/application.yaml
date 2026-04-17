@@ -20,11 +20,6 @@ spring:
     ansi:
       enabled: ALWAYS
 
-amadeus:
-  base-url: ${AMADEUS_BASE_URL:https://test.api.amadeus.com}
-  client-id: ${AMADEUS_CLIENT_ID:}
-  client-secret: ${AMADEUS_CLIENT_SECRET:}
-
 springdoc:
   swagger-ui:
     path: /supply/swagger-ui

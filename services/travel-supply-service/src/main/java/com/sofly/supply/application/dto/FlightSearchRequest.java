@@ -40,11 +40,6 @@ public class FlightSearchRequest {
     @Schema(defaultValue = "KRW")
     private String currencyCode;
 
-    // Amadeus 전용
-    @Builder.Default
-    @Schema(defaultValue = "10")
-    private int max = 10;
-
     // booking 전용
     @Schema(defaultValue = "none")
     private StopsType stops;
