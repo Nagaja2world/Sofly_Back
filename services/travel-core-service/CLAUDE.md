@@ -34,12 +34,14 @@ The app uses `me.paulschwarz:spring-dotenv` to load a `.env` file from the proje
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`
 - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`
-- `FRONTEND_REDIRECT_URL`
-- `GEMINI_API_KEY` — Google Gemini AI API key
+- `GEMINI_API_KEY` — Google Gemini AI
+- `AWS_S3_ACCESS_KEY_ID`, `AWS_S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `AWS_REGION` — S3 (album)
+- `OAUTH2_REDIRECT_URI` — OAuth2 success redirect (default: `http://localhost:3000/oauth2/callback`)
+- `SUPPLY_SERVICE_URL` — supply service base URL (default: `http://supply:8081`)
 
-Config file: `src/main/resources/application-core.yaml` (not `application.yaml`). The `bootRun` task and the Docker entry point both pass `-Dspring.config.name=application-core`.
+Config file: `src/main/resources/application-core.yaml` (not `application.yaml`). The `bootRun` task and Docker entry point both pass `-Dspring.config.name=application-core`.
 
-Swagger UI is available at `http://localhost:8080/core-docs`.
+Swagger UI: `http://localhost:8080/core/swagger-ui`
 
 ## Architecture
 
@@ -53,47 +55,65 @@ com.sofly.core
 │   │   ├── memory/  # RdbChatMemory (PostgreSQL + Redis hybrid)
 │   │   └── prompt/  # SystemPrompts (travel planner prompt)
 │   ├── auth/        # AuthController + AuthService (token refresh)
-│   ├── config/      # RedisConfig
+│   ├── config/      # RedisConfig, S3Config
 │   ├── entity/      # BaseTimeEntity (@MappedSuperclass for createdAt/updatedAt)
 │   ├── exception/   # ErrorCode, GlobalExceptionHandler, SoflyException
-│   ├── response/    # ApiResponse (common API response wrapper)
+│   ├── response/    # ApiResponse + BaseErrorCode/BaseSuccessCode/ErrorStatus/SuccessStatus
 │   └── security/    # SecurityConfig, JWT filter/provider, OAuth2 handlers
+│       └── workspace/ # @RequireWorkspaceMember + WorkspaceMemberAspect (AOP)
 └── domain/          # Business domains
-    ├── user/        # User entity (OAuth2-backed), UserRepository, UserService
-    ├── workspace/   # Workspace (trip container), WorkspaceMember, SavedFlight
+    ├── user/        # User entity (OAuth2-backed), UserController (profile CRUD)
+    ├── workspace/   # Workspace, WorkspaceMember, SavedFlight
+    │   # Controllers split: WorkspaceController, WorkspaceFlightController,
+    │   #                    WorkspaceInviteController, WorkspaceMemberController
     ├── schedule/    # Schedule + ScheduleItem, full CRUD API
     ├── chat/        # ChatRoom + ChatMessage, AI-powered travel planner chat
-    ├── album/       # Album + Photo (Google Drive metadata)
-    └── travellog/   # TravelLog (markdown post-trip diary)
+    ├── album/       # Album + Photo (AWS S3 storage)
+    ├── travellog/   # TravelLog (markdown) + TravellogPhotoController (photo linking)
+    └── conquest/    # 정복지도 — VisitedCountry, VisitedCity, AirportInfoService
 ```
 
 ### Auth Flow
 
 - Sessions are **stateless** (`SessionCreationPolicy.STATELESS`).
-- Social login (Google / Kakao / Naver) via Spring OAuth2 Client → `CustomOAuth2UserService` creates/updates the `User` entity → `OAuth2AuthenticationSuccessHandler` issues JWT pair and redirects to `FRONTEND_REDIRECT_URL`.
+- Social login (Google / Kakao / Naver) via Spring OAuth2 Client → `CustomOAuth2UserService` creates/updates the `User` entity → `OAuth2AuthenticationSuccessHandler` issues JWT pair and redirects to `OAUTH2_REDIRECT_URI`.
 - All subsequent requests carry a JWT Bearer token, validated by `JwtAuthenticationFilter`.
 - Refresh tokens are stored in Redis (`RefreshTokenRepository`). Token refresh endpoint: `POST /api/auth/refresh`.
 
+### Workspace Access Control
+
+`@RequireWorkspaceMember(minRole = MemberRole.EDITOR)` is an AOP annotation that validates workspace membership before the method executes. The annotated method **must** have a `Long workspaceId` parameter. Roles are checked by enum ordinal: `OWNER(0) > EDITOR(1) > VIEWER(2)`.
+
 ### Domain Model Notes
 
-- All entities extend `BaseTimeEntity` for audit timestamps; `@EnableJpaAuditing` is on the main application class.
-- `Workspace` is the root aggregate for a trip. `WorkspaceMember` is the join table between `Workspace` and `User`.
-- `Schedule` supports multiple versions per workspace. `ScheduleItem` represents a draggable place/activity card with `orderIndex` and `Category` (ACCOMMODATION, RESTAURANT, CAFE, ATTRACTION, TRANSPORT).
-- `ChatRoom` is scoped to a workspace (one per workspace). `ChatMessage` stores USER/ASSISTANT messages for AI chat history.
-- `SavedFlight` stores denormalized flight info (from supply service) linked to a workspace.
-- `Album` has a one-to-one relationship with `Workspace` and holds a Google Drive folder ID. `Photo` stores thumbnail/original URLs and EXIF metadata.
-- `TravelLog` is a markdown-based travel journal with visibility control (PRIVATE, MEMBERS, PUBLIC).
+- All entities extend `BaseTimeEntity`; `@EnableJpaAuditing` is on the main application class.
+- `Workspace` is the root aggregate. `WorkspaceMember` is the join table between `Workspace` and `User` with roles (OWNER / EDITOR / VIEWER).
+- `Schedule` supports multiple versions per workspace. `ScheduleItem` has `orderIndex` and `Category` (ACCOMMODATION, RESTAURANT, CAFE, ATTRACTION, TRANSPORT).
+- `ChatRoom` is scoped to a workspace (one per workspace). `ChatMessage` stores USER/ASSISTANT messages.
+- `SavedFlight` stores denormalized flight info linked to a workspace. Saving a flight fires `FlightSavedEvent`, which triggers `ConquestMapService.onFlightSaved()`.
+- `Album` is created lazily per workspace. `Photo` stores S3 key + object URL. Upload allows jpeg/png/webp/heic, max 10MB per file, 20 files per request. Delete requires OWNER/EDITOR role or being the uploader.
+- `TravelLog` is a markdown journal with visibility (PRIVATE, MEMBERS, PUBLIC). Photos can be linked via `TravellogPhotoController`.
 - All JPA relationships use `FetchType.LAZY`.
+
+### Conquest Map (정복지도)
+
+`domain/conquest` tracks which countries and cities a user has visited.
+
+- **`VisitStatus`**: `UNVISITED → PLANNED → VISITED`
+- **Auto-PLANNED**: When a flight is saved to a workspace, `FlightSavedEvent` is published. `ConquestMapService.onFlightSaved()` resolves the arrival airport via `AirportInfoService` and marks the destination country/city as `PLANNED` for all workspace members.
+- **Auto-VISITED**: `VisitStatusScheduler` runs periodically and promotes `PLANNED` entries to `VISITED` once the flight's departure time has passed.
+- **Manual override**: Country/city status can be set manually via the API. Bulk import is supported.
+- `AirportInfoService` holds a static airport-to-country/city/coordinate mapping (IATA code lookup). It also exposes `calculateDistanceKm()` used in stats (total distance traveled).
+- `ConquestMapController` exposes: conquest map, stats panel, trip routes (arcs between airports), country-scoped workspaces, and CRUD for country/city status.
 
 ### AI Chat (Travel Planner)
 
 - **Model:** Google Gemini 2.5 Flash via Spring AI (`spring.ai.google.genai`)
-- **Memory:** `RdbChatMemory` implements Spring AI's `ChatMemory` interface using a hybrid strategy — PostgreSQL as primary store and Redis (24-hour TTL) as cache. Falls back to DB on Redis miss. Sliding window of 20 recent messages. Conversation ID format: `"room:{chatRoomId}"`.
-- **Flow:** `ChatService` uses `ChatClient` with `MessageChatMemoryAdvisor`. User messages and assistant replies are persisted via `RdbChatMemory`.
-- **System Prompt:** `SystemPrompts.TRAVEL_PLANNER` guides a 3-stage conversation: (1) information collection, (2) itinerary proposal in natural language, (3) JSON output only when user explicitly confirms (e.g., "확정해줘", "저장해줘").
+- **Memory:** `RdbChatMemory` uses PostgreSQL as primary store and Redis (24-hour TTL) as cache. Falls back to DB on Redis miss. Sliding window of 20 messages. Conversation ID: `"room:{chatRoomId}"`.
+- **System Prompt:** `SystemPrompts.TRAVEL_PLANNER` runs a 3-stage conversation: (1) information gathering, (2) natural language itinerary proposal, (3) JSON output only when user explicitly confirms (e.g., "확정해줘", "저장해줘").
 
 ### Key Infrastructure
 
-- **OpenFeign** (`@EnableFeignClients`) is enabled for future inter-service calls.
-- **`@ConfigurationPropertiesScan`** is on the main class; add `@ConfigurationProperties` beans freely.
+- **OpenFeign** (`@EnableFeignClients`) is enabled for future inter-service calls. The supply service URL is configured via `sofly.supply.url`.
+- **`@ConfigurationPropertiesScan`** is on the main class.
 - Spring Cloud version: `2025.0.0`.

@@ -28,4 +28,9 @@ public class FlightSearchService {
     public List<FlightDestination> searchDestination(String query, String languageCode) {
         return flightMetaPort.searchDestinations(query, languageCode);
     }
+
+    public JsonNode getFlightDetails(String supplier, String token, String currencyCode) {
+        FlightSupplierPort selected = router.selectFlightSupplier(supplier);
+        return selected.getFlightDetails(token, currencyCode);
+    }
 }

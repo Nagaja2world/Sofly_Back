@@ -13,7 +13,7 @@ public class SupplierRouter {
 
     private final SupplierRegistry registry;
 
-    @Value("${app.suppliers.default:amadeus}")
+    @Value("${app.suppliers.default:booking}")
     private String defaultSupplier;
 
     public SupplierRouter(SupplierRegistry registry) {

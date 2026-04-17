@@ -1,7 +1,42 @@
 services:
+  core:
+    build: ./services/travel-core-service
+    container_name: sofly-core
+    ports:
+      - "8080:8080"
+    env_file: ./services/travel-core-service/.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://sofly-postgres:5432/sofly_db
+      SPRING_DATASOURCE_USERNAME: sofly_user
+      SPRING_DATASOURCE_PASSWORD: sofly_password
+      REDIS_HOST: sofly-redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - sofly-net
+
+  supply:
+    build: ./services/travel-supply-service
+    container_name: sofly_supply
+    ports:
+      - "8082:8081"
+    env_file: ./services/travel-supply-service/.env
+    environment:
+      REDIS_HOST: sofly-redis
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - sofly-net
+
   postgres:
     image: postgres:16-alpine
     container_name: sofly-postgres
+    networks:
+      - sofly-net
     ports:
       - "5432:5432"
     environment:
@@ -19,6 +54,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: sofly-redis
+    networks:
+      - sofly-net
     ports:
       - "6379:6379"
     volumes:
@@ -45,3 +82,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  sofly-net:
+    name: sofly-net

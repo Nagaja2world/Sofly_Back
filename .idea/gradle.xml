@@ -5,7 +5,7 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/services/travel-core-service" />
-        <option name="gradleJvm" value="21" />
+        <option name="gradleJvm" value="21 (WSL)" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/services/travel-core-service" />
@@ -14,7 +14,7 @@
       </GradleProjectSettings>
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/services/travel-supply-service" />
-        <option name="gradleJvm" value="21" />
+        <option name="gradleJvm" value="21 (WSL)" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/services/travel-supply-service" />

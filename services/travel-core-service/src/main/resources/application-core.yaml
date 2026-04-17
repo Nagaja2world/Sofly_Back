@@ -97,6 +97,8 @@ sofly:
   oauth2:
     redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth2/callback}
     # redirect-uri: ${FRONTEND_REDIRECT_URI:http://localhost:8080}
+  supply:
+    url: ${SUPPLY_SERVICE_URL:http://supply:8081}
 
 springdoc:
   swagger-ui:
