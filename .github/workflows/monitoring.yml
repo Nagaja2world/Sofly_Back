@@ -43,7 +43,22 @@ jobs:
             mkdir -p "$DEPLOY_PATH/monitoring"
             cd "$DEPLOY_PATH/monitoring"
 
-            echo "👉🏻[2] Create .env"
+            echo "👉🏻 [2] Git 최신화"
+            cd "$DEPLOY_PATH"
+            git remote prune origin
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
+
+            echo "📌 현재 브랜치: $(git branch --show-current)"
+            echo "📌 현재 커밋:   $(git rev-parse HEAD)"
+            echo "📌 커밋 메시지: $(git log -1 --pretty=format:'%s')"
+            echo "📌 커밋 시간:   $(git log -1 --pretty=format:'%ci')"
+            echo "📌 커밋 작성자: $(git log -1 --pretty=format:'%an')"
+
+            echo "👉🏻[3] Create .env"
             printf '%s\n' \
               "REDIS_UI_USER=$REDIS_UI_USER" \
               "REDIS_UI_PASSWORD=$REDIS_UI_PASSWORD" \
@@ -52,9 +67,6 @@ jobs:
               "GRAFANA_USER=$GRAFANA_USER" \
               "GRAFANA_PASSWORD=$GRAFANA_PASSWORD" > .env.monitoring
             chmod 600 .env.monitoring
-
-            echo "👉🏻[3] Copy config files"
-            cp $DEPLOY_PATH/monitoring/prometheus.yml ./prometheus.yml
 
             echo "👉🏻[4] Deploy Monitoring Stack"
             sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.monitoring.yml" pull
