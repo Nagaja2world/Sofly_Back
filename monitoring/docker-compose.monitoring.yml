@@ -25,6 +25,7 @@ services:
       AUTH_TYPE: LOGIN_FORM
       SPRING_SECURITY_USER_NAME: ${KAFKA_UI_USER}
       SPRING_SECURITY_USER_PASSWORD: ${KAFKA_UI_PASSWORD}
+      SERVER_SERVLET_CONTEXT_PATH: /kafka-ui
     env_file: .env.monitoring
     restart: unless-stopped
 
