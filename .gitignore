@@ -47,3 +47,6 @@ out/
 ### postman ###
 .postman
 /postman/
+
+### Windows ###
+*:Zone.Identifier

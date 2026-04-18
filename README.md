@@ -48,7 +48,7 @@
 
 이 프로젝트는 두 개의 독립적으로 배포되는 Spring Boot 서비스로 구성된 **멀티 모듈 모노레포**입니다.
 
-<img width="1892" height="1698" alt="Sofly_Back_Architecture" src="https://github.com/user-attachments/assets/dcf245d5-c3f0-46ab-ba03-31c3bb87d9d6" />
+<img width="1892" height="1698" alt="Sofly_Back_Architecture" src="docs/images/Sofly_Back_Architecture.jpg" />
 
 ---
 
