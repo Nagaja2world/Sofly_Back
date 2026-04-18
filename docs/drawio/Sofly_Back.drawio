@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="페이지-1" id="dlATB8cib0bf26w3nTM_">
-    <mxGraphModel dx="861" dy="1575" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#000000,#FFFFFF)" math="0" shadow="0">
+    <mxGraphModel dx="923" dy="1659" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#000000,#FFFFFF)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -87,6 +87,11 @@
         <mxCell id="JxX8RIYY0gjUF22rf_ki-14" edge="1" parent="1" source="TYkesp74AfdNCKm2Rl2g-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;strokeColor=light-dark(#000000,#000000);endArrow=block;endFill=1;" target="gLAKS5OtG530hYWtvZdb-11">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="JxX8RIYY0gjUF22rf_ki-34" connectable="0" parent="JxX8RIYY0gjUF22rf_ki-14" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0)); background-color: light-dark(rgb(255, 255, 255), rgb(255, 255, 255));&quot;&gt;AI Integration&lt;/font&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.3234" y="3" as="geometry">
+            <mxPoint y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="JxX8RIYY0gjUF22rf_ki-28" edge="1" parent="1" source="TYkesp74AfdNCKm2Rl2g-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;strokeColor=light-dark(#000000,#000000);endArrow=block;endFill=1;" target="TYkesp74AfdNCKm2Rl2g-34">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -94,6 +99,9 @@
           <mxGeometry relative="1" x="0.066" y="4" as="geometry">
             <mxPoint x="38" y="-11" as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="JxX8RIYY0gjUF22rf_ki-35" edge="1" parent="1" source="TYkesp74AfdNCKm2Rl2g-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.407;entryY=-0.007;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;exitX=0.41;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;entryPerimeter=0;strokeColor=light-dark(#000000,#000000);endArrow=block;endFill=1;" target="TYkesp74AfdNCKm2Rl2g-38">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="TYkesp74AfdNCKm2Rl2g-37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=light-dark(#000000,#666666);fillColor=none;strokeWidth=1.5;dashed=1;" value="" vertex="1">
           <mxGeometry height="266" width="309" x="2169" y="562" as="geometry" />
@@ -474,6 +482,12 @@
         </mxCell>
         <mxCell id="JxX8RIYY0gjUF22rf_ki-31" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0)); background-color: light-dark(rgb(255, 255, 255), rgb(255, 255, 255));&quot;&gt;Pub/Sub State Sync&lt;/font&gt;" vertex="1">
           <mxGeometry x="2588.9" y="834" as="geometry" />
+        </mxCell>
+        <mxCell id="JxX8RIYY0gjUF22rf_ki-36" edge="1" parent="1" source="TYkesp74AfdNCKm2Rl2g-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.514;entryY=-0.005;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;exitX=0.517;exitY=0.999;exitDx=0;exitDy=0;exitPerimeter=0;entryPerimeter=0;strokeColor=light-dark(#000000,#000000);endArrow=none;endFill=0;startArrow=block;startFill=1;" target="TYkesp74AfdNCKm2Rl2g-38">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2311" y="847" as="sourcePoint" />
+            <mxPoint x="2311" y="893" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
