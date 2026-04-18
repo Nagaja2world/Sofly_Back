@@ -56,12 +56,12 @@
 ┌───────────────────────────────────────────────────────────┐
 │                        Client (Frontend)                   │
 └───────────────┬───────────────────────────┬───────────────┘
-                │                           │
+                │ HTTPS / WebSocket         │
                 ▼                           ▼
 ┌───────────────────────┐     ┌───────────────────────────┐
 │  travel-core-service  │────▶│  travel-supply-service    │
 │  (Layered Arch)       │     │  (Hexagonal Arch)         │
-│  :8080                │     │  :8082 (Docker)           │
+│  :8080                │     │  :8081 / Docker :8082     │
 │                       │     │                           │
 │  - Auth / User        │     │  - 항공권 검색            │
 │  - Workspace          │     │  - 호텔 검색              │
@@ -73,9 +73,10 @@
           │                               │
           └──────────────┬────────────────┘
                          ▼
-              ┌─────────────────────┐
-              │  PostgreSQL / Redis │
-              └─────────────────────┘
+     ┌───────────────────────────────────────┐
+     │  PostgreSQL  │  Redis  │  Kafka        │
+     │  (도메인 저장) │ (캐시/토큰) │ (Pub/Sub)  │
+     └───────────────────────────────────────┘
 ```
 
 **travel-core-service** — 레이어드 아키텍처. 인증·워크스페이스·일정·AI 채팅·앨범·여행 로그·정복 지도 등 핵심 비즈니스 로직을 담당합니다.
@@ -177,23 +178,45 @@ cd Sofly_Back
 
 ### Local Development
 
+`docker-compose.local.yml`은 PostgreSQL, Redis, Kafka와 모니터링 도구(Prometheus, Grafana, Kafka UI 등)를 포함한 전체 로컬 스택입니다.
+
 ```bash
-# 1. PostgreSQL, Redis 먼저 실행
-docker compose -f docker-compose.local.yml up -d
+# 1. 인프라만 실행 (DB, Redis, Kafka)
+docker compose -f docker-compose.local.yml up -d postgres redis kafka
 
 # 2. 서비스 실행 (각각 별도 터미널)
 ./gradlew :services:travel-core-service:bootRun   # http://localhost:8080
 ./gradlew :services:travel-supply-service:bootRun  # http://localhost:8081
 ```
 
-### Docker (전체 서비스)
+모니터링 도구까지 포함한 전체 로컬 스택을 실행하려면:
 
 ```bash
-# JAR 빌드 후 컨테이너 실행
+docker compose -f docker-compose.local.yml up -d
+```
+
+| 도구 | URL |
+|------|-----|
+| Grafana | http://localhost:3000 |
+| Prometheus | http://localhost:9090 |
+| Kafka UI | http://localhost:8989 |
+| Redis UI | http://localhost:8085 |
+
+### Docker (프로덕션)
+
+프로덕션 배포는 GitHub Actions를 통해 자동화됩니다. 수동 배포 시 프로파일을 지정해 실행합니다:
+
+```bash
+# JAR 빌드
 ./gradlew :services:travel-core-service:clean bootJar -x test
 ./gradlew :services:travel-supply-service:clean bootJar -x test
-docker compose up -d
+
+# 프로파일별 컨테이너 실행 (Blue/Green 배포)
+docker compose -f docker-compose.yml --profile core up -d
+docker compose -f docker-compose.yml --profile supply up -d
 ```
+
+> 무중단 배포 설정은 `docs/nginx-bluegreen.md` 참고
 
 ---
 
@@ -205,7 +228,7 @@ docker compose up -d
 
 ```dotenv
 # Database
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/sofly
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/sofly_db
 SPRING_DATASOURCE_USERNAME=
 SPRING_DATASOURCE_PASSWORD=
 
@@ -277,7 +300,7 @@ Sofly_Back/
 │   │           ├── travellog/            # 여행 로그 (Markdown)
 │   │           └── conquest/             # 정복 지도 (방문 국가/도시)
 │   │
-│   └── travel-supply-service/            # 외부 공급자 API 연동 (Port 8081)
+│   └── travel-supply-service/            # 외부 공급자 API 연동 (bootRun :8081 / Docker :8082)
 │       └── src/main/java/com/sofly/supply/
 │           ├── adapter/
 │           │   ├── inbound/rest/         # REST 컨트롤러
@@ -322,7 +345,7 @@ Sofly_Back/
 
 Swagger UI: `http://localhost:8080/core/swagger-ui`
 
-### travel-supply-service (`:8081`)
+### travel-supply-service (`:8081` bootRun / `:8082` Docker)
 
 | 분류 | Method | Endpoint | 설명 |
 |------|--------|----------|------|
@@ -331,7 +354,7 @@ Swagger UI: `http://localhost:8080/core/swagger-ui`
 | 장소 | `GET` | `/supply/places` | 장소 텍스트 검색 (dev only) |
 | 장소 | `GET` | `/supply/places/photo` | 장소 사진 URL 조회 (dev only) |
 
-Swagger UI: `http://localhost:8081/supply/swagger-ui`
+Swagger UI: `http://localhost:8081/supply/swagger-ui` (bootRun) / `http://localhost:8082/supply/swagger-ui` (Docker)
 
 ---
 
