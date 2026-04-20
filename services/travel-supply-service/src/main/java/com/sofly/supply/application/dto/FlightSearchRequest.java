@@ -11,6 +11,7 @@ import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -51,6 +52,10 @@ public class FlightSearchRequest {
     @Builder.Default
     @Schema(defaultValue = "1")
     private Integer pageNo = 1;
+    @Schema(description = "항공사 코드 필터 (예: KE, OZ). 미입력 시 전체 반환")
+    private List<String> airlines;
+    @Schema(description = "다음 페이지 커서 (이전 응답의 nextPageCursor 값). 항공사 필터 사용 시에만 유효")
+    private String cursor;
 
 
     //booking enum
