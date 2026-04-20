@@ -43,6 +43,8 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
+    networks:
+      - sofly-net
     restart: unless-stopped
 
   grafana:
