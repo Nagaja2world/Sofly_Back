@@ -119,3 +119,13 @@ cloud:
 
 logging:
   exception-conversion-word: "%wEx{0}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health
+  metrics:
+    export:
+      prometheus:
+        enabled: true
