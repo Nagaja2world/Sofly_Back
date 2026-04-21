@@ -61,7 +61,7 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
     networks:
-          - sofly-net
+      - sofly-net
     depends_on:
       - prometheus
     restart: unless-stopped
