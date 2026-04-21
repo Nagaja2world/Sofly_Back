@@ -14,3 +14,13 @@ scrape_configs:
     metrics_path: '/prometheus/metrics'
     static_configs:
       - targets: ['prometheus:9090']
+
+  - job_name: 'spring-core'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['core:8080']
+
+  - job_name: 'spring-supply'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['supply:8081']
