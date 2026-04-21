@@ -60,6 +60,8 @@ services:
     env_file: .env.monitoring
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+          - sofly-net
     depends_on:
       - prometheus
     restart: unless-stopped
