@@ -2,7 +2,7 @@ name: Deploy travel-supply-service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop","infra/65-add-monitoring-stack" ]
     paths:
       - 'services/travel-supply-service/**'
       - '.github/workflows/deploy-supply.yml'
