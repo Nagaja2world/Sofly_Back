@@ -2,7 +2,7 @@ name: Deploy Monitoring Stack
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop","infra/65-add-monitoring-stack" ]
     paths:
       - 'monitoring/prometheus'
       - 'monitoring/docker-compose.monitoring.yml'
