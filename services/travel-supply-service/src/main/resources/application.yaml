@@ -54,4 +54,3 @@ management:
   tracing:
     sampling:
       probability: 1.0
-    skip-pattern: /actuator.*
