@@ -41,9 +41,12 @@ dependencies {
     // Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    //Zipkin
+    // Zipkin
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+    // JPA/JDBC Query Tracing
+    implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:1.0.6'
 
     // JPA / DB
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -51,6 +54,9 @@ dependencies {
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
 
     // Environment Variables (.env)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
