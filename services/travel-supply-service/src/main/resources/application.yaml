@@ -19,7 +19,7 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
-      
+
   zipkin:
     base-url: http://sofly-zipkin:9411
 
@@ -54,3 +54,6 @@ management:
   tracing:
     sampling:
       probability: 1.0
+    export:
+      zipkin:
+        endpoint: http://sofly-zipkin:9411/api/v2/spans
