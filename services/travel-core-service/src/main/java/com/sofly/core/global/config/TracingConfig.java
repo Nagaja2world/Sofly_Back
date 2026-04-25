@@ -14,8 +14,13 @@ public class TracingConfig {
     public ObservationRegistryCustomizer<ObservationRegistry> noActuatorObservations() {
         return registry -> registry.observationConfig()
             .observationPredicate((name, context) -> {
+                // /actuator 제외
                 if (context instanceof ServerRequestObservationContext ctx) {
                     return !ctx.getCarrier().getRequestURI().startsWith("/actuator");
+                }
+                // security filterchain 제외
+                if (name.startsWith("spring.security.")) {
+                    return false;
                 }
                 return true;
             });
