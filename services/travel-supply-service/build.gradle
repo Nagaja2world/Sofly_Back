@@ -30,6 +30,10 @@ dependencies {
     // Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
+    //Zipkin
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
