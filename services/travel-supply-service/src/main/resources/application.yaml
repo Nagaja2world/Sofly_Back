@@ -20,9 +20,6 @@ spring:
     ansi:
       enabled: ALWAYS
 
-  zipkin:
-    base-url: http://sofly-zipkin:9411
-
 springdoc:
   swagger-ui:
     path: /supply/swagger-ui
@@ -51,9 +48,9 @@ management:
   metrics:
     export:
       prometheus:
+  zipkin:
+    tracing:
+      endpoint: http://sofly-zipkin:9411/api/v2/spans
   tracing:
     sampling:
       probability: 1.0
-    export:
-      zipkin:
-        endpoint: http://sofly-zipkin:9411/api/v2/spans
