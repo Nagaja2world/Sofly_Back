@@ -91,6 +91,15 @@ services:
       - sofly-net
     restart: unless-stopped
 
+  zipkin:
+      image: openzipkin/zipkin:latest
+      container_name: sofly-zipkin
+      ports:
+        - "9411:9411"
+      networks:
+        - sofly-net
+      restart: unless-stopped
+
 volumes:
   prometheus-data:
   grafana-data:
