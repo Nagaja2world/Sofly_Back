@@ -124,12 +124,15 @@ cloud:
 
 logging:
   exception-conversion-word: "%wEx{0}"
+  level:
+    com.zaxxer.hikari: DEBUG
+    com.zaxxer.hikari.HikariConfig: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus, health
+        include: prometheus, health, metrics
   metrics:
     export:
       prometheus:
