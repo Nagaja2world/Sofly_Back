@@ -11,7 +11,11 @@ services:
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-sofly-redis}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
     networks:
-      - sofly-net
+      sofly-net:
+        aliases:
+          - core
+    labels:
+      - "prometheus_scrape=true" 
     restart: unless-stopped
     healthcheck:
       # test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
@@ -32,7 +36,11 @@ services:
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-sofly-redis}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
     networks:
-      - sofly-net
+      sofly-net:
+        aliases:
+          - supply
+    labels:
+      - "prometheus_scrape=true" 
     restart: unless-stopped
     healthcheck:
       # test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]

@@ -1,7 +1,42 @@
 services:
+  core:
+    build: ./services/travel-core-service
+    container_name: sofly-core
+    ports:
+      - "8080:8080"
+    env_file: ./services/travel-core-service/.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://sofly-postgres:5432/sofly_db
+      SPRING_DATASOURCE_USERNAME: sofly_user
+      SPRING_DATASOURCE_PASSWORD: sofly_password
+      REDIS_HOST: sofly-redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - sofly-net
+
+  supply:
+    build: ./services/travel-supply-service
+    container_name: sofly_supply
+    ports:
+      - "8082:8081"
+    env_file: ./services/travel-supply-service/.env
+    environment:
+      REDIS_HOST: sofly-redis
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - sofly-net
+
   postgres:
     image: postgres:16-alpine
     container_name: sofly-postgres
+    networks:
+      - sofly-net
     ports:
       - "5432:5432"
     environment:
@@ -19,6 +54,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: sofly-redis
+    networks:
+      - sofly-net
     ports:
       - "6379:6379"
     volumes:
@@ -33,7 +70,7 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
@@ -42,6 +79,67 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx384m -Xms256m"
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
 
+  # ── Monitoring ───────────────────────────────────────────
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sofly-redis-ui
+    ports:
+      - "8085:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: sofly-kafka-ui
+    ports:
+      - "8989:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: sofly-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sofly-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.local.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sofly-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: sofly-cadvisor
+    ports:
+      - "8086:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  sofly-net:
+    name: sofly-net

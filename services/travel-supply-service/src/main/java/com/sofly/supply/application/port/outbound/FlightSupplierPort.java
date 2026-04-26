@@ -9,4 +9,6 @@ public interface FlightSupplierPort {
     String supplierKey();
 
     JsonNode searchFlightOffers(FlightSearchRequest request);
+
+    JsonNode getFlightDetails(String token, String currencyCode);
 }

@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']  # localhost 아니라 컨테이너 이름
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'prometheus'
+    metrics_path: '/prometheus/metrics'
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'spring-core'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['core:8080']
+
+  - job_name: 'spring-supply'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['supply:8081']

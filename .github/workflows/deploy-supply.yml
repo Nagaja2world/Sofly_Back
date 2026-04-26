@@ -78,9 +78,6 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
-          AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
-          AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
-          AMADEUS_BASE_URL: ${{ secrets.AMADEUS_BASE_URL }}
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           GOOGLE_PLACES_BASE_URL: ${{ secrets.GOOGLE_PLACES_BASE_URL }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
@@ -94,7 +91,7 @@ jobs:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          envs: AMADEUS_CLIENT_ID,AMADEUS_CLIENT_SECRET,AMADEUS_BASE_URL,GOOGLE_PLACES_API_KEY,GOOGLE_PLACES_BASE_URL,REDIS_HOST,REDIS_PORT,DEPLOY_PATH,RAPIDAPI_KEY,RAPIDAPI_HOST,RAPIDAPI_BASE_URL,IMAGE_TAG
+          envs: GOOGLE_PLACES_API_KEY,GOOGLE_PLACES_BASE_URL,REDIS_HOST,REDIS_PORT,DEPLOY_PATH,RAPIDAPI_KEY,RAPIDAPI_HOST,RAPIDAPI_BASE_URL,IMAGE_TAG
           script_stop: true
           script: |
             set -e
@@ -211,9 +208,6 @@ jobs:
             # ── 4. .env 생성 ───────────────────────────────────
             echo "👉🏻[4] Create .env.supply"
             printf '%s\n' \
-              "AMADEUS_CLIENT_ID=$AMADEUS_CLIENT_ID" \
-              "AMADEUS_CLIENT_SECRET=$AMADEUS_CLIENT_SECRET" \
-              "AMADEUS_BASE_URL=$AMADEUS_BASE_URL" \
               "GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY" \
               "GOOGLE_PLACES_BASE_URL=$GOOGLE_PLACES_BASE_URL" \
               "RAPIDAPI_KEY=$RAPIDAPI_KEY" \
@@ -285,6 +279,16 @@ jobs:
 
             # ── 10. 미사용 이미지 정리 ─────────────────────────
             echo "👉🏻[10] Cleanup Unused Images"
-            sudo docker image prune -f
+
+            # 삭제 전 이미지 개수 확인
+            SUPPLY_BEFORE=$(sudo docker images sm010422/sofly-supply --format "{{.ID}}" | wc -l)
+
+            # 최신 2개만 남기고 삭제
+            SUPPLY_REMOVED=$(sudo docker images sm010422/sofly-supply --format "{{.ID}}" | tail -n +3 | xargs -r docker rmi 2>&1)
+
+            # 삭제 후 이미지 개수 확인
+            SUPPLY_AFTER=$(sudo docker images sm010422/sofly-supply --format "{{.ID}}" | wc -l)
+
+            echo "✅ sofly-supply: ${SUPPLY_BEFORE}개 → ${SUPPLY_AFTER}개 삭제"
 
             echo "🚀 supply Blue/Green 배포 완료! ($TARGET_COLOR:$TARGET_PORT)"

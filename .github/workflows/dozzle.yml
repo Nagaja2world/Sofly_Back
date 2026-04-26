@@ -1,0 +1,69 @@
+name: Deploy Dozzle Monitoring
+
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'monitoring/docker-compose.dozzle.yml'
+      - '.github/workflows/dozzle.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dozzle-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Dozzle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOZZLE_USERNAME: ${{ secrets.DOZZLE_USERNAME }}
+          DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          envs: DOZZLE_USERNAME,DOZZLE_PASSWORD,DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -e
+
+            # ── 1. 배포 경로 이동 ────────────────────────────
+            echo "👉🏻[1] Move to deploy path"
+            mkdir -p "$DEPLOY_PATH/monitoring"
+            cd "$DEPLOY_PATH/monitoring"
+
+            echo "👉🏻 [2] Git 최신화"
+            git remote prune origin
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git checkout -B develop origin/develop
+            git reset --hard origin/develop
+
+            echo "📌 현재 브랜치: $(git branch --show-current)"
+            echo "📌 현재 커밋:   $(git rev-parse HEAD)"
+            echo "📌 커밋 메시지: $(git log -1 --pretty=format:'%s')"
+            echo "📌 커밋 시간:   $(git log -1 --pretty=format:'%ci')"
+            echo "📌 커밋 작성자: $(git log -1 --pretty=format:'%an')"
+
+            # ── 2. .env 생성 ─────────────────────────────────
+            echo "👉🏻[3] Create .env"
+            printf '%s\n' \
+              "DOZZLE_USERNAME=$DOZZLE_USERNAME" \
+              "DOZZLE_PASSWORD=$DOZZLE_PASSWORD" > .env.dozzle
+            chmod 600 .env.dozzle
+
+            # ── 3. Dozzle 실행 ───────────────────────────────
+            echo "👉🏻[4] Deploy Dozzle"
+            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.dozzle.yml" pull
+            sudo docker compose -f "$DEPLOY_PATH/monitoring/docker-compose.dozzle.yml" up -d
+
+            # ── 4. 실행 확인 ─────────────────────────────────
+            echo "👉🏻[5] Check Dozzle status"
+            sudo docker ps | grep dozzle && echo "✅ Dozzle is UP" || echo "❌ Dozzle is DOWN"

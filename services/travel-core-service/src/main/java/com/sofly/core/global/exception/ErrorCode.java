@@ -44,6 +44,14 @@ public enum ErrorCode {
     TRAVEL_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "여행기를 찾을 수 없습니다."),
     TRAVEL_LOG_ACCESS_DENIED(HttpStatus.FORBIDDEN, "여행기에 접근 권한이 없습니다."),
 
+    // ── Chat ─────────────────────────────────────────────
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+    CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "저장된 AI 응답 메시지가 없습니다."),
+    INVALID_AI_RESPONSE(HttpStatus.UNPROCESSABLE_ENTITY, "AI 응답을 일정으로 변환할 수 없습니다. 먼저 일정을 확정해주세요."),
+
+    // ── Supply ───────────────────────────────────────────
+    SUPPLY_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "공급 서비스 호출 중 오류가 발생했습니다."),
+
     // ── Common ───────────────────────────────────────────
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

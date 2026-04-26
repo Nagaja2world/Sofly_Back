@@ -20,11 +20,6 @@ spring:
     ansi:
       enabled: ALWAYS
 
-amadeus:
-  base-url: ${AMADEUS_BASE_URL:https://test.api.amadeus.com}
-  client-id: ${AMADEUS_CLIENT_ID:}
-  client-secret: ${AMADEUS_CLIENT_SECRET:}
-
 springdoc:
   swagger-ui:
     path: /supply/swagger-ui
@@ -44,3 +39,18 @@ rapidapi:
   api-key: ${RAPIDAPI_KEY:}
   host: ${RAPIDAPI_HOST:booking-com15.p.rapidapi.com}
   base-url: ${RAPIDAPI_BASE_URL:https://booking-com15.p.rapidapi.com}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health
+  metrics:
+    export:
+      prometheus:
+  zipkin:
+    tracing:
+      endpoint: http://sofly-zipkin:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0

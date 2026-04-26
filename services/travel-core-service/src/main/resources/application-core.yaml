@@ -25,6 +25,11 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:sofly_password}
     driver-class-name: org.postgresql.Driver
 
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 3000
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -109,6 +114,8 @@ sofly:
   oauth2:
     redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth2/callback}
     # redirect-uri: ${FRONTEND_REDIRECT_URI:http://localhost:8080}
+  supply:
+    url: ${SUPPLY_SERVICE_URL:http://supply:8081}
 
 springdoc:
   swagger-ui:
@@ -129,3 +136,22 @@ cloud:
 
 logging:
   exception-conversion-word: "%wEx{0}"
+  level:
+    com.zaxxer.hikari: INFO
+    com.zaxxer.hikari.HikariConfig: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  zipkin:
+    tracing:
+      endpoint: http://sofly-zipkin:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0

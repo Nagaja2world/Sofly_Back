@@ -50,7 +50,7 @@ public class FlightSearchController {
     @Operation(summary = "항공편 검색", description = "공급자(supplier)를 선택하여 항공편 오퍼를 검색합니다. 기본값: booking")
     @GetMapping("/offers")
     public JsonNode offers(
-            @Parameter(description = "공급자 키 (amadeus | booking)", example = "booking")
+            @Parameter(description = "공급자 키 (booking)", example = "booking")
             @RequestParam(required = false) String supplier,
             @ParameterObject @ModelAttribute FlightSearchRequest request
     ) {
@@ -66,5 +66,21 @@ public class FlightSearchController {
             @RequestParam String languageCode
     ){
         return flightSearchService.searchDestination(query, languageCode);
+    }
+
+    @Operation(
+            summary = "항공편 상세 조회",
+            description = "searchFlights 또는 searchFlightsMultiStops 응답의 token으로 항공편 상세 정보를 조회합니다."
+    )
+    @GetMapping("/details")
+    public JsonNode getFlightDetails(
+            @Parameter(description = "공급자 키 (booking)", example = "booking")
+            @RequestParam(required = false) String supplier,
+            @Parameter(description = "항공편 token (searchFlights 응답에서 획득)", required = true)
+            @RequestParam String token,
+            @Parameter(description = "통화 코드", example = "KRW")
+            @RequestParam(required = false, defaultValue = "KRW") String currencyCode
+    ) {
+        return flightSearchService.getFlightDetails(supplier, token, currencyCode);
     }
 }

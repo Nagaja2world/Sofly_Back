@@ -5,29 +5,106 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.List;
+import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 class BookingComFlightResponseFilter {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    static final int PAGE_SIZE = 15;
 
     private BookingComFlightResponseFilter() {}
 
-    static JsonNode filter(JsonNode root) {
+    static JsonNode filter(JsonNode root, List<String> airlineFilter) {
         ObjectNode result = MAPPER.createObjectNode();
         result.put("status", root.path("status").asBoolean());
 
         JsonNode data = root.path("data");
         if (data.isMissingNode()) return result;
 
+        JsonNode allOffers = data.path("flightOffers");
+        Map<String, ObjectNode> availableAirlines = extractAvailableAirlines(allOffers);
+
         ObjectNode filteredData = MAPPER.createObjectNode();
-        filteredData.set("flightOffers", filterOffers(data.path("flightOffers")));
+        filteredData.set("flightOffers", filterOffers(allOffers, airlineFilter));
+        filteredData.set("aggregation", buildAggregation(data.path("aggregation").path("totalCount").asLong(), availableAirlines, null));
         result.set("data", filteredData);
         return result;
     }
 
-    private static ArrayNode filterOffers(JsonNode offers) {
-        ArrayNode result = MAPPER.createArrayNode();
+    static JsonNode buildResponse(boolean status, long totalCount, List<ObjectNode> offers,
+                                   Map<String, ObjectNode> airlines, String nextPageCursor) {
+        ObjectNode result = MAPPER.createObjectNode();
+        result.put("status", status);
+
+        ArrayNode offersArray = MAPPER.createArrayNode();
+        offers.forEach(offersArray::add);
+
+        ObjectNode data = MAPPER.createObjectNode();
+        data.set("flightOffers", offersArray);
+        data.set("aggregation", buildAggregation(totalCount, airlines, nextPageCursor));
+        result.set("data", data);
+        return result;
+    }
+
+    static Map<String, ObjectNode> extractAvailableAirlines(JsonNode offers) {
+        Map<String, ObjectNode> airlines = new LinkedHashMap<>();
         for (JsonNode offer : offers) {
-            result.add(filterOffer(offer));
+            for (JsonNode segment : offer.path("segments")) {
+                for (JsonNode leg : segment.path("legs")) {
+                    for (JsonNode c : leg.path("carriersData")) {
+                        String code = c.path("code").asText();
+                        if (!code.isEmpty() && !airlines.containsKey(code)) {
+                            ObjectNode airline = MAPPER.createObjectNode();
+                            airline.put("code", code);
+                            airline.put("name", c.path("name").asText());
+                            airline.put("logo", c.path("logo").asText());
+                            airlines.put(code, airline);
+                        }
+                    }
+                }
+            }
+        }
+        return airlines;
+    }
+
+    static boolean matchesAirlineFilter(JsonNode offer, Set<String> filterSet) {
+        for (JsonNode segment : offer.path("segments")) {
+            for (JsonNode leg : segment.path("legs")) {
+                for (JsonNode c : leg.path("carriersData")) {
+                    if (filterSet.contains(c.path("code").asText())) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    static ObjectNode mapOffer(JsonNode offer) {
+        return filterOffer(offer);
+    }
+
+    private static ObjectNode buildAggregation(long totalCount, Map<String, ObjectNode> availableAirlines,
+                                                String nextPageCursor) {
+        ObjectNode node = MAPPER.createObjectNode();
+        node.put("totalCount", totalCount);
+        if (nextPageCursor != null) node.put("nextPageCursor", nextPageCursor);
+        ArrayNode airlineArray = MAPPER.createArrayNode();
+        availableAirlines.values().forEach(airlineArray::add);
+        node.set("availableAirlines", airlineArray);
+        return node;
+    }
+
+    private static ArrayNode filterOffers(JsonNode offers, List<String> airlineFilter) {
+        ArrayNode result = MAPPER.createArrayNode();
+        Set<String> filterSet = airlineFilter != null && !airlineFilter.isEmpty()
+                ? new java.util.HashSet<>(airlineFilter)
+                : null;
+        for (JsonNode offer : offers) {
+            if (filterSet == null || matchesAirlineFilter(offer, filterSet)) {
+                result.add(filterOffer(offer));
+            }
         }
         return result;
     }
