@@ -55,9 +55,6 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    // Kafka
-    implementation 'org.springframework.kafka:spring-kafka'
-
     // Environment Variables (.env)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
