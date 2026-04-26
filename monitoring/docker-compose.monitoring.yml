@@ -87,6 +87,8 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    command:
+      - '--housekeeping_interval=15s'
     networks:
       - sofly-net
     restart: unless-stopped
