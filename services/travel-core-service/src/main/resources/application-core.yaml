@@ -125,7 +125,7 @@ cloud:
 logging:
   exception-conversion-word: "%wEx{0}"
   level:
-    com.zaxxer.hikari: DEBUG
+    com.zaxxer.hikari: INFO
     com.zaxxer.hikari.HikariConfig: DEBUG
 
 management:
