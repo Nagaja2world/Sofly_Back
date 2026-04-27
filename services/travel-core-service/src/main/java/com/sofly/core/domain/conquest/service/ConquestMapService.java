@@ -209,51 +209,6 @@ public class ConquestMapService {
                 .toList();
     }
 
-    // ── 항공편 저장 이벤트 수신 (PLANNED 자동 반영) ────────────────────
-
-    // @EventListener
-    // @Transactional
-    // public void onFlightSaved(FlightSavedEvent event) {
-    //     AirportInfo arrivalInfo = airportInfoService.findByIata(event.getArrivalAirport()).orElse(null);
-    //     if (arrivalInfo == null) {
-    //         log.warn("알 수 없는 도착 공항 코드: {}", event.getArrivalAirport());
-    //         return;
-    //     }
-    //
-    //     for (Long userId : event.getMemberUserIds()) {
-    //         User user = userRepository.getReferenceById(userId);
-    //         applyPlannedStatus(user, arrivalInfo);
-    //     }
-    // }
-
-    // ── 스케줄러 호출용: PLANNED → VISITED 자동 전환 ──────────────────
-
-    // @Transactional
-    // public void promotePlannedToVisited() {
-    //     LocalDateTime now = LocalDateTime.now();
-    //     // TODO: Join Query 성능 개선 필요
-    //     List<VisitedCountry> plannedCountries = visitedCountryRepository.findByStatus(VisitStatus.PLANNED);
-    //
-    //     for (VisitedCountry plannedCountry : plannedCountries) {
-    //         Long userId = plannedCountry.getUser().getId();
-    //         boolean hasDepartedFlight = hasDepartedFlightToCountry(userId, plannedCountry.getCountryCode(), now);
-    //         if (hasDepartedFlight) {
-    //             plannedCountry.updateStatus(VisitStatus.VISITED);
-    //             log.info("PLANNED → VISITED 전환: userId={}, country={}", userId, plannedCountry.getCountryCode());
-    //         }
-    //     }
-    //
-    //     List<VisitedCity> plannedCities = visitedCityRepository.findByStatus(VisitStatus.PLANNED);
-    //     for (VisitedCity plannedCity : plannedCities) {
-    //         Long userId = plannedCity.getUser().getId();
-    //         boolean hasDepartedFlight = hasDepartedFlightToCountry(userId, plannedCity.getCountryCode(), now);
-    //         if (hasDepartedFlight) {
-    //             plannedCity.updateStatus(VisitStatus.VISITED);
-    //             log.info("PLANNED → VISITED 전환: userId={}, city={}", userId, plannedCity.getCityName());
-    //         }
-    //     }
-    // }
-
     @Transactional
     public void promoteToVisited(Long userId, String countryCode) {
         // 국가 VISITED 전환 (이미 VISITED이면 스킵 → 멱등성 보장)
