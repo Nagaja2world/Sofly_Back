@@ -1,0 +1,35 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: sofly-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - redis-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sofly-redis-ui
+    ports:
+      - "8085:8081"
+    networks:
+      - redis-net
+    environment:
+      REDIS_HOSTS: local:sofly-redis:6379
+      HTTP_USER: ${REDIS_UI_USER}
+      HTTP_PASSWORD: ${REDIS_UI_PASSWORD}
+    env_file: .env.monitoring
+    restart: unless-stopped
+
+networks:
+  redis-net:
+    external: true
+
+# docker compose -f docker-compose.redis.yml up -d
+# Spring server -> ./gradew bootRun

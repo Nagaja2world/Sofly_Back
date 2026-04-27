@@ -36,3 +36,6 @@ services:
 networks:
   kafka-net:
     external: true
+
+# docker compose -f docker-compose.kafka.yml up -d
+# Spring server -> ./gradew bootRun
