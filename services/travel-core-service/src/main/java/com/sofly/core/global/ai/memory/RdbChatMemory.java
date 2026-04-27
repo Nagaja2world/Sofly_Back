@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -81,11 +82,11 @@ public class RdbChatMemory implements ChatMemory {
                 .getContent();
         Collections.reverse(dbMessages);
 
-        List<Message> messages = dbMessages.stream()
+        List<Message> messages = new ArrayList<>(dbMessages.stream()
                 .map(m -> m.getRole() == ChatMessage.Role.USER
                         ? (Message) new UserMessage(m.getContent())
                         : (Message) new AssistantMessage(m.getContent()))
-                .toList();
+                .toList());
 
         try {
             redisTemplate.opsForValue().set(cacheKey, messages, TTL);

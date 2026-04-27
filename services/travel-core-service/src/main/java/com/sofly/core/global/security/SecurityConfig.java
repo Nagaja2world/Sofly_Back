@@ -43,6 +43,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/",
+                        "/error",
                         "/index.html",
                         "/user-profile-test.html",
                         "/conquest-test.html",

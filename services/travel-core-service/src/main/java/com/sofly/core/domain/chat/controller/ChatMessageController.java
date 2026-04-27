@@ -78,6 +78,7 @@ public class ChatMessageController {
         chatService.chatStream(roomId, request)
                 .subscribe(
                         chunk -> {
+                            if (chunk == null) return;
                             try {
                                 emitter.send(SseEmitter.event().data(chunk));
                                 collector.append(chunk);
