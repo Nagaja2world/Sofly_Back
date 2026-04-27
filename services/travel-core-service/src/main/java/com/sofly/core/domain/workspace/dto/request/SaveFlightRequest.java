@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Getter
 public class SaveFlightRequest {
@@ -23,10 +24,10 @@ public class SaveFlightRequest {
     private String arrivalAirport;
 
     @NotNull
-    private LocalDateTime departureTime;
+    private ZonedDateTime departureTime;
 
     @NotNull
-    private LocalDateTime arrivalTime;
+    private ZonedDateTime arrivalTime;
 
     private String duration;
 

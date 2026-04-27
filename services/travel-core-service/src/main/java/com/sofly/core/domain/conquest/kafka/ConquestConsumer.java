@@ -1,19 +1,21 @@
 package com.sofly.core.domain.conquest.kafka;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
 import com.sofly.core.domain.conquest.service.AirportInfoService;
 import com.sofly.core.domain.conquest.service.AirportInfoService.AirportInfo;
 import com.sofly.core.domain.conquest.service.ConquestMapService;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.global.kafka.dto.FlightSavedMessage;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Slf4j
 @Component
@@ -38,25 +40,21 @@ public class ConquestConsumer {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        Instant now = Instant.now();  // UTC 기준 현재시각
+        // KST 입력(+09:00)을 UTC Instant로 변환
+        Instant departureInstant = message.getDepartureTime().toInstant(); 
 
         for (Long userId : message.getMemberUserIds()) {
             try {
                 User user = userRepository.getReferenceById(userId);
 
-                // 1. 도착 국가/도시 PLANNED 반영
                 conquestMapService.applyPlannedStatus(user, arrivalInfo);
 
-                // 2. 출발 시간 분기
-                if (message.getDepartureTime().isBefore(now)) {
-                    // 이미 출발한 항공편 → 즉시 VISITED 전환
+                if (departureInstant.isBefore(now)) {
                     conquestMapService.promoteToVisited(userId, arrivalInfo.countryCode());
                     log.info("즉시 VISITED 전환: userId={}, country={}", userId, arrivalInfo.countryCode());
                 } else {
-                    // 미래 출발 → Redis Sorted Set 등록 (score = 출발 epoch seconds)
-                    long epochSeconds = message.getDepartureTime().toEpochSecond(ZoneOffset.UTC);
-                    // member 포맷: {userId}:{countryCode}:{cityName}
-                    // cityName은 한국어(콜론 없음)이므로 파싱 안전
+                    long epochSeconds = departureInstant.getEpochSecond();
                     String member = userId + ":" + arrivalInfo.countryCode() + ":" + arrivalInfo.cityName();
                     stringRedisTemplate.opsForZSet().add(FLIGHT_DEPARTURES_KEY, member, epochSeconds);
                     log.info("Redis 등록: member={}, score={}", member, epochSeconds);

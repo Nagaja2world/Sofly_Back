@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Getter
@@ -15,5 +15,5 @@ public class FlightSavedMessage {
     private List<Long> memberUserIds;
     private String departureAirport;
     private String arrivalAirport;
-    private LocalDateTime departureTime;
+    private ZonedDateTime departureTime;
 }
