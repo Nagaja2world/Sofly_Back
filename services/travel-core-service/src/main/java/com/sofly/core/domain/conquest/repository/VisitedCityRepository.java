@@ -16,4 +16,6 @@ public interface VisitedCityRepository extends JpaRepository<VisitedCity, Long> 
     List<VisitedCity> findByUserIdAndCountryCode(Long userId, String countryCode);
 
     List<VisitedCity> findByStatus(VisitStatus status);
+
+    List<VisitedCity> findByUserIdAndCountryCodeAndStatus(Long userId, String countryCode, VisitStatus status);
 }

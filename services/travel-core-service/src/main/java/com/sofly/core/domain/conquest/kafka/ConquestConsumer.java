@@ -1,8 +1,8 @@
 package com.sofly.core.domain.conquest.kafka;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -59,9 +59,11 @@ public class ConquestConsumer {
                     stringRedisTemplate.opsForZSet().add(FLIGHT_DEPARTURES_KEY, member, epochSeconds);
                     log.info("Redis 등록: member={}, score={}", member, epochSeconds);
                 }
-            } catch (Exception e) {
-                log.error("ConquestConsumer 처리 실패: userId={}, err={}", userId, e.getMessage(), e);
-            }
+                } catch (DataAccessException e) {
+                    log.error("ConquestConsumer DB 오류: userId={}, err={}", userId, e.getMessage(), e);
+                } catch (IllegalArgumentException e) {
+                    log.error("ConquestConsumer 잘못된 인자: userId={}, err={}", userId, e.getMessage(), e);
+                }
         }
     }
 }

@@ -1,14 +1,17 @@
 package com.sofly.core.domain.conquest.scheduler;
 
-import com.sofly.core.domain.conquest.service.ConquestMapService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.util.Set;
+
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.Set;
+import com.sofly.core.domain.conquest.service.ConquestMapService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -46,9 +49,13 @@ public class RedisFlightDepartureScheduler {
                 conquestMapService.promoteToVisited(userId, countryCode);
                 stringRedisTemplate.opsForZSet().remove(KEY, member);
                 log.info("PLANNED → VISITED 완료: userId={}, country={}", userId, countryCode);
-            } catch (Exception e) {
-                // 삭제하지 않음 → 다음 1분 주기에 재시도
-                log.warn("promoteToVisited 실패 (재시도 예정): member={}, err={}", member, e.getMessage());
+            } catch (DataAccessException e) {
+                // DB 오류 → Redis 삭제 안 함 → 다음 주기 재시도
+                log.warn("DB 오류로 재시도 예정: member={}, err={}", member, e.getMessage());
+            } catch (IllegalArgumentException e) {
+                // 잘못된 member 포맷 → 재시도해도 의미 없으므로 삭제
+                log.error("잘못된 member 포맷, 제거: member={}, err={}", member, e.getMessage());
+                stringRedisTemplate.opsForZSet().remove(KEY, member);
             }
         }
     }

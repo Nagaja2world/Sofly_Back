@@ -221,9 +221,7 @@ public class ConquestMapService {
                 });
 
         // 해당 국가의 도시들 VISITED 전환
-        visitedCityRepository.findByUserId(userId).stream()
-                .filter(city -> city.getCountryCode().equals(countryCode)
-                        && city.getStatus() == VisitStatus.PLANNED)
+        visitedCityRepository.findByUserIdAndCountryCodeAndStatus(userId, countryCode, VisitStatus.PLANNED)
                 .forEach(city -> {
                     city.updateStatus(VisitStatus.VISITED);
                     log.info("도시 PLANNED→VISITED: userId={}, city={}", userId, city.getCityName());
