@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +29,7 @@ import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
-import com.sofly.core.domain.conquest.event.FlightSavedEvent;
+import com.sofly.core.global.kafka.dto.FlightSavedMessage;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,7 +42,7 @@ public class WorkspaceService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final SavedFlightRepository savedFlightRepository;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${sofly.oauth2.redirect-uri}")
     private String baseUrl;
@@ -214,8 +214,8 @@ public class WorkspaceService {
                 .airline(request.getAirline())
                 .departureAirport(request.getDepartureAirport())
                 .arrivalAirport(request.getArrivalAirport())
-                .departureTime(request.getDepartureTime())
-                .arrivalTime(request.getArrivalTime())
+                .departureTime(request.getDepartureTime().toLocalDateTime())
+                .arrivalTime(request.getArrivalTime().toLocalDateTime())
                 .duration(request.getDuration())
                 .price(request.getPrice())
                 .flightType(request.getFlightType())
@@ -227,12 +227,9 @@ public class WorkspaceService {
         List<Long> memberIds = workspace.getMembers().stream()
                 .map(member -> member.getUser().getId())
                 .toList();
-        eventPublisher.publishEvent(new FlightSavedEvent(
-                memberIds,
-                workspace.getId(),
-                request.getDepartureAirport(),
-                request.getArrivalAirport(),
-                request.getDepartureTime()
+        kafkaTemplate.send("flight.saved", new FlightSavedMessage(
+                workspace.getId(), memberIds,
+                request.getDepartureAirport(), request.getArrivalAirport(), request.getDepartureTime()
         ));
 
         return SavedFlightResponse.from(flight);

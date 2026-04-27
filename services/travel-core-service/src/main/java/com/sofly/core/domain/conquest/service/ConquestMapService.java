@@ -8,7 +8,6 @@ import com.sofly.core.domain.conquest.entity.VisitedCity;
 import com.sofly.core.domain.conquest.entity.VisitedCountry;
 import com.sofly.core.domain.conquest.enums.Continent;
 import com.sofly.core.domain.conquest.enums.VisitStatus;
-import com.sofly.core.domain.conquest.event.FlightSavedEvent;
 import com.sofly.core.domain.conquest.repository.VisitedCityRepository;
 import com.sofly.core.domain.conquest.repository.VisitedCountryRepository;
 import com.sofly.core.domain.conquest.service.AirportInfoService.AirportInfo;
@@ -210,49 +209,23 @@ public class ConquestMapService {
                 .toList();
     }
 
-    // ── 항공편 저장 이벤트 수신 (PLANNED 자동 반영) ────────────────────
-
-    @EventListener
     @Transactional
-    public void onFlightSaved(FlightSavedEvent event) {
-        AirportInfo arrivalInfo = airportInfoService.findByIata(event.getArrivalAirport()).orElse(null);
-        if (arrivalInfo == null) {
-            log.warn("알 수 없는 도착 공항 코드: {}", event.getArrivalAirport());
-            return;
-        }
+    public void promoteToVisited(Long userId, String countryCode) {
+        // 국가 VISITED 전환 (이미 VISITED이면 스킵 → 멱등성 보장)
+        visitedCountryRepository.findByUserIdAndCountryCode(userId, countryCode)
+                .ifPresent(vc -> {
+                    if (vc.getStatus() == VisitStatus.PLANNED) {
+                        vc.updateStatus(VisitStatus.VISITED);
+                        log.info("국가 PLANNED→VISITED: userId={}, country={}", userId, countryCode);
+                    }
+                });
 
-        for (Long userId : event.getMemberUserIds()) {
-            User user = userRepository.getReferenceById(userId);
-            applyPlannedStatus(user, arrivalInfo);
-        }
-    }
-
-    // ── 스케줄러 호출용: PLANNED → VISITED 자동 전환 ──────────────────
-
-    @Transactional
-    public void promotePlannedToVisited() {
-        LocalDateTime now = LocalDateTime.now();
-        // TODO: Join Query 성능 개선 필요
-        List<VisitedCountry> plannedCountries = visitedCountryRepository.findByStatus(VisitStatus.PLANNED);
-
-        for (VisitedCountry plannedCountry : plannedCountries) {
-            Long userId = plannedCountry.getUser().getId();
-            boolean hasDepartedFlight = hasDepartedFlightToCountry(userId, plannedCountry.getCountryCode(), now);
-            if (hasDepartedFlight) {
-                plannedCountry.updateStatus(VisitStatus.VISITED);
-                log.info("PLANNED → VISITED 전환: userId={}, country={}", userId, plannedCountry.getCountryCode());
-            }
-        }
-
-        List<VisitedCity> plannedCities = visitedCityRepository.findByStatus(VisitStatus.PLANNED);
-        for (VisitedCity plannedCity : plannedCities) {
-            Long userId = plannedCity.getUser().getId();
-            boolean hasDepartedFlight = hasDepartedFlightToCountry(userId, plannedCity.getCountryCode(), now);
-            if (hasDepartedFlight) {
-                plannedCity.updateStatus(VisitStatus.VISITED);
-                log.info("PLANNED → VISITED 전환: userId={}, city={}", userId, plannedCity.getCityName());
-            }
-        }
+        // 해당 국가의 도시들 VISITED 전환
+        visitedCityRepository.findByUserIdAndCountryCodeAndStatus(userId, countryCode, VisitStatus.PLANNED)
+                .forEach(city -> {
+                    city.updateStatus(VisitStatus.VISITED);
+                    log.info("도시 PLANNED→VISITED: userId={}, city={}", userId, city.getCityName());
+                });
     }
 
     // ── 내부 헬퍼 ──────────────────────────────────────────────────────
@@ -270,7 +243,8 @@ public class ConquestMapService {
                 .build());
     }
 
-    private void applyPlannedStatus(User user, AirportInfo arrivalInfo) {
+    @Transactional
+    public void applyPlannedStatus(User user, AirportInfo arrivalInfo) {
         // 국가 PLANNED 처리
         visitedCountryRepository
                 .findByUserIdAndCountryCode(user.getId(), arrivalInfo.countryCode())
