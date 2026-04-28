@@ -146,6 +146,9 @@ management:
       exposure:
         include: prometheus, health, metrics
   metrics:
+    enable:
+      spring.scheduling: false
+      datasource: false
     export:
       prometheus:
         enabled: true
@@ -155,3 +158,8 @@ management:
   tracing:
     sampling:
       probability: 1.0
+  observations:
+    http:
+      server:
+        requests:
+          ignore-patterns: "/actuator/**"
