@@ -16,12 +16,20 @@ public class TracingConfig {
             .observationPredicate((name, context) -> {
                 // /actuator 제외
                 if (context instanceof ServerRequestObservationContext ctx) {
-                    return !ctx.getCarrier().getRequestURI().startsWith("/actuator");
+                    String uri = ctx.getCarrier().getRequestURI();
+                    if (uri.startsWith("/actuator")) return false;
+                    // 정적 파일 요청 제외 (폰트, 이미지 등)
+                    if (uri.startsWith("/assets")) return false;
+                    if (uri.endsWith(".woff") || uri.endsWith(".woff2")
+                        || uri.endsWith(".js") || uri.endsWith(".css")) return false;
                 }
-                // security filterchain 제외
-                if (name.startsWith("spring.security.")) {
-                    return false;
-                }
+                // spring.security 제외
+                if (name.startsWith("spring.security.")) return false;
+                // 스케줄러 제외
+                if (name.startsWith("spring.scheduling")) return false;
+                // DB/Redis 커넥션 제외
+                if (name.startsWith("db.client") || name.equals("connection")) return false;
+
                 return true;
             });
     }
