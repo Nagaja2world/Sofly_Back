@@ -44,6 +44,7 @@ dependencies {
     // Zipkin
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'io.zipkin.brave:brave'
 
     // JPA/JDBC Query Tracing
     implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:1.0.6'
