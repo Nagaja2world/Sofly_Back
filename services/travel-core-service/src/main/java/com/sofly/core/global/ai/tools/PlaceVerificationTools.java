@@ -3,10 +3,12 @@ package com.sofly.core.global.ai.tools;
 import com.sofly.core.global.client.SupplyClient;
 import com.sofly.core.global.client.dto.PlacesResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PlaceVerificationTools {
@@ -18,11 +20,13 @@ public class PlaceVerificationTools {
             @ToolParam(description = "검색할 장소명 (예: '경복궁', 'Eiffel Tower')") String placeName
     ) {
         try {
+            log.info("verifyPlace tool called - placeName={}", placeName);
             PlacesResponse response = supplyClient.searchPlace(placeName);
             if (response.places() == null || response.places().isEmpty()) {
                 return "'" + placeName + "'에 해당하는 장소를 찾을 수 없습니다.";
             }
             PlacesResponse.Place place = response.places().get(0);
+            log.info("verifyPlace tool resolved - placeName={}, resolvedName={}", placeName, place.displayName().text());
             return String.format("장소 확인됨: %s | 주소: %s | 유형: %s | 평점: %s",
                     place.displayName().text(),
                     place.formattedAddress(),
@@ -30,6 +34,7 @@ public class PlaceVerificationTools {
                     place.rating() != null ? place.rating() : "없음"
             );
         } catch (Exception e) {
+            log.warn("verifyPlace tool failed - placeName={}", placeName, e);
             return "장소 확인 서비스에 일시적인 오류가 발생했습니다. 장소명: " + placeName;
         }
     }
