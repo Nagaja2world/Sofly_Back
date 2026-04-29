@@ -20,7 +20,8 @@ public enum AuthErrorCode implements BaseErrorCode {
     // 회원가입 시 중복된 아이디가 있을 경우
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "DUPLICATE_LOGIN_ID", "이미 존재하는 아이디입니다."),
     EMPTY_AUTHENTICATION(HttpStatus.UNAUTHORIZED, "EMPTY_AUTHENTICATION", "인증 정보가 존재하지 않습니다."),
-    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "해당 사용자를 찾지 못했습니다.");
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "해당 사용자를 찾지 못했습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "접근 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

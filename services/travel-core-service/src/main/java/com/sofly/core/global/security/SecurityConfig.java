@@ -2,6 +2,7 @@ package com.sofly.core.global.security;
 
 import java.util.List;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -41,6 +42,7 @@ public class SecurityConfig {
         http
             // 요청 권한 설정
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC).permitAll()
                 .requestMatchers(
                         "/",
                         "/error",
@@ -69,10 +71,13 @@ public class SecurityConfig {
                         new JwtAuthenticationFilter(jwtTokenProvider, filterResponseUtils),
                         UsernamePasswordAuthenticationFilter.class
                 )
-                // 토큰 없이 authenticated() 경로 접근 시 401
+                // 토큰 없이 authenticated() 경로 접근 시 401, 권한 없는 경우 403
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint((request, response, authException) -> {
-                        filterResponseUtils.sendUnauthorized(response,AuthErrorCode.EMPTY_AUTHENTICATION);
+                        filterResponseUtils.sendUnauthorized(response, AuthErrorCode.EMPTY_AUTHENTICATION);
+                    })
+                    .accessDeniedHandler((request, response, accessDeniedException) -> {
+                        filterResponseUtils.sendUnauthorized(response, AuthErrorCode.ACCESS_DENIED);
                     })
                 );
 
