@@ -1,0 +1,8 @@
+package com.sofly.core.domain.messaging.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.sofly.core.domain.messaging.entity.MessagingRoom;
+
+public interface MessagingRoomRepository extends JpaRepository<MessagingRoom, Long> {
+}
