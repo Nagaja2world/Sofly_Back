@@ -2,6 +2,7 @@ package com.sofly.core.global.exception;
 
 import java.util.stream.Collectors;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -27,6 +28,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(errorCode.getMessage()));
     }
 
@@ -37,6 +39,7 @@ public class GlobalExceptionHandler {
         BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(errorCode.getMessage()));
     }
 
@@ -46,6 +49,7 @@ public class GlobalExceptionHandler {
         BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(errorCode.getMessage()));
     }
 
@@ -55,6 +59,7 @@ public class GlobalExceptionHandler {
         BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(errorCode.getMessage()));
     }
 
@@ -68,6 +73,7 @@ public class GlobalExceptionHandler {
         log.warn("Validation 실패: {}", message);
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(message));
     }
 
@@ -77,6 +83,7 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error: ", e);
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }
