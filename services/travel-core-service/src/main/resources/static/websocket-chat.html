@@ -465,30 +465,31 @@
 
   // ── 메시지 전송 ──
   function sendMessage() {
-    if (!stompClient || !stompClient.connected) return;
-    const roomId  = document.getElementById('room-id').value;
-    const content = document.getElementById('msg-input').value.trim();
-    if (!content) return;
+      if (!stompClient || !stompClient.connected) return;
+      const roomId  = document.getElementById('room-id').value;
+      const content = document.getElementById('msg-input').value.trim();
+      if (!content) return;
 
-    const payload = {
-      senderId: parseInt(document.getElementById('sender-id').value),
-      senderNickname: document.getElementById('sender-nickname').value,
-      content: content,
-      type: document.getElementById('msg-type').value
-    };
+      const payload = {
+          senderId: parseInt(document.getElementById('sender-id').value),
+          senderNickname: document.getElementById('sender-nickname').value,
+          content: content,
+          type: document.getElementById('msg-type').value
+      };
 
-    const dest = '/pub/chat.message.' + roomId;
-    stompClient.send(dest, {}, JSON.stringify(payload));
-    addRawLog('out', JSON.stringify(payload));
-    addMessage({ ...payload, createdAt: new Date().toISOString() }, 'sent');
-    document.getElementById('msg-input').value = '';
+      const dest = '/pub/chat.message.' + roomId;
+      stompClient.send(dest, {}, JSON.stringify(payload));
+      addRawLog('out', JSON.stringify(payload));
+      // ❌ addMessage 제거 — 구독에서 받아서 표시하면 됨
+      document.getElementById('msg-input').value = '';
   }
 
   function handleEnter(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+      if (e.isComposing) return;  
+      if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+      }
   }
 
   // ── REST: 채팅방 생성 ──
