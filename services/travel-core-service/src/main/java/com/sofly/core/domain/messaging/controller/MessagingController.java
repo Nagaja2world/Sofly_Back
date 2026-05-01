@@ -1,5 +1,6 @@
 package com.sofly.core.domain.messaging.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,6 @@ import com.sofly.core.domain.messaging.entity.MessagingRoom;
 import com.sofly.core.domain.messaging.service.MessagingService;
 import com.sofly.core.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -113,7 +113,11 @@ public class MessagingController {
     @SendTo("/sub/chat/{roomId}")
     public MessagingMessageResponse sendMessage(
             @DestinationVariable Long roomId,
-            MessagingMessageRequest request) {
-        return messagingService.sendMessage(roomId, request);
+            MessagingMessageRequest request,
+            Principal principal) {  // ← WebSocket 세션 유저 주입
+        
+        // accessor.setUser(auth) 로 세팅된 값이 여기로 들어옴
+        Long senderId = Long.parseLong(principal.getName());
+        return messagingService.sendMessage(roomId, request, senderId);
     }
 }
