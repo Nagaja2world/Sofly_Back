@@ -1,5 +1,13 @@
 package com.sofly.core.domain.messaging.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sofly.core.domain.messaging.document.MessagingMessage;
 import com.sofly.core.domain.messaging.dto.MessagingMessageRequest;
 import com.sofly.core.domain.messaging.dto.MessagingMessageResponse;
@@ -9,14 +17,13 @@ import com.sofly.core.domain.messaging.entity.MessagingRoomMember;
 import com.sofly.core.domain.messaging.repository.MessagingMessageRepository;
 import com.sofly.core.domain.messaging.repository.MessagingRoomMemberRepository;
 import com.sofly.core.domain.messaging.repository.MessagingRoomRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.sofly.core.domain.user.entity.User;
+import com.sofly.core.domain.user.repository.UserRepository;
+import com.sofly.core.global.exception.ErrorCode;
+import com.sofly.core.global.exception.SoflyException;
+import com.sofly.core.global.security.util.SecurityUtils;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +32,7 @@ public class MessagingService {
     private final MessagingRoomRepository messagingRoomRepository;
     private final MessagingRoomMemberRepository messagingRoomMemberRepository;
     private final MessagingMessageRepository messagingMessageRepository;
+    private final UserRepository userRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChannelTopic channelTopic;
 
@@ -53,21 +61,25 @@ public class MessagingService {
     }
 
     // 메시지 전송 → MongoDB 저장 → Redis Pub/Sub 발행
-    public MessagingMessageResponse sendMessage(Long roomId, MessagingMessageRequest request) {
+    public MessagingMessageResponse sendMessage(
+            Long roomId,
+            MessagingMessageRequest request,
+            Long senderId) {  // ← 파라미터로 받기
+
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
+
         MessagingMessage message = MessagingMessage.builder()
                 .messagingRoomId(roomId)
-                .senderId(request.senderId())
-                .senderNickname(request.senderNickname())
+                .senderId(senderId)
+                .senderNickname(sender.getNickname())
                 .content(request.content())
                 .type(request.type())
                 .createdAt(LocalDateTime.now())
                 .build();
 
         MessagingMessage saved = messagingMessageRepository.save(message);
-
-        // Redis Pub/Sub으로 브로드캐스트
         redisTemplate.convertAndSend(channelTopic.getTopic(), saved);
-
         return MessagingMessageResponse.from(saved);
     }
 
