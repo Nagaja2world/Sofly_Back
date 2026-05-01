@@ -8,284 +8,69 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap');
-
     :root {
-      --bg: #0a0a0f;
-      --surface: #111118;
-      --border: #1e1e2e;
-      --accent: #7c6cfc;
-      --accent2: #fc6cb4;
-      --success: #4ade80;
-      --error: #f87171;
-      --warn: #fbbf24;
-      --text: #e2e8f0;
-      --muted: #475569;
-      --mono: 'JetBrains Mono', monospace;
-      --sans: 'Syne', sans-serif;
+      --bg: #0a0a0f; --surface: #111118; --border: #1e1e2e;
+      --accent: #7c6cfc; --accent2: #fc6cb4;
+      --success: #4ade80; --error: #f87171; --warn: #fbbf24;
+      --text: #e2e8f0; --muted: #475569;
+      --mono: 'JetBrains Mono', monospace; --sans: 'Syne', sans-serif;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--mono);
-      min-height: 100vh;
-      display: grid;
-      grid-template-rows: auto 1fr;
-    }
-
-    header {
-      padding: 20px 32px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: var(--surface);
-    }
-
-    header h1 {
-      font-family: var(--sans);
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    #status-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--error);
-      transition: background 0.3s;
-      flex-shrink: 0;
-    }
+    body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+    header { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; background: var(--surface); }
+    header h1 { font-family: var(--sans); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    #status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--error); transition: background 0.3s; flex-shrink: 0; }
     #status-dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
-
-    #status-text {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .main {
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      height: calc(100vh - 61px);
-      overflow: hidden;
-    }
-
-    /* ── 사이드바 ── */
-    .sidebar {
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      overflow-y: auto;
-    }
-
-    .section {
-      padding: 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .section-title {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-
-    label {
-      display: block;
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      margin-top: 12px;
-    }
+    #status-text { font-size: 12px; color: var(--muted); }
+    .main { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 61px); overflow: hidden; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+    .section { padding: 20px; border-bottom: 1px solid var(--border); }
+    .section-title { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+    .badge-required { background: var(--error)22; color: var(--error); border: 1px solid var(--error)44; }
+    label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; margin-top: 12px; }
     label:first-of-type { margin-top: 0; }
-
-    input, select {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 12px;
-      padding: 9px 12px;
-      border-radius: 6px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input:focus, select:focus { border-color: var(--accent); }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      margin-top: 10px;
-      letter-spacing: 0.5px;
-    }
-    button:hover { opacity: 0.85; }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.35; cursor: not-allowed; }
-
+    input, select, textarea.token-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 12px; padding: 9px 12px; border-radius: 6px; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea.token-input:focus { border-color: var(--accent); }
+    textarea.token-input { resize: vertical; min-height: 80px; line-height: 1.5; word-break: break-all; }
+    .token-status { margin-top: 8px; font-size: 10px; padding: 6px 10px; border-radius: 4px; display: none; }
+    .token-status.valid   { display: block; background: var(--success)11; color: var(--success); border: 1px solid var(--success)33; }
+    .token-status.invalid { display: block; background: var(--error)11;   color: var(--error);   border: 1px solid var(--error)33; }
+    button { width: 100%; padding: 10px; border: none; border-radius: 6px; font-family: var(--mono); font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 10px; letter-spacing: 0.5px; }
+    button:hover { opacity: 0.85; } button:active { transform: scale(0.98); } button:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-danger  { background: #2a1a1a; color: var(--error); border: 1px solid var(--error)33; }
     .btn-send    { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
     .btn-room    { background: #1a1a2e; color: var(--accent); border: 1px solid var(--accent)33; margin-top: 6px; }
-
-    /* ── 채팅 영역 ── */
-    .chat-area {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .chat-toolbar {
-      padding: 14px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--surface);
-      flex-shrink: 0;
-    }
-
+    .btn-warn    { background: #2a1f0a; color: var(--warn); border: 1px solid var(--warn)33; }
+    .chat-area { display: flex; flex-direction: column; overflow: hidden; }
+    .chat-toolbar { padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); background: var(--surface); flex-shrink: 0; }
     .chat-toolbar span { color: var(--accent); font-weight: 600; }
-
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      flex-shrink: 0;
-    }
-    .tab {
-      padding: 10px 20px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .tab { padding: 10px 20px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
     .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
     .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
     .tab-content.active { display: flex; }
-
-    /* 메시지 로그 */
-    #message-log {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .msg-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      animation: fadeIn 0.2s ease;
-    }
+    #message-log { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+    .msg-item { display: flex; flex-direction: column; gap: 4px; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-    .msg-meta {
-      font-size: 10px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .msg-meta { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
     .msg-nick { color: var(--accent2); font-weight: 600; }
-    .msg-time { color: var(--muted); }
-
-    .msg-bubble {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      line-height: 1.6;
-      word-break: break-all;
-    }
-    .msg-bubble.sent { border-color: var(--accent)44; background: #12102a; }
+    .msg-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 1.6; word-break: break-all; }
+    .msg-bubble.sent     { border-color: var(--accent)44; background: #12102a; }
     .msg-bubble.received { border-color: var(--accent2)33; }
-    .msg-bubble.system { border-color: var(--warn)33; color: var(--warn); font-style: italic; font-size: 11px; }
-
-    /* 메시지 입력 */
-    .msg-input-area {
-      padding: 16px 24px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-      flex-shrink: 0;
-    }
-
-    #msg-input {
-      flex: 1;
-      resize: none;
-      height: 42px;
-      padding: 10px 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
+    .msg-bubble.system   { border-color: var(--warn)33; color: var(--warn); font-style: italic; font-size: 11px; }
+    .msg-input-area { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+    #msg-input { flex: 1; resize: none; height: 42px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
     #msg-input:focus { border-color: var(--accent); }
-
-    #send-btn {
-      width: 80px;
-      margin-top: 0;
-      height: 42px;
-    }
-
-    /* Raw 로그 */
-    #raw-log {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 24px;
-      font-size: 11px;
-      line-height: 1.8;
-    }
-
-    .log-line {
-      padding: 2px 0;
-      border-bottom: 1px solid var(--border)66;
-      display: flex;
-      gap: 10px;
-    }
+    #send-btn { width: 80px; margin-top: 0; height: 42px; }
+    #raw-log { flex: 1; overflow-y: auto; padding: 16px 24px; font-size: 11px; line-height: 1.8; }
+    .log-line { padding: 2px 0; border-bottom: 1px solid var(--border)66; display: flex; gap: 10px; }
     .log-ts { color: var(--muted); flex-shrink: 0; }
     .log-dir { flex-shrink: 0; font-weight: 700; }
-    .log-dir.out { color: var(--accent); }
-    .log-dir.in  { color: var(--accent2); }
-    .log-dir.sys { color: var(--warn); }
+    .log-dir.out { color: var(--accent); } .log-dir.in { color: var(--accent2); } .log-dir.sys { color: var(--warn); }
     .log-body { word-break: break-all; color: var(--text)cc; }
-
-    /* 스크롤바 */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   </style>
 </head>
 <body>
@@ -297,10 +82,21 @@
 </header>
 
 <div class="main">
-
-  <!-- 사이드바 -->
   <div class="sidebar">
 
+    <!-- AUTH -->
+    <div class="section">
+      <div class="section-title">
+        Auth
+        <span class="badge badge-required">REQUIRED</span>
+      </div>
+      <label>Access Token (JWT)</label>
+      <textarea class="token-input" id="access-token" placeholder="eyJhbGciOiJIUzI1NiJ9...&#10;Swagger에서 로그인 후 복사"></textarea>
+      <div id="token-status" class="token-status"></div>
+      <button class="btn-warn" onclick="verifyToken()">VERIFY TOKEN</button>
+    </div>
+
+    <!-- CONNECTION -->
     <div class="section">
       <div class="section-title">Connection</div>
       <label>Server URL</label>
@@ -309,6 +105,7 @@
       <button class="btn-danger" id="disconnect-btn" onclick="disconnect()" disabled>DISCONNECT</button>
     </div>
 
+    <!-- SUBSCRIPTION -->
     <div class="section">
       <div class="section-title">Subscription</div>
       <label>Room ID</label>
@@ -316,12 +113,9 @@
       <button class="btn-room" onclick="subscribeRoom()">SUBSCRIBE /sub/chat/{roomId}</button>
     </div>
 
+    <!-- MESSAGE -->
     <div class="section">
-      <div class="section-title">Sender</div>
-      <label>Sender ID</label>
-      <input id="sender-id" type="number" value="1"/>
-      <label>Sender Nickname</label>
-      <input id="sender-nickname" value="테스트유저"/>
+      <div class="section-title">Message</div>
       <label>Message Type</label>
       <select id="msg-type">
         <option value="TEXT">TEXT</option>
@@ -330,6 +124,7 @@
       </select>
     </div>
 
+    <!-- REST API -->
     <div class="section">
       <div class="section-title">REST API</div>
       <label>Create Room (POST)</label>
@@ -351,19 +146,14 @@
 
   </div>
 
-  <!-- 채팅 영역 -->
   <div class="chat-area">
-
     <div class="chat-toolbar">
       <span>STOMP</span> WebSocket · 구독: <span id="subscribed-rooms">없음</span>
     </div>
-
     <div class="tabs">
       <div class="tab active" onclick="switchTab('chat', this)">CHAT</div>
       <div class="tab" onclick="switchTab('raw', this)">RAW LOG</div>
     </div>
-
-    <!-- 채팅 탭 -->
     <div class="tab-content active" id="tab-chat">
       <div id="message-log"></div>
       <div class="msg-input-area">
@@ -371,12 +161,9 @@
         <button class="btn-send" id="send-btn" onclick="sendMessage()" disabled>SEND</button>
       </div>
     </div>
-
-    <!-- Raw 로그 탭 -->
     <div class="tab-content" id="tab-raw">
       <div id="raw-log"></div>
     </div>
-
   </div>
 </div>
 
@@ -384,7 +171,47 @@
   let stompClient = null;
   const subscribedRooms = new Set();
 
-  // ── 탭 전환 ──
+  function getToken() {
+    return document.getElementById('access-token').value.trim();
+  }
+
+  // JWT 페이로드에서 닉네임 추출 (보낸 메시지 표시용)
+  function getTokenNickname() {
+    try {
+      const parts = getToken().split('.');
+      if (parts.length !== 3) return 'me';
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.nickname ?? payload.name ?? payload.sub ?? 'me';
+    } catch { return 'me'; }
+  }
+
+  function verifyToken() {
+    const token = getToken();
+    const statusEl = document.getElementById('token-status');
+    if (!token) {
+      statusEl.className = 'token-status invalid';
+      statusEl.textContent = '❌ 토큰을 입력해주세요.';
+      return;
+    }
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) throw new Error();
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const exp = payload.exp;
+      const now = Math.floor(Date.now() / 1000);
+      if (exp && exp < now) {
+        statusEl.className = 'token-status invalid';
+        statusEl.textContent = '❌ 만료된 토큰 (' + new Date(exp * 1000).toLocaleString() + ')';
+      } else {
+        statusEl.className = 'token-status valid';
+        statusEl.textContent = '✅ 유효한 토큰 · 만료: ' + (exp ? new Date(exp * 1000).toLocaleString() : '없음');
+      }
+    } catch {
+      statusEl.className = 'token-status invalid';
+      statusEl.textContent = '❌ 올바르지 않은 JWT 형식';
+    }
+  }
+
   function switchTab(name, el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -392,36 +219,37 @@
     document.getElementById('tab-' + name).classList.add('active');
   }
 
-  // ── 상태 업데이트 ──
   function setStatus(connected) {
-    const dot = document.getElementById('status-dot');
-    const txt = document.getElementById('status-text');
-    dot.className = connected ? 'connected' : '';
-    txt.textContent = connected ? 'CONNECTED' : 'DISCONNECTED';
+    document.getElementById('status-dot').className = connected ? 'connected' : '';
+    document.getElementById('status-text').textContent = connected ? 'CONNECTED' : 'DISCONNECTED';
     document.getElementById('connect-btn').disabled = connected;
     document.getElementById('disconnect-btn').disabled = !connected;
     document.getElementById('send-btn').disabled = !connected;
   }
 
-  // ── 연결 ──
   function connect() {
+    const token = getToken();
+    if (!token) { alert('Access Token을 먼저 입력해주세요.'); return; }
     const url = document.getElementById('server-url').value;
     const socket = new SockJS(url);
     stompClient = Stomp.over(socket);
-    stompClient.debug = null; // 기본 콘솔 로그 끔
+    stompClient.debug = null;
 
-    stompClient.connect({}, () => {
-      setStatus(true);
-      addRawLog('sys', 'Connected to ' + url);
-      addSystemMsg('✅ 연결 성공: ' + url);
-    }, (err) => {
-      setStatus(false);
-      addRawLog('sys', 'Connection error: ' + err);
-      addSystemMsg('❌ 연결 실패: ' + err);
-    });
+    stompClient.connect(
+      { Authorization: 'Bearer ' + token },
+      () => {
+        setStatus(true);
+        addRawLog('sys', 'Connected · Token OK');
+        addSystemMsg('✅ 연결 성공: ' + url);
+      },
+      (err) => {
+        setStatus(false);
+        addRawLog('sys', 'Error: ' + err);
+        addSystemMsg('❌ 연결 실패 (토큰 만료/오류 확인): ' + err);
+      }
+    );
   }
 
-  // ── 연결 해제 ──
   function disconnect() {
     if (stompClient) {
       stompClient.disconnect(() => {
@@ -434,17 +262,10 @@
     }
   }
 
-  // ── 구독 ──
   function subscribeRoom() {
     const roomId = document.getElementById('room-id').value;
-    if (!stompClient || !stompClient.connected) {
-      alert('먼저 연결해주세요.');
-      return;
-    }
-    if (subscribedRooms.has(roomId)) {
-      addSystemMsg('⚠️ Room ' + roomId + ' 이미 구독 중');
-      return;
-    }
+    if (!stompClient || !stompClient.connected) { alert('먼저 연결해주세요.'); return; }
+    if (subscribedRooms.has(roomId)) { addSystemMsg('⚠️ Room ' + roomId + ' 이미 구독 중'); return; }
     stompClient.subscribe('/sub/chat/' + roomId, (message) => {
       const body = JSON.parse(message.body);
       addRawLog('in', message.body);
@@ -458,41 +279,56 @@
 
   function updateSubscribedLabel() {
     const el = document.getElementById('subscribed-rooms');
-    el.textContent = subscribedRooms.size > 0
-      ? [...subscribedRooms].map(id => 'Room ' + id).join(', ')
-      : '없음';
+    el.textContent = subscribedRooms.size > 0 ? [...subscribedRooms].map(id => 'Room ' + id).join(', ') : '없음';
   }
 
-  // ── 메시지 전송 ──
   function sendMessage() {
-      if (!stompClient || !stompClient.connected) return;
-      const roomId  = document.getElementById('room-id').value;
-      const content = document.getElementById('msg-input').value.trim();
-      if (!content) return;
+    if (!stompClient || !stompClient.connected) return;
+    const roomId  = document.getElementById('room-id').value;
+    const content = document.getElementById('msg-input').value.trim();
+    if (!content) return;
 
-      const payload = {
-          senderId: parseInt(document.getElementById('sender-id').value),
-          senderNickname: document.getElementById('sender-nickname').value,
-          content: content,
-          type: document.getElementById('msg-type').value
-      };
+    const payload = {
+      content: content,
+      type: document.getElementById('msg-type').value
+    };
 
-      const dest = '/pub/chat.message.' + roomId;
-      stompClient.send(dest, {}, JSON.stringify(payload));
-      addRawLog('out', JSON.stringify(payload));
-      // ❌ addMessage 제거 — 구독에서 받아서 표시하면 됨
-      document.getElementById('msg-input').value = '';
+    stompClient.send(
+      '/pub/chat.message.' + roomId,
+      { Authorization: 'Bearer ' + getToken() },
+      JSON.stringify(payload)
+    );
+
+    addRawLog('out', JSON.stringify(payload));
+
+    // ✅ 보낸 메시지 즉시 표시 (sent 스타일)
+    // addMessage({
+    //   senderNickname: getTokenNickname(),
+    //   content: content,
+    //   type: payload.type,
+    //   createdAt: null
+    // }, 'sent');
+
+    document.getElementById('msg-input').value = '';
   }
 
   function handleEnter(e) {
-      if (e.isComposing) return;  
-      if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-      }
+    if (e.isComposing) return;
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  // ── REST: 채팅방 생성 ──
+  function authFetch(url, options = {}) {
+    const token = getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(options.headers ?? {})
+      }
+    });
+  }
+
   async function createRoom() {
     const body = {
       type: document.getElementById('room-type').value,
@@ -501,44 +337,30 @@
       memberIds: document.getElementById('member-ids').value.split(',').map(Number)
     };
     try {
-      const res = await fetch('/api/v1/messaging/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
+      const res = await authFetch('/api/v1/messaging/rooms', { method: 'POST', body: JSON.stringify(body) });
       const data = await res.json();
       addRawLog('in', JSON.stringify(data));
       addSystemMsg('🏠 채팅방 생성 완료 → ID: ' + (data.data?.id ?? data.id));
-    } catch(e) {
-      addSystemMsg('❌ 채팅방 생성 실패: ' + e.message);
-    }
+    } catch(e) { addSystemMsg('❌ 채팅방 생성 실패: ' + e.message); }
   }
 
-  // ── REST: 메시지 히스토리 ──
   async function fetchMessages() {
     const roomId = document.getElementById('room-id').value;
     try {
-      const res = await fetch('/api/v1/messaging/rooms/' + roomId + '/messages');
+      const res = await authFetch('/api/v1/messaging/rooms/' + roomId + '/messages');
       const data = await res.json();
       const messages = data.data ?? data;
       addRawLog('in', JSON.stringify(data));
-      addSystemMsg('📜 히스토리 ' + (messages.length ?? 0) + '건 로드');
-      (messages ?? []).forEach(msg => addMessage(msg, 'received'));
-    } catch(e) {
-      addSystemMsg('❌ 히스토리 조회 실패: ' + e.message);
-    }
+      addSystemMsg('📜 히스토리 ' + (Array.isArray(messages) ? messages.length : 0) + '건 로드');
+      (Array.isArray(messages) ? messages : []).forEach(msg => addMessage(msg, 'received'));
+    } catch(e) { addSystemMsg('❌ 히스토리 조회 실패: ' + e.message); }
   }
 
-  // ── UI: 메시지 추가 ──
   function addMessage(msg, direction) {
     const log = document.getElementById('message-log');
     const div = document.createElement('div');
     div.className = 'msg-item';
-
-    const time = msg.createdAt
-      ? new Date(msg.createdAt).toLocaleTimeString()
-      : new Date().toLocaleTimeString();
-
+    const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString() : new Date().toLocaleTimeString();
     div.innerHTML = `
       <div class="msg-meta">
         <span class="msg-nick">${msg.senderNickname ?? 'unknown'}</span>
@@ -560,22 +382,16 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  // ── UI: Raw 로그 추가 ──
   function addRawLog(dir, body) {
     const log = document.getElementById('raw-log');
     const div = document.createElement('div');
     div.className = 'log-line';
     const ts = new Date().toLocaleTimeString();
     const dirLabel = { out: '→ OUT', in: '← IN', sys: '◆ SYS' }[dir];
-    div.innerHTML = `
-      <span class="log-ts">${ts}</span>
-      <span class="log-dir ${dir}">${dirLabel}</span>
-      <span class="log-body">${body}</span>
-    `;
+    div.innerHTML = `<span class="log-ts">${ts}</span><span class="log-dir ${dir}">${dirLabel}</span><span class="log-body">${body}</span>`;
     log.appendChild(div);
     log.scrollTop = log.scrollHeight;
   }
 </script>
-
 </body>
 </html>
