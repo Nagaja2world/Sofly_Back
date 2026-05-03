@@ -3,6 +3,8 @@ package com.sofly.core.domain.messaging.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
@@ -21,7 +23,6 @@ import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
-import com.sofly.core.global.security.util.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -66,6 +67,9 @@ public class MessagingService {
             MessagingMessageRequest request,
             Long senderId) {  // ← 파라미터로 받기
 
+        messagingRoomRepository.findById(roomId)
+            .orElseThrow(()  -> new SoflyException(ErrorCode.ROOM_NOT_FOUND));
+
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
 
@@ -85,10 +89,9 @@ public class MessagingService {
 
     // 채팅방 메시지 히스토리 조회
     @Transactional(readOnly = true)
-    public List<MessagingMessageResponse> getMessages(Long roomId) {
-        return messagingMessageRepository.findByMessagingRoomIdOrderByCreatedAtAsc(roomId)
-                .stream()
-                .map(MessagingMessageResponse::from)
-                .toList();
+    public Page<MessagingMessageResponse> getMessages(Long roomId, Pageable pageable) {
+        return messagingMessageRepository
+                .findByMessagingRoomIdOrderByCreatedAtDesc(roomId, pageable)
+                .map(MessagingMessageResponse::from);
     }
 }
