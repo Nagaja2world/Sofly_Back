@@ -345,15 +345,21 @@
   }
 
   async function fetchMessages() {
-    const roomId = document.getElementById('room-id').value;
-    try {
-      const res = await authFetch('/api/v1/messaging/rooms/' + roomId + '/messages');
-      const data = await res.json();
-      const messages = data.data ?? data;
-      addRawLog('in', JSON.stringify(data));
-      addSystemMsg('📜 히스토리 ' + (Array.isArray(messages) ? messages.length : 0) + '건 로드');
-      (Array.isArray(messages) ? messages : []).forEach(msg => addMessage(msg, 'received'));
-    } catch(e) { addSystemMsg('❌ 히스토리 조회 실패: ' + e.message); }
+      const roomId = document.getElementById('room-id').value;
+      try {
+          const res = await authFetch('/api/v1/messaging/rooms/' + roomId + '/messages?page=0&size=30');
+          const data = await res.json();
+          addRawLog('in', JSON.stringify(data));
+
+          // ✅ Page.content에서 꺼내야 함
+          const messages = data.data?.content ?? data.content ?? data;
+          const total = data.data?.totalElements ?? 0;
+
+          addSystemMsg('📜 히스토리 ' + (Array.isArray(messages) ? messages.length : 0) + '건 로드 (전체: ' + total + '건)');
+          (Array.isArray(messages) ? messages : []).forEach(msg => addMessage(msg, 'received'));
+      } catch(e) {
+          addSystemMsg('❌ 히스토리 조회 실패: ' + e.message);
+      }
   }
 
   function addMessage(msg, direction) {
