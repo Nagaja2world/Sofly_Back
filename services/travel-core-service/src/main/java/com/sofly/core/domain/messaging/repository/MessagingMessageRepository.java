@@ -9,7 +9,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import com.sofly.core.domain.messaging.document.MessagingMessage;
 
 public interface MessagingMessageRepository extends MongoRepository<MessagingMessage, String> {
-    List<MessagingMessage> findByMessagingRoomIdOrderByCreatedAtAsc(Long messagingRoomId);
-    
     Page<MessagingMessage> findByMessagingRoomIdOrderByCreatedAtDesc(Long messagingRoomId, Pageable pageable);
 }

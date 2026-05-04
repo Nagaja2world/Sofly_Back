@@ -67,9 +67,18 @@ public class MessagingService {
             MessagingMessageRequest request,
             Long senderId) {  // ← 파라미터로 받기
 
+        // 1. 채팅방 존재 확인
         messagingRoomRepository.findById(roomId)
             .orElseThrow(()  -> new SoflyException(ErrorCode.ROOM_NOT_FOUND));
 
+        // 2. 멤버 여부 확인 
+        boolean isMember = messagingRoomMemberRepository
+                .existsByMessagingRoomIdAndUserId(roomId, senderId);
+        if (!isMember) {
+            throw new SoflyException(ErrorCode.MESSAGING_ROOM_ACCESS_DENIED);
+        }
+
+        // 3. 유저 조회
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
 

@@ -52,6 +52,7 @@ public enum ErrorCode {
     // ── Message ──────────────────────────────────────────
 
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+    MESSAGING_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "채팅방에 접근 권한이 없습니다."),
 
     // ── Supply ───────────────────────────────────────────
     SUPPLY_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "공급 서비스 호출 중 오류가 발생했습니다."),
