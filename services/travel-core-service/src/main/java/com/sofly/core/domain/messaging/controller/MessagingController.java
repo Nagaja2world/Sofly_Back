@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -119,10 +119,13 @@ public class MessagingController {
     public void sendMessage(
             @DestinationVariable Long roomId,
             MessagingMessageRequest request,
-            Principal principal) {  // ← WebSocket 세션 유저 주입
+            Principal principal,
+            SimpMessageHeaderAccessor headerAccessor) {  // ← WebSocket 세션 유저 주입
         
         // accessor.setUser(auth) 로 세팅된 값이 여기로 들어옴
         Long senderId = Long.parseLong(principal.getName());
-        messagingService.sendMessage(roomId, request, senderId);
+        //  세션에서 닉네임 꺼냄 (DB 조회 없음)
+        String senderNickname = (String) headerAccessor.getSessionAttributes().get("nickname");
+        messagingService.sendMessage(roomId, request, senderId, senderNickname);
     }
 }
