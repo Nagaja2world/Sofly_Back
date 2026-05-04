@@ -126,9 +126,9 @@ public class RdbChatMemory implements ChatMemory {
         }
 
         List<Message> toMessages() {
-            return messages.stream()
+            return new ArrayList<>(messages.stream()
                     .map(ChatMemoryItem::toMessage)
-                    .toList();
+                    .toList());
         }
     }
 
