@@ -44,6 +44,9 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+    mongodb:
+      uri: ${MONGODB_URI}
+      database: ${MONGODB_DATABASE:sofly_chat}
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}

@@ -49,6 +49,11 @@ public enum ErrorCode {
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "저장된 AI 응답 메시지가 없습니다."),
     INVALID_AI_RESPONSE(HttpStatus.UNPROCESSABLE_ENTITY, "AI 응답을 일정으로 변환할 수 없습니다. 먼저 일정을 확정해주세요."),
 
+    // ── Message ──────────────────────────────────────────
+
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+    MESSAGING_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "채팅방에 접근 권한이 없습니다."),
+
     // ── Supply ───────────────────────────────────────────
     SUPPLY_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "공급 서비스 호출 중 오류가 발생했습니다."),
 
