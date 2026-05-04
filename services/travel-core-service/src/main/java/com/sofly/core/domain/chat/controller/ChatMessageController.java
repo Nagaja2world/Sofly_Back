@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -42,12 +43,14 @@ public class ChatMessageController {
     }
 
     @Operation(summary = "메시지 전송", description = "ChatRoom에 메시지를 보내고 AI 응답을 받습니다.")
-    @PostMapping("/{roomId}")
+    @PostMapping(value = "/{roomId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ChatResponse> chat(
             @PathVariable Long roomId,
             @RequestBody @Valid ChatRequest request
     ) {
-        return ResponseEntity.ok(chatService.chat(roomId, request));
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(chatService.chat(roomId, request));
     }
 
     @Operation(
@@ -73,11 +76,21 @@ public class ChatMessageController {
         }, 15, 15, TimeUnit.SECONDS);
 
         emitter.onCompletion(() -> heartbeat.cancel(true));
+        emitter.onTimeout(() -> heartbeat.cancel(true));
         emitter.onError(t -> heartbeat.cancel(true));
 
-        chatService.chatStream(roomId, request)
+        Flux<String> stream;
+        try {
+            stream = chatService.chatStream(roomId, request);
+        } catch (Exception e) {
+            sendStreamError(emitter, heartbeat, e);
+            return emitter;
+        }
+
+        stream
                 .subscribe(
                         chunk -> {
+                            if (chunk == null) return;
                             try {
                                 emitter.send(SseEmitter.event().data(chunk));
                                 collector.append(chunk);
@@ -86,18 +99,27 @@ public class ChatMessageController {
                             }
                         },
                         error -> {
-                            try {
-                                emitter.send(SseEmitter.event().name("error").data(error.getMessage()));
-                            } catch (IOException ignored) {}
-                            emitter.completeWithError(error);
+                            sendStreamError(emitter, heartbeat, error);
                         },
                         () -> {
+                            heartbeat.cancel(true);
                             chatService.finalizeStream(roomId, collector.toString());
                             emitter.complete();
                         }
                 );
 
         return emitter;
+    }
+
+    private void sendStreamError(SseEmitter emitter, ScheduledFuture<?> heartbeat, Throwable error) {
+        heartbeat.cancel(true);
+        try {
+            String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
+            emitter.send(SseEmitter.event().name("error").data(message));
+        } catch (IOException ignored) {
+            // Client disconnected or response is already closed.
+        }
+        emitter.complete();
     }
 
     @Operation(

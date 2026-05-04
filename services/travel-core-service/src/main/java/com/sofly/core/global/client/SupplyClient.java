@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "supply-service", url = "${sofly.supply.url}")
+@FeignClient(name = "supply-service", url = "${sofly.supply.url:http://supply:8081}")
 public interface SupplyClient {
 
     // ── 항공권 ──────────────────────────────────────────────────────────

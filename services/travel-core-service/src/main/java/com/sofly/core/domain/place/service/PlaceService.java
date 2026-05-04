@@ -9,6 +9,8 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PlaceService {
@@ -17,7 +19,7 @@ public class PlaceService {
 
     public PlacesResponse searchPlaces(String text) {
         try {
-            return supplyClient.searchPlace(text);
+            return normalizePlacesResponse(supplyClient.searchPlace(text));
         } catch (FeignException e) {
             throw new SoflyException(ErrorCode.SUPPLY_SERVICE_ERROR, e.getMessage());
         }
@@ -29,5 +31,12 @@ public class PlaceService {
         } catch (FeignException e) {
             throw new SoflyException(ErrorCode.SUPPLY_SERVICE_ERROR, e.getMessage());
         }
+    }
+
+    private PlacesResponse normalizePlacesResponse(PlacesResponse response) {
+        if (response == null || response.places() == null) {
+            return new PlacesResponse(List.of());
+        }
+        return response;
     }
 }
