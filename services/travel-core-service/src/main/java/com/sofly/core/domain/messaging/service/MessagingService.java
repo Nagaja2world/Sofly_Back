@@ -65,7 +65,8 @@ public class MessagingService {
     public MessagingMessageResponse sendMessage(
             Long roomId,
             MessagingMessageRequest request,
-            Long senderId) {  // ← 파라미터로 받기
+            Long senderId,
+            String senderNickname) {
 
         // 1. 채팅방 존재 확인
         messagingRoomRepository.findById(roomId)
@@ -78,14 +79,10 @@ public class MessagingService {
             throw new SoflyException(ErrorCode.MESSAGING_ROOM_ACCESS_DENIED);
         }
 
-        // 3. 유저 조회
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
-
         MessagingMessage message = MessagingMessage.builder()
                 .messagingRoomId(roomId)
                 .senderId(senderId)
-                .senderNickname(sender.getNickname())
+                .senderNickname(senderNickname)
                 .content(request.content())
                 .type(request.type())
                 .createdAt(LocalDateTime.now())
