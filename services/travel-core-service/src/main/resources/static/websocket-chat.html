@@ -351,12 +351,14 @@
           const data = await res.json();
           addRawLog('in', JSON.stringify(data));
 
-          // ✅ Page.content에서 꺼내야 함
           const messages = data.data?.content ?? data.content ?? data;
           const total = data.data?.totalElements ?? 0;
 
           addSystemMsg('📜 히스토리 ' + (Array.isArray(messages) ? messages.length : 0) + '건 로드 (전체: ' + total + '건)');
-          (Array.isArray(messages) ? messages : []).forEach(msg => addMessage(msg, 'received'));
+
+          // ✅ Desc로 가져왔으니 reverse() 해서 오래된 것부터 표시
+          const sorted = Array.isArray(messages) ? [...messages].reverse() : [];
+          sorted.forEach(msg => addMessage(msg, 'received'));
       } catch(e) {
           addSystemMsg('❌ 히스토리 조회 실패: ' + e.message);
       }
