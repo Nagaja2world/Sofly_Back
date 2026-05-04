@@ -116,14 +116,13 @@ public class MessagingController {
     }
 
     @MessageMapping("/chat.message.{roomId}")
-    @SendTo("/sub/chat/{roomId}")
-    public MessagingMessageResponse sendMessage(
+    public void sendMessage(
             @DestinationVariable Long roomId,
             MessagingMessageRequest request,
             Principal principal) {  // ← WebSocket 세션 유저 주입
         
         // accessor.setUser(auth) 로 세팅된 값이 여기로 들어옴
         Long senderId = Long.parseLong(principal.getName());
-        return messagingService.sendMessage(roomId, request, senderId);
+        messagingService.sendMessage(roomId, request, senderId);
     }
 }
