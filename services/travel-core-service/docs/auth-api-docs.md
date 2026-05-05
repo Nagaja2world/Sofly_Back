@@ -253,6 +253,7 @@ JWT Payload 예시 (디코딩 후)
 | `iat` | 발급 시간 (Unix timestamp) |
 | `exp` | 만료 시간 (Unix timestamp) |
 
+
 ---
 
 ## 6. 테스트 페이지
