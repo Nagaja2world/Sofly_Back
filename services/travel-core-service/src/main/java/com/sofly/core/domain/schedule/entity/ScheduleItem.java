@@ -9,6 +9,7 @@ import java.time.LocalTime;
 @Entity
 @Table(name = "schedule_items")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor

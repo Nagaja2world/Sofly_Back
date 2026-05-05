@@ -99,6 +99,8 @@ public class ScheduleService {
                         .address(item.getAddress())
                         .latitude(item.getLatitude())
                         .longitude(item.getLongitude())
+                        .placeId(item.getPlaceId())
+                        .photoReference(item.getPhotoReference())
                         .memo(item.getMemo())
                         .deepLinkUrl(item.getDeepLinkUrl())
                         .estimatedCost(item.getEstimatedCost())
@@ -135,6 +137,12 @@ public class ScheduleService {
                 request.estimatedCost(),
                 request.name()
         );
+
+        if (request.placeId() != null) item.setPlaceId(request.placeId());
+        if (request.photoReference() != null) item.setPhotoReference(request.photoReference());
+        if (request.latitude() != null) item.setLatitude(request.latitude());
+        if (request.longitude() != null) item.setLongitude(request.longitude());
+
         return ScheduleItemResponse.from(item);
     }
 
@@ -158,6 +166,8 @@ public class ScheduleService {
                 .address(request.address())
                 .latitude(request.latitude())
                 .longitude(request.longitude())
+                .placeId(request.placeId())
+                .photoReference(request.photoReference())
                 .memo(request.memo())
                 .deepLinkUrl(request.deepLinkUrl())
                 .estimatedCost(request.estimatedCost())
