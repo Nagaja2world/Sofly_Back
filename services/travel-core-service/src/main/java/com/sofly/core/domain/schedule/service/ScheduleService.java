@@ -240,7 +240,7 @@ public class ScheduleService {
 
     // ── Map pin ──────────────────────────────────────────────
 
-    public ScheduleMapResponse getScheduleMap(Long userId, Long scheduleId){
+    public ScheduleMapResponse getScheduleMap(Long scheduleId){
         List<ScheduleItem> items = scheduleItemRepository.findByScheduleIdWithCoordinates(scheduleId);
 
         if (items.isEmpty()) {
