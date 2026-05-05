@@ -29,6 +29,9 @@ public record ScheduleItemCreateRequest(
         Double latitude,
         Double longitude,
 
+        String placeId,
+        String photoReference,
+
         String memo,
         String deepLinkUrl,
         Double estimatedCost

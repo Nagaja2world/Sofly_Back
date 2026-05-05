@@ -43,6 +43,12 @@ public class ScheduleItem extends BaseTimeEntity {
 
     private Double longitude;
 
+    @Column
+    private String placeId; // Google places ID (nullable)
+
+    @Column
+    private String photoReference; // 대표 사진 resource name (nullable)
+
     @Column(columnDefinition = "TEXT")
     private String memo;
 
