@@ -4,6 +4,7 @@ server:
 logging:
   level:
     com.sofly.supply.adapter.outbound.rapidapi: DEBUG
+    org.springframework.cache: TRACE
 
 spring:
   application:

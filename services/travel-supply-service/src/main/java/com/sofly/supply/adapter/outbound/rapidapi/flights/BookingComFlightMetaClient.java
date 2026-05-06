@@ -22,8 +22,16 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
 
     private final WebClient rapidApiWebClient;
 
-    @Cacheable(value = "flightDestinations", key = "#query + ':' + #languageCode")
+    @Cacheable(
+        value = "flightDestinations",
+        key = "#query.toLowerCase().trim() + ':' + #languageCode",
+        condition = "#query != null && #query.trim().length() >= 2"
+    )
     public List<FlightDestination> searchDestinations(String query, String languageCode){
+
+        if (query == null || query.trim().length() < 2) {
+            return List.of();
+        }
         try{
             JsonNode response = rapidApiWebClient.get()
                     .uri(uriBuilder -> uriBuilder
