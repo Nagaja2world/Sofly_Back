@@ -32,7 +32,11 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
         return "booking";
     }
 
-    @Cacheable(value = "bookingFlights", key = "#request")
+    @Cacheable(
+        value = "bookingFlights",
+        key = "#request",
+        unless = "#result == null || #result.path('data').path('flightOffers').size() == 0"
+    )
     @Override
     public JsonNode searchFlightOffers(FlightSearchRequest request) {
         List<String> airlineFilter = request.getAirlines() != null ? request.getAirlines() : List.of();
@@ -135,7 +139,14 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
                 .block();
     }
 
-    @Cacheable(value = "bookingFlightDetails", key = "#token + ':' + #currencyCode")
+    @Cacheable(
+        value = "bookingFlightDetails",
+        key = "#token + ':' + #currencyCode",
+        unless = "#result == null " +
+                "|| #result.path('status').asBoolean() == false " +
+                "|| #result.path('data').isMissingNode() " +
+                "|| #result.path('data').path('segments').size() == 0"
+    )
     @Override
     public JsonNode getFlightDetails(String token, String currencyCode) {
         String response = rapidApiWebClient.get()
