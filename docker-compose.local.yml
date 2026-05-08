@@ -15,6 +15,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      kafka:
+        condition: service_started
     networks:
       - sofly-net
 
@@ -78,6 +80,8 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 24
       KAFKA_HEAP_OPTS: "-Xmx384m -Xms256m"
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    networks:
+      - sofly-net
 
   # ── Monitoring ───────────────────────────────────────────
   redis-commander:
@@ -89,6 +93,8 @@ services:
       REDIS_HOSTS: local:redis:6379
     depends_on:
       - redis
+    networks:
+      - sofly-net
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -100,6 +106,8 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     depends_on:
       - kafka
+    networks:
+      - sofly-net
 
   prometheus:
     image: prom/prometheus:latest
