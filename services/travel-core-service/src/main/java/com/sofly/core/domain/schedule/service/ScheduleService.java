@@ -275,6 +275,8 @@ public class ScheduleService {
                 .address(req.address())
                 .latitude(req.latitude())
                 .longitude(req.longitude())
+                .placeId(req.placeId())
+                .photoReference(req.photoReference())
                 .memo(req.memo())
                 .deepLinkUrl(req.deepLinkUrl())
                 .estimatedCost(req.estimatedCost())

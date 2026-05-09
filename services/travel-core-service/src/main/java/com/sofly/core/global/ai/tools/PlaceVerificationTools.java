@@ -34,7 +34,7 @@ public class PlaceVerificationTools {
         try {
             log.info("verifyPlace tool called - placeName={}", placeName);
             PlacesResponse response = supplyClient.searchPlace(placeName);
-            if (response.places() == null || response.places().isEmpty()) {
+            if (response == null || response.places() == null || response.places().isEmpty()) {
                 log.info("verifyPlace tool - place not found - placeName={}", placeName);
                 return new PlaceVerificationResult(false, placeName, null, null, null, null, null, null, null);
             }
@@ -44,10 +44,14 @@ public class PlaceVerificationTools {
                     : null;
             Double lat = place.location() != null ? place.location().latitude() : null;
             Double lng = place.location() != null ? place.location().longitude() : null;
-            log.info("verifyPlace tool resolved - placeName={}, resolvedName={}, placeId={}", placeName, place.displayName().text(), place.id());
+            String resolvedName = place.displayName() != null ? place.displayName().text() : null;
+            log.info(
+                    "verifyPlace tool resolved - placeName={}, resolvedName={}, placeId={}, photoReference={}, lat={}, lng={}",
+                    placeName, resolvedName, place.id(), photoRef, lat, lng
+            );
             return new PlaceVerificationResult(
                     true,
-                    place.displayName().text(),
+                    resolvedName,
                     place.formattedAddress(),
                     place.id(),
                     photoRef,

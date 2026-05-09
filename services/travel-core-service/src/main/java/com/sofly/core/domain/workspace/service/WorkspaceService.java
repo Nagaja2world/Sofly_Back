@@ -3,6 +3,10 @@ package com.sofly.core.domain.workspace.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.sofly.core.domain.workspace.dto.request.*;
+import com.sofly.core.domain.workspace.dto.response.*;
+import com.sofly.core.domain.workspace.entity.SavedPlace;
+import com.sofly.core.domain.workspace.repository.SavedPlaceRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -13,14 +17,6 @@ import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
-import com.sofly.core.domain.workspace.dto.request.CreateWorkspaceRequest;
-import com.sofly.core.domain.workspace.dto.request.SaveFlightRequest;
-import com.sofly.core.domain.workspace.dto.request.UpdateMemberRoleRequest;
-import com.sofly.core.domain.workspace.dto.request.UpdateWorkspaceRequest;
-import com.sofly.core.domain.workspace.dto.response.InviteCodeResponse;
-import com.sofly.core.domain.workspace.dto.response.SavedFlightResponse;
-import com.sofly.core.domain.workspace.dto.response.WorkspaceMemberResponse;
-import com.sofly.core.domain.workspace.dto.response.WorkspaceResponse;
 import com.sofly.core.domain.workspace.entity.SavedFlight;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember;
@@ -41,6 +37,7 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final SavedFlightRepository savedFlightRepository;
+    private final SavedPlaceRepository savedPlaceRepository;
     private final UserRepository userRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -244,6 +241,55 @@ public class WorkspaceService {
                 .map(SavedFlightResponse::from)
                 .toList();
     }
+
+    // ── savedPlace ───────────────────────────────────────
+    @Transactional
+    public SavedPlaceResponse savePlace(Long userId, Long workspaceId, SavePlaceRequest request){
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        if(savedPlaceRepository.existsByWorkspaceIdAndPlaceId(workspaceId, request.placeId())){
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_SAVED_PLACE);
+        }
+
+        SavedPlace savedPlace = SavedPlace.builder()
+                .workspace(workspace)
+                .placeId(request.placeId())
+                .name(request.name())
+                .address(request.address())
+                .latitude(request.latitude())
+                .longitude(request.longitude())
+                .primaryType(request.primaryType())
+                .photoReference(request.photoReference())
+                .rating(request.rating())
+                .googleMapsUri(request.googleMapsUri())
+                .build();
+
+        savedPlaceRepository.save(savedPlace);
+
+        return SavedPlaceResponse.from(savedPlace);
+    }
+
+    public List<SavedPlaceResponse> getSavedPlaces(Long userId, Long workspaceId){
+        findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        return savedPlaceRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(SavedPlaceResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteSavedPlace(Long userId, Long workspaceId, Long savedPlaceId){
+        findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        SavedPlace savedPlace = savedPlaceRepository.findByIdAndWorkspaceId(savedPlaceId, workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_PLACE_NOT_FOUND));
+
+        savedPlaceRepository.delete(savedPlace);
+    }
+
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────
 
