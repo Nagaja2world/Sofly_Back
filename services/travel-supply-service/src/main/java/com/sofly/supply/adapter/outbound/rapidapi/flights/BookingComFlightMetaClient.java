@@ -78,10 +78,6 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
                 ));
             }
 
-            // results = results.stream()
-            //     .filter(d -> d.id() != null && !d.id().contains("undefined"))
-            //     .toList();
-
             return results;
         } catch (WebClientResponseException e){
             log.warn("Booking.com searchDestination API error: {} {}", e.getStatusCode(), e.getMessage());
