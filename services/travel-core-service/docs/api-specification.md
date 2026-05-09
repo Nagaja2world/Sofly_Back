@@ -102,7 +102,7 @@ Authorization: Bearer eyJhbGci...
 | Flight | 3 | 항공권 검색, 공항 검색, 항공편 상세 |
 | Hotel | 4 | 호텔 검색, 목적지/정렬/필터 옵션 |
 | Place | 2 | 장소 검색, 장소 사진 조회 |
-| Workspace | 12 | 여행 워크스페이스 생성/조회/수정/삭제, 초대, 멤버, 항공편 저장 |
+| Workspace | 15 | 여행 워크스페이스 생성/조회/수정/삭제, 초대, 멤버, 항공편 저장, 장소 핀 저장/조회/삭제 |
 | Schedule | 12 | 일정 생성/조회/복사/수정/삭제, 아이템 관리, 지도 핀 |
 | AI Chat | 6 | AI 채팅방, 메시지, 스트리밍, 일정 저장 |
 | Messaging | 3 REST + 1 WS | 실시간 채팅방/메시지 |
@@ -342,6 +342,44 @@ Authorization: Bearer eyJhbGci...
 | `duration`, `price` | string/integer | N | 소요 시간/가격 |
 | `flightType` | enum | Y | `OUTBOUND`, `RETURN` |
 
+### 9.5 워크스페이스 장소 핀
+
+| API명 | 역할/요약 | 엔드포인트 | Method | Request | Response | 상태코드 | 인증/인가 |
+|---|---|---|---|---|---|---|---|
+| 장소 저장 | Google Places 기반 장소를 워크스페이스에 핀 저장 | `/api/workspaces/{workspaceId}/places` | `POST` | Body: `SavePlaceRequest` | `ApiResponse<SavedPlaceResponse>` | `201`, `400`, `401`, `403`, `404`, `409` | JWT + 멤버 |
+| 저장된 장소 목록 조회 | 워크스페이스에 핀 저장된 장소 목록 조회 | `/api/workspaces/{workspaceId}/places` | `GET` | Path: `workspaceId` | `ApiResponse<List<SavedPlaceResponse>>` | `200`, `401`, `403`, `404` | JWT + 멤버 |
+| 저장된 장소 삭제 | 워크스페이스에서 핀 저장된 장소 삭제 | `/api/workspaces/{workspaceId}/places/{savedPlaceId}` | `DELETE` | Path: `workspaceId`, `savedPlaceId` | 없음 | `204`, `401`, `403`, `404` | JWT + 멤버 |
+
+**SavePlaceRequest**
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `placeId` | string | Y | Google Places ID |
+| `name` | string | Y | 장소명 |
+| `address` | string | N | 주소 |
+| `latitude`, `longitude` | number | N | 좌표 |
+| `primaryType` | string | N | 장소 유형 (예: restaurant) |
+| `photoReference` | string | N | Google Places 사진 resource name |
+| `rating` | number | N | 평점 |
+| `googleMapsUri` | string | N | Google Maps URI |
+
+**SavedPlaceResponse**
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | number | 저장 ID |
+| `placeId` | string | Google Places ID |
+| `name` | string | 장소명 |
+| `address` | string | 주소 |
+| `latitude`, `longitude` | number | 좌표 |
+| `primaryType` | string | 장소 유형 |
+| `photoReference` | string | 사진 resource name |
+| `rating` | number | 평점 |
+| `googleMapsUri` | string | Google Maps URI |
+| `createdAt` | datetime | 저장 시각 |
+
+> 409: 동일한 `placeId`가 이미 워크스페이스에 저장된 경우 (WORKSPACE_008)
+
 ---
 
 ## 10. Schedule API
@@ -359,7 +397,7 @@ Authorization: Bearer eyJhbGci...
 | 일정 포크 | 기존 일정을 복사해 새 버전 생성 | `/api/v1/schedules/{scheduleId}/fork` | `POST` | Query: `title` optional | `ScheduleResponse` | `200`, `401`, `404` | JWT 필요 |
 | 일정 제목 수정 | 일정 제목 변경 | `/api/v1/schedules/{scheduleId}/title` | `PATCH` | Query: `title` | `ScheduleResponse` | `200`, `400`, `401`, `404` | JWT 필요 |
 | 일정 삭제 | 일정 삭제 | `/api/v1/schedules/{scheduleId}` | `DELETE` | Path: `scheduleId` | 없음 | `204`, `401`, `404` | JWT 필요 |
-| 일정 지도 핀 조회 | 좌표가 있는 일정 아이템을 day별 핀으로 반환 | `/api/v1/schedules/{scheduleId}/map` | `GET` | Path: `scheduleId` | `ScheduleMapResponse` | `200`, `401`, `404` | JWT 필요 |
+| 일정 지도 핀 조회 | 좌표가 있는 일정 아이템을 day별 핀으로 반환 | `/api/v1/schedules/{scheduleId}/map` | `GET` | Path: `scheduleId` | `ScheduleMapResponse` | `200`, `401`, `403`, `404` | JWT + 멤버 (워크스페이스) |
 
 **ScheduleCreateRequest**
 

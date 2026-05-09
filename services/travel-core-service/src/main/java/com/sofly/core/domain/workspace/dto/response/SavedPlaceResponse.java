@@ -15,7 +15,7 @@ public record SavedPlaceResponse(
         String photoReference,
         Double rating,
         String googleMapsUri,
-        LocalDateTime createAt
+        LocalDateTime createdAt
 ) {
     public static SavedPlaceResponse from(SavedPlace savedPlace) {
         return new SavedPlaceResponse(

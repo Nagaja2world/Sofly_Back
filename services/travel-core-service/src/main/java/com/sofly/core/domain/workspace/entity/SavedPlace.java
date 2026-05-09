@@ -14,7 +14,7 @@ import lombok.*;
 @Table(name = "saved_place")
 public class SavedPlace extends BaseTimeEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

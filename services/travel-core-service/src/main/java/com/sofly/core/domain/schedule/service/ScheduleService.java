@@ -5,8 +5,11 @@ import com.sofly.core.domain.schedule.entity.Schedule;
 import com.sofly.core.domain.schedule.entity.ScheduleItem;
 import com.sofly.core.domain.schedule.repository.ScheduleItemRepository;
 import com.sofly.core.domain.schedule.repository.ScheduleRepository;
+import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember;
+import com.sofly.core.domain.workspace.exception.WorkspaceException;
+import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.security.workspace.RequireWorkspaceMember;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +29,7 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleItemRepository scheduleItemRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     // ── 조회 ────────────────────────────────────────────────
 
@@ -141,11 +145,7 @@ public class ScheduleService {
                 request.estimatedCost(),
                 request.name()
         );
-
-        if (request.placeId() != null) item.setPlaceId(request.placeId());
-        if (request.photoReference() != null) item.setPhotoReference(request.photoReference());
-        if (request.latitude() != null) item.setLatitude(request.latitude());
-        if (request.longitude() != null) item.setLongitude(request.longitude());
+        item.updatePlace(request.placeId(), request.photoReference(), request.latitude(), request.longitude());
 
         return ScheduleItemResponse.from(item);
     }
@@ -240,7 +240,14 @@ public class ScheduleService {
 
     // ── Map pin ──────────────────────────────────────────────
 
-    public ScheduleMapResponse getScheduleMap(Long scheduleId){
+    public ScheduleMapResponse getScheduleMap(Long scheduleId, Long userId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        Long workspaceId = schedule.getWorkspace().getId();
+        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
+        }
+
         List<ScheduleItem> items = scheduleItemRepository.findByScheduleIdWithCoordinates(scheduleId);
 
         if (items.isEmpty()) {

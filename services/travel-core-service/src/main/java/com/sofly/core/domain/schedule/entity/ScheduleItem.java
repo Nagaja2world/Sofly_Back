@@ -70,6 +70,13 @@ public class ScheduleItem extends BaseTimeEntity {
         this.name = name;
     }
 
+    public void updatePlace(String placeId, String photoReference, Double latitude, Double longitude) {
+        if (placeId != null) this.placeId = placeId;
+        if (photoReference != null) this.photoReference = photoReference;
+        if (latitude != null) this.latitude = latitude;
+        if (longitude != null) this.longitude = longitude;
+    }
+
     public void updateOrder(Integer orderIndex) {
         this.orderIndex = orderIndex;
     }

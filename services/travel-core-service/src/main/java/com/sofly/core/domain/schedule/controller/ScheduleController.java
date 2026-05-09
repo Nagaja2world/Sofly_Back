@@ -5,6 +5,7 @@ import com.sofly.core.domain.schedule.dto.ScheduleMapResponse;
 import com.sofly.core.domain.schedule.dto.ScheduleResponse;
 import com.sofly.core.domain.schedule.dto.ScheduleSummaryResponse;
 import com.sofly.core.domain.schedule.service.ScheduleService;
+import com.sofly.core.global.security.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -117,6 +118,7 @@ public class ScheduleController {
     @GetMapping("/{scheduleId}/map")
     public ResponseEntity<ScheduleMapResponse> getMapPins(
             @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId) {
-        return ResponseEntity.ok(scheduleService.getScheduleMap(scheduleId));
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(scheduleService.getScheduleMap(scheduleId, userId));
     }
 }
