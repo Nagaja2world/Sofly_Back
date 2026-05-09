@@ -25,7 +25,8 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
     @Cacheable(
         value = "flightDestinations",
         key = "#query.toLowerCase().trim() + ':' + #languageCode",
-        condition = "#query != null && #query.trim().length() >= 2"
+        condition = "#query != null && #query.trim().length() >= 2",
+        unless = "#result == null || #result.isEmpty()" 
     )
     public List<FlightDestination> searchDestinations(String query, String languageCode){
 
@@ -76,6 +77,10 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
                         RapidApiJsonUtils.textOrNull(item, "parent")
                 ));
             }
+
+            results = results.stream()
+                .filter(d -> d.id() != null && !d.id().contains("undefined"))
+                .toList();
 
             return results;
         } catch (WebClientResponseException e){
