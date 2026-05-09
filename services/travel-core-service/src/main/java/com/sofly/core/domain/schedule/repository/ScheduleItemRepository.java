@@ -18,6 +18,10 @@ public interface ScheduleItemRepository extends JpaRepository<ScheduleItem, Long
     // 특정 일정의 모든 아이템 (day, orderIndex 정렬)
     List<ScheduleItem> findByScheduleIdOrderByDayAscOrderIndexAsc(Long scheduleId);
 
+    // latitude, longitude가 non-null인 item 필터링
+    @Query("SELECT s FROM ScheduleItem s WHERE s.schedule.id = :scheduleId AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL")
+    List<ScheduleItem> findByScheduleIdWithCoordinates(@Param("scheduleId") Long scheduleId);
+
     // 특정 일차의 아이템만
     List<ScheduleItem> findByScheduleIdAndDayOrderByOrderIndexAsc(Long scheduleId, Integer day);
 

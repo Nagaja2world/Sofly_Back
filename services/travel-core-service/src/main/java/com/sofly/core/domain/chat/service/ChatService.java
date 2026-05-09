@@ -156,6 +156,8 @@ public class ChatService {
                                 item.address(),
                                 item.latitude(),
                                 item.longitude(),
+                                item.placeId(),
+                                item.photoReference(),
                                 item.memo(),
                                 item.deepLinkUrl(),
                                 item.estimatedCost()

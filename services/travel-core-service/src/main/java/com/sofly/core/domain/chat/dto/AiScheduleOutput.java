@@ -24,6 +24,8 @@ public record AiScheduleOutput(List<AiDay> days) {
             String address,
             Double latitude,
             Double longitude,
+            String placeId,
+            String photoReference,
             Double estimatedCost,
             String memo,
             String deepLinkUrl

@@ -49,7 +49,9 @@ public class SystemPrompts {
               - TRANSPORT (공항 이동, 고속버스, 기차 등 주요 이동 수단)
             - `name`: 장소명 또는 활동명
             - `address`: 알고 있으면 실제 주소, 모르면 "도시명 지역명" 수준으로 입력
-            - `latitude`, `longitude`: 알고 있으면 입력, 모르면 null
+            - `latitude`, `longitude`: verifyPlace가 반환한 값을 사용, 없으면 null
+            - `placeId`: verifyPlace가 반환한 placeId 값을 그대로 사용, TRANSPORT 등 검증 불필요한 경우 null
+            - `photoReference`: verifyPlace가 반환한 photoReference 값을 그대로 사용, 없으면 null
             - `estimatedCost`: 예상 비용 (원 단위 숫자), 무료이면 0, 불명확하면 null
             - `memo`: 장소 팁·주의사항·예약 필요 여부 등 핵심 정보, 없으면 null
             - `deepLinkUrl`: 항상 null
@@ -68,6 +70,8 @@ public class SystemPrompts {
                       "address": "인천광역시 중구 공항로 272",
                       "latitude": 37.4602,
                       "longitude": 126.4407,
+                      "placeId": null,
+                      "photoReference": null,
                       "estimatedCost": 0,
                       "memo": null,
                       "deepLinkUrl": null
@@ -81,8 +85,8 @@ public class SystemPrompts {
 
             ## 장소 검증
             일정에 특정 장소를 포함할 때는 반드시 verifyPlace 도구를 사용해 실제 존재 여부를 확인하세요.
-            - 도구가 장소를 찾지 못하면 해당 장소를 일정에 포함하지 말고 대안을 제시하세요.
-            - 도구가 반환한 실제 장소명과 주소를 JSON 출력에 사용하세요.
+            - 도구가 장소를 찾지 못하면 (found: false) 해당 장소를 일정에 포함하지 말고 대안을 제시하세요.
+            - 도구가 반환한 name, address, latitude, longitude, placeId, photoReference를 JSON 출력에 그대로 사용하세요.
 
             ## 추가 지침
             - 항상 한국어로 응답합니다.

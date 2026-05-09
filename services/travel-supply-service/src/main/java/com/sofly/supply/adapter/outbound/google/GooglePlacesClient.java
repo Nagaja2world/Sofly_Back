@@ -29,8 +29,9 @@ public class GooglePlacesClient implements PlaceInfoPort {
     }
 
     public Optional<PlacesResponse> searchText(String text) {
+        String normalizedText = normalizeSearchText(text);
 
-        if (text == null || text.isBlank()) {
+        if (normalizedText.isBlank()) {
             log.warn("Search text is null or blank");
             return Optional.empty();
         }
@@ -63,7 +64,7 @@ public class GooglePlacesClient implements PlaceInfoPort {
                     )
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of(
-                            "textQuery", text,
+                            "textQuery", normalizedText,
                             "languageCode", "ko"
                             ))
                     .retrieve()
@@ -73,10 +74,10 @@ public class GooglePlacesClient implements PlaceInfoPort {
             return Optional.ofNullable(response);
 
         } catch (WebClientResponseException e) {
-            log.warn("Google Places API error for text '{}': {} {}", text, e.getStatusCode(), e.getMessage());
+            log.warn("Google Places API error for text '{}': {} {}", normalizedText, e.getStatusCode(), e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
-            log.warn("Unexpected error during Google Places enrichment for text '{}': {}", text, e.getMessage());
+            log.warn("Unexpected error during Google Places enrichment for text '{}': {}", normalizedText, e.getMessage());
             return Optional.empty();
         }
     }
@@ -106,4 +107,12 @@ public class GooglePlacesClient implements PlaceInfoPort {
         }
     }
 
+    private String normalizeSearchText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text
+                .replaceAll("[\\u200B-\\u200D\\u2060\\uFEFF]", "")
+                .trim();
+    }
 }

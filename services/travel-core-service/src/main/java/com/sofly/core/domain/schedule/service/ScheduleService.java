@@ -5,14 +5,21 @@ import com.sofly.core.domain.schedule.entity.Schedule;
 import com.sofly.core.domain.schedule.entity.ScheduleItem;
 import com.sofly.core.domain.schedule.repository.ScheduleItemRepository;
 import com.sofly.core.domain.schedule.repository.ScheduleRepository;
+import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
 import com.sofly.core.domain.workspace.entity.Workspace;
+import com.sofly.core.domain.workspace.entity.WorkspaceMember;
+import com.sofly.core.domain.workspace.exception.WorkspaceException;
+import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
+import com.sofly.core.global.security.workspace.RequireWorkspaceMember;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +29,7 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleItemRepository scheduleItemRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     // ── 조회 ────────────────────────────────────────────────
 
@@ -99,6 +107,8 @@ public class ScheduleService {
                         .address(item.getAddress())
                         .latitude(item.getLatitude())
                         .longitude(item.getLongitude())
+                        .placeId(item.getPlaceId())
+                        .photoReference(item.getPhotoReference())
                         .memo(item.getMemo())
                         .deepLinkUrl(item.getDeepLinkUrl())
                         .estimatedCost(item.getEstimatedCost())
@@ -135,6 +145,8 @@ public class ScheduleService {
                 request.estimatedCost(),
                 request.name()
         );
+        item.updatePlace(request.placeId(), request.photoReference(), request.latitude(), request.longitude());
+
         return ScheduleItemResponse.from(item);
     }
 
@@ -158,6 +170,8 @@ public class ScheduleService {
                 .address(request.address())
                 .latitude(request.latitude())
                 .longitude(request.longitude())
+                .placeId(request.placeId())
+                .photoReference(request.photoReference())
                 .memo(request.memo())
                 .deepLinkUrl(request.deepLinkUrl())
                 .estimatedCost(request.estimatedCost())
@@ -224,6 +238,37 @@ public class ScheduleService {
         item.incrementDeepLinkClick();
     }
 
+    // ── Map pin ──────────────────────────────────────────────
+
+    public ScheduleMapResponse getScheduleMap(Long scheduleId, Long userId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        Long workspaceId = schedule.getWorkspace().getId();
+        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
+        }
+
+        List<ScheduleItem> items = scheduleItemRepository.findByScheduleIdWithCoordinates(scheduleId);
+
+        if (items.isEmpty()) {
+            return new ScheduleMapResponse(List.of());
+        }
+
+        List<ScheduleMapResponse.DayGroup> days = items.stream()
+                .collect(Collectors.groupingBy(ScheduleItem::getDay))
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> new ScheduleMapResponse.DayGroup(
+                        entry.getKey(),
+                        entry.getValue().stream()
+                                .map(this::toMapPin)
+                                .toList()
+                ))
+                .toList();
+
+        return new ScheduleMapResponse(days);
+    }
+
     // ── 내부 헬퍼 ───────────────────────────────────────────
 
     private ScheduleItem buildScheduleItem(ScheduleItemCreateRequest req, Schedule schedule) {
@@ -237,9 +282,24 @@ public class ScheduleService {
                 .address(req.address())
                 .latitude(req.latitude())
                 .longitude(req.longitude())
+                .placeId(req.placeId())
+                .photoReference(req.photoReference())
                 .memo(req.memo())
                 .deepLinkUrl(req.deepLinkUrl())
                 .estimatedCost(req.estimatedCost())
                 .build();
+    }
+
+    private ScheduleMapResponse.MapPin toMapPin(ScheduleItem item) {
+        return new ScheduleMapResponse.MapPin(
+                item.getId(),
+                item.getName(),
+                item.getCategory(),
+                item.getLatitude(),
+                item.getLongitude(),
+                item.getPlaceId(),
+                item.getPhotoReference(),
+                item.getVisitTime()
+        );
     }
 }

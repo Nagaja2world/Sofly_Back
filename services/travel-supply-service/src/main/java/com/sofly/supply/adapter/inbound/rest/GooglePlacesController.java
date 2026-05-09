@@ -6,7 +6,6 @@ import com.sofly.supply.application.dto.PlacesResponse.PhotoMedia;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,8 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
-@Profile("!prod")
-@Tag(name = "Google Places", description = "Google Places API 테스트 (비프로덕션 전용)")
+@Tag(name = "Google Places", description = "Google Places API")
 @RestController
 @RequestMapping("/supply/places")
 public class GooglePlacesController {

@@ -1,9 +1,11 @@
 package com.sofly.core.domain.schedule.controller;
 
 import com.sofly.core.domain.schedule.dto.ScheduleCreateRequest;
+import com.sofly.core.domain.schedule.dto.ScheduleMapResponse;
 import com.sofly.core.domain.schedule.dto.ScheduleResponse;
 import com.sofly.core.domain.schedule.dto.ScheduleSummaryResponse;
 import com.sofly.core.domain.schedule.service.ScheduleService;
+import com.sofly.core.global.security.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -104,5 +106,19 @@ public class ScheduleController {
             @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Map ────────────────────────────────────────────────
+
+    @Operation(summary = "일정 지도 핀 조회", description = "좌표(위경도)가 등록된 아이템을 일차별로 그룹핑하여 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "일정 없음")
+    })
+    @GetMapping("/{scheduleId}/map")
+    public ResponseEntity<ScheduleMapResponse> getMapPins(
+            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(scheduleService.getScheduleMap(scheduleId, userId));
     }
 }

@@ -9,6 +9,7 @@ import java.time.LocalTime;
 @Entity
 @Table(name = "schedule_items")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor
@@ -43,6 +44,12 @@ public class ScheduleItem extends BaseTimeEntity {
 
     private Double longitude;
 
+    @Column
+    private String placeId; // Google places ID (nullable)
+
+    @Column
+    private String photoReference; // 대표 사진 resource name (nullable)
+
     @Column(columnDefinition = "TEXT")
     private String memo;
 
@@ -61,6 +68,13 @@ public class ScheduleItem extends BaseTimeEntity {
         this.address = address;
         this.estimatedCost = estimatedCost;
         this.name = name;
+    }
+
+    public void updatePlace(String placeId, String photoReference, Double latitude, Double longitude) {
+        if (placeId != null) this.placeId = placeId;
+        if (photoReference != null) this.photoReference = photoReference;
+        if (latitude != null) this.latitude = latitude;
+        if (longitude != null) this.longitude = longitude;
     }
 
     public void updateOrder(Integer orderIndex) {

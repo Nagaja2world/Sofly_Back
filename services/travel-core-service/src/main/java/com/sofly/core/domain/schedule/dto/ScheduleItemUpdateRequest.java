@@ -21,5 +21,13 @@ public record ScheduleItemUpdateRequest(
 
         Double estimatedCost,
 
-        String name
+        String name,
+
+        String placeId,
+
+        String photoReference,
+
+        Double latitude,
+
+        Double longitude
 ) {}
