@@ -78,9 +78,9 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
                 ));
             }
 
-            results = results.stream()
-                .filter(d -> d.id() != null && !d.id().contains("undefined"))
-                .toList();
+            // results = results.stream()
+            //     .filter(d -> d.id() != null && !d.id().contains("undefined"))
+            //     .toList();
 
             return results;
         } catch (WebClientResponseException e){
