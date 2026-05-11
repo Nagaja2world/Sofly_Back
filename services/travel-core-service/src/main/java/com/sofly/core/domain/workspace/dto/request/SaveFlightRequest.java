@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Getter
@@ -17,11 +16,23 @@ public class SaveFlightRequest {
     @NotBlank
     private String airline;
 
+    private String airlineLogo;
+    private String planeType;
+    private String cabinClass;
+
     @NotBlank
     private String departureAirport;
 
+    private String departureCity;
+    private String departureCountry;
+    private String departureTerminal;
+
     @NotBlank
     private String arrivalAirport;
+
+    private String arrivalCity;
+    private String arrivalCountry;
+    private String arrivalTerminal;
 
     @NotNull
     private ZonedDateTime departureTime;
@@ -29,9 +40,24 @@ public class SaveFlightRequest {
     @NotNull
     private ZonedDateTime arrivalTime;
 
-    private String duration;
+    /** totalTime(초) / 60 → durationMinutes */
+    private Integer durationMinutes;
 
-    private Integer price;
+    /** priceBreakdown.total */
+    private Integer totalPrice;
+
+    private Integer baseFare;
+    private Integer tax;
+    private Integer platformFee;
+    private String currencyCode;
+
+    private Integer checkedBaggageKg;
+    private Integer checkedBaggagePiece;
+    private Integer cabinBaggageKg;
+    private Boolean personalItemIncluded;
+
+    private String bookingToken;
+    private String offerReference;
 
     @NotNull
     private FlightType flightType;
