@@ -1,6 +1,7 @@
 package com.sofly.core.global.config;
 
 import com.sofly.core.global.kafka.dto.FlightSavedMessage;
+import com.sofly.core.global.kafka.dto.InvitationCreatedMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +25,6 @@ public class KafkaConsumerConfig {
     public ConsumerFactory<String, FlightSavedMessage> flightSavedConsumerFactory() {
         JsonDeserializer<FlightSavedMessage> deserializer = new JsonDeserializer<>(FlightSavedMessage.class);
         deserializer.addTrustedPackages("com.sofly.core.*");
-        // 타입 헤더 무시하고 위에서 지정한 FlightSavedMessage로 고정 역직렬화
         deserializer.setUseTypeHeaders(false);
 
         Map<String, Object> props = new HashMap<>();
@@ -39,6 +39,27 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, FlightSavedMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(flightSavedConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, InvitationCreatedMessage> invitationConsumerFactory() {
+        JsonDeserializer<InvitationCreatedMessage> deserializer = new JsonDeserializer<>(InvitationCreatedMessage.class);
+        deserializer.addTrustedPackages("com.sofly.core.*");
+        deserializer.setUseTypeHeaders(false);
+
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, InvitationCreatedMessage> invitationListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, InvitationCreatedMessage> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(invitationConsumerFactory());
         return factory;
     }
 }

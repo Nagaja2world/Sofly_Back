@@ -1,13 +1,19 @@
 package com.sofly.core.domain.workspace.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
 import com.sofly.core.domain.workspace.entity.SavedPlace;
+import com.sofly.core.domain.workspace.entity.WorkspaceInvitation;
+import com.sofly.core.domain.workspace.entity.WorkspaceInvitation.InvitationStatus;
 import com.sofly.core.domain.workspace.repository.SavedPlaceRepository;
+import com.sofly.core.domain.workspace.repository.WorkspaceInvitationRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +32,7 @@ import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.kafka.dto.FlightSavedMessage;
+import com.sofly.core.global.kafka.dto.InvitationCreatedMessage;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,12 +41,17 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class WorkspaceService {
 
+    private static final String INVITE_REDIS_KEY_PREFIX = "invite:";
+    private static final Duration INVITE_TTL = Duration.ofDays(7);
+
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final WorkspaceInvitationRepository workspaceInvitationRepository;
     private final SavedFlightRepository savedFlightRepository;
     private final SavedPlaceRepository savedPlaceRepository;
     private final UserRepository userRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Value("${sofly.oauth2.redirect-uri}")
     private String baseUrl;
@@ -127,24 +139,108 @@ public class WorkspaceService {
         return InviteCodeResponse.of(code, baseUrl);
     }
 
-    // ── 직접 초대 (userId 기반) ────────────────────────────────
+    // ── 초대 요청 생성 ─────────────────────────────────────────
 
     @Transactional
-    public WorkspaceMemberResponse inviteMember(Long requesterId, Long workspaceId, Long targetUserId) {
+    public InvitationResponse inviteMember(Long requesterId, Long workspaceId, Long targetUserId) {
+        if (requesterId.equals(targetUserId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.CANNOT_INVITE_SELF);
+        }
+
         Workspace workspace = findWorkspaceById(workspaceId);
         validateOwner(workspace, requesterId);
 
         if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, targetUserId)) {
             throw new WorkspaceException(WorkspaceErrorCode.ALREADY_WORKSPACE_MEMBER);
         }
+        if (workspaceInvitationRepository.existsByWorkspaceIdAndInviteeIdAndStatus(
+                workspaceId, targetUserId, InvitationStatus.PENDING)) {
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_PENDING_INVITATION);
+        }
 
-        User target = userRepository.findById(targetUserId)
+        User inviter = userRepository.findById(requesterId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User invitee = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, target);
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .inviter(inviter)
+                .invitee(invitee)
+                .expiresAt(LocalDateTime.now().plus(INVITE_TTL))
+                .build();
+
+        workspaceInvitationRepository.save(invitation);
+
+        // Redis에 TTL과 함께 토큰 등록
+        stringRedisTemplate.opsForValue().set(
+                INVITE_REDIS_KEY_PREFIX + invitation.getId(), "1", INVITE_TTL);
+
+        // Kafka로 알림 이벤트 발행
+        kafkaTemplate.send("workspace.invitation", new InvitationCreatedMessage(
+                invitation.getId(), workspace.getId(), workspace.getTitle(),
+                inviter.getNickname(), targetUserId));
+
+        return InvitationResponse.from(invitation);
+    }
+
+    // ── 초대 수락 ──────────────────────────────────────────────
+
+    @Transactional
+    public WorkspaceMemberResponse acceptInvitation(Long userId, Long invitationId) {
+        WorkspaceInvitation invitation = workspaceInvitationRepository
+                .findByIdAndInviteeId(invitationId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
+
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
+        }
+
+        String redisKey = INVITE_REDIS_KEY_PREFIX + invitationId;
+        if (Boolean.FALSE.equals(stringRedisTemplate.hasKey(redisKey))) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_EXPIRED);
+        }
+
+        Workspace workspace = invitation.getWorkspace();
+
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_WORKSPACE_MEMBER);
+        }
+
+        invitation.accept();
+        stringRedisTemplate.delete(redisKey);
+
+        User invitee = invitation.getInvitee();
+        WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, invitee);
         workspace.addMember(newMember);
 
         return WorkspaceMemberResponse.from(newMember);
+    }
+
+    // ── 초대 거절 ──────────────────────────────────────────────
+
+    @Transactional
+    public void rejectInvitation(Long userId, Long invitationId) {
+        WorkspaceInvitation invitation = workspaceInvitationRepository
+                .findByIdAndInviteeId(invitationId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
+
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
+        }
+
+        invitation.reject();
+        stringRedisTemplate.delete(INVITE_REDIS_KEY_PREFIX + invitationId);
+    }
+
+    // ── 내 초대 목록 조회 ──────────────────────────────────────
+
+    public List<InvitationResponse> getMyInvitations(Long userId) {
+        return workspaceInvitationRepository
+                .findAllByInviteeIdAndStatus(userId, InvitationStatus.PENDING).stream()
+                .filter(i -> !i.isExpired())
+                .map(InvitationResponse::from)
+                .toList();
     }
 
     // ── 초대 코드로 멤버 가입 ──────────────────────────────────

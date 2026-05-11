@@ -18,7 +18,12 @@ public enum WorkspaceErrorCode implements BaseErrorCode {
     CANNOT_ASSIGN_OWNER_ROLE(HttpStatus.BAD_REQUEST, "WORKSPACE_007", "소유자 역할은 직접 변경할 수 없습니다."),
     ALREADY_SAVED_PLACE(HttpStatus.CONFLICT, "WORKSPACE_008", "이미 저장된 장소입니다."),
     SAVED_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_009", "저장된 장소를 찾을 수 없습니다."),
-    SAVED_FLIGHT_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_010", "저장된 항공편을 찾을 수 없습니다.");
+    SAVED_FLIGHT_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_010", "저장된 항공편을 찾을 수 없습니다."),
+    INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_011", "초대를 찾을 수 없습니다."),
+    INVITATION_ALREADY_PROCESSED(HttpStatus.CONFLICT, "WORKSPACE_012", "이미 처리된 초대입니다."),
+    INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "WORKSPACE_013", "만료된 초대입니다."),
+    ALREADY_PENDING_INVITATION(HttpStatus.CONFLICT, "WORKSPACE_014", "이미 대기 중인 초대가 있습니다."),
+    CANNOT_INVITE_SELF(HttpStatus.BAD_REQUEST, "WORKSPACE_015", "자기 자신을 초대할 수 없습니다.");
     private final HttpStatus status;
     private final String code;
     private final String message;
