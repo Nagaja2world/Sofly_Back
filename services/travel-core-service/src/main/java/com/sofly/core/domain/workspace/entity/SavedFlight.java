@@ -29,7 +29,7 @@ public class SavedFlight extends BaseTimeEntity {
     @Column(nullable = false)
     private String airline;             // Peach Aviation
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String airlineLogo;         // https://r-xx.bstatic.com/data/airlines_logo/MM.png
 
     @Column
