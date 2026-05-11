@@ -127,6 +127,26 @@ public class WorkspaceService {
         return InviteCodeResponse.of(code, baseUrl);
     }
 
+    // ── 직접 초대 (userId 기반) ────────────────────────────────
+
+    @Transactional
+    public WorkspaceMemberResponse inviteMember(Long requesterId, Long workspaceId, Long targetUserId) {
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateOwner(workspace, requesterId);
+
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, targetUserId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_WORKSPACE_MEMBER);
+        }
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, target);
+        workspace.addMember(newMember);
+
+        return WorkspaceMemberResponse.from(newMember);
+    }
+
     // ── 초대 코드로 멤버 가입 ──────────────────────────────────
 
     @Transactional

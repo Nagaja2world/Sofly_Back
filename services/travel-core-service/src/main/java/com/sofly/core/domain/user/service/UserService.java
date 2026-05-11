@@ -3,9 +3,12 @@ package com.sofly.core.domain.user.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.dto.UserProfileResponse;
 import com.sofly.core.domain.user.dto.UserProfileUpdateRequest;
+import com.sofly.core.domain.user.dto.UserSearchResponse;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
@@ -60,6 +63,16 @@ public class UserService {
         }
 
         return UserProfileResponse.from(user);
+    }
+
+    /**
+     * GET /api/users/search?email=...
+     * 이메일 prefix로 사용자 검색 (자동완성 드롭다운용)
+     */
+    public List<UserSearchResponse> searchByEmail(String emailPrefix) {
+        return userRepository.findTop10ByEmailStartingWithIgnoreCase(emailPrefix).stream()
+                .map(UserSearchResponse::from)
+                .toList();
     }
 
     // ── AI 일정 생성 연동용 ───────────────────────────────────
