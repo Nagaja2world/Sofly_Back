@@ -106,7 +106,7 @@ public class SavedFlight extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String bookingToken;        // 예약시 필요한 token (길어서 TEXT)
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String offerReference;      // d6a1f_3212210372
 
     // ── 타입 ──────────────────────────────────────────
