@@ -261,6 +261,19 @@ public class WorkspaceService {
                 .toList();
     }
 
+    // ── 항공편 삭제 ────────────────────────────────────────────
+
+    @Transactional
+    public void deleteFlight(Long userId, Long workspaceId, Long flightId) {
+        findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        SavedFlight flight = savedFlightRepository.findByIdAndWorkspaceId(flightId, workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_FLIGHT_NOT_FOUND));
+
+        savedFlightRepository.delete(flight);
+    }
+
     // ── savedPlace ───────────────────────────────────────
     @Transactional
     public SavedPlaceResponse savePlace(Long userId, Long workspaceId, SavePlaceRequest request){

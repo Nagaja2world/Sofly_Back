@@ -56,4 +56,20 @@ public class WorkspaceFlightController {
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(workspaceService.getFlights(userId, workspaceId)));
     }
+
+    @Operation(summary = "저장된 항공편 삭제", description = "워크스페이스에 저장된 항공편을 삭제합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스 또는 항공편을 찾을 수 없음")
+    })
+    @DeleteMapping("/{flightId}")
+    public ResponseEntity<Void> deleteFlight(
+            @PathVariable Long workspaceId,
+            @PathVariable Long flightId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        workspaceService.deleteFlight(userId, workspaceId, flightId);
+        return ResponseEntity.noContent().build();
+    }
 }

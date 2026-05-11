@@ -17,7 +17,8 @@ public enum WorkspaceErrorCode implements BaseErrorCode {
     OWNER_CANNOT_LEAVE(HttpStatus.BAD_REQUEST, "WORKSPACE_006", "워크스페이스 소유자는 탈퇴할 수 없습니다."),
     CANNOT_ASSIGN_OWNER_ROLE(HttpStatus.BAD_REQUEST, "WORKSPACE_007", "소유자 역할은 직접 변경할 수 없습니다."),
     ALREADY_SAVED_PLACE(HttpStatus.CONFLICT, "WORKSPACE_008", "이미 저장된 장소입니다."),
-    SAVED_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_009", "저장된 장소를 찾을 수 없습니다.");
+    SAVED_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_009", "저장된 장소를 찾을 수 없습니다."),
+    SAVED_FLIGHT_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKSPACE_010", "저장된 항공편을 찾을 수 없습니다.");
     private final HttpStatus status;
     private final String code;
     private final String message;
