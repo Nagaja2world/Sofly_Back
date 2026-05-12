@@ -8,7 +8,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "workspace_like",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id, user_id"}))
+    uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id", "user_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
