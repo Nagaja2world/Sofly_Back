@@ -12,6 +12,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -31,15 +32,23 @@ public class S3Service {
 
     /** 파일을 S3에 업로드하고 URL 반환 */
     public String uploadFile(MultipartFile file, String s3Key) {
+        return uploadFile(file, s3Key, false);
+    }
+
+    /** 파일을 S3에 업로드하고 URL 반환 (publicRead: true이면 public-read ACL 설정) */
+    public String uploadFile(MultipartFile file, String s3Key, boolean publicRead) {
         try {
-            PutObjectRequest putRequest = PutObjectRequest.builder()
+            PutObjectRequest.Builder builder = PutObjectRequest.builder()
                     .bucket(s3Config.getS3().getBucket())
                     .key(s3Key)
                     .contentType(file.getContentType())
-                    .contentLength(file.getSize())
-                    .build();
+                    .contentLength(file.getSize());
 
-            s3Client.putObject(putRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            if (publicRead) {
+                builder.acl(ObjectCannedACL.PUBLIC_READ);
+            }
+
+            s3Client.putObject(builder.build(), RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             return buildObjectUrl(s3Key);
         } catch (IOException | SdkException e) {
             log.error("S3 업로드 실패. key={}, error={}", s3Key, e.getMessage(), e);

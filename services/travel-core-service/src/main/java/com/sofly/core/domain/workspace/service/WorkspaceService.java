@@ -134,7 +134,7 @@ public class WorkspaceService {
         }
         String s3Key = "workspaces/" + workspaceId + "/cover/" + java.util.UUID.randomUUID() + ext;
 
-        String imageUrl = s3Service.uploadFile(file, s3Key);
+        String imageUrl = s3Service.uploadFile(file, s3Key, true);
         workspace.updateCoverImage(imageUrl);
 
         return WorkspaceResponse.from(workspace);
