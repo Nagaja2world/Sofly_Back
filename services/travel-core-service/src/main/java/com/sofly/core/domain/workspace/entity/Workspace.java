@@ -41,6 +41,11 @@ public class Workspace extends BaseTimeEntity {
 
     private String inviteCode;          // 초대 링크 코드 (UUID)
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private WorkspaceVisibility visibility = WorkspaceVisibility.PRIVATE;
+
     // 소유자
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
@@ -73,5 +78,9 @@ public class Workspace extends BaseTimeEntity {
 
     public boolean isOwner(Long userId) {
         return this.owner.getId().equals(userId);
+    }
+
+    public void changeVisibility(WorkspaceVisibility visibility) {
+        this.visibility = visibility;
     }
 }
