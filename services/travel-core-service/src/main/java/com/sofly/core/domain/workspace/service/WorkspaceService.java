@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.sofly.core.domain.album.service.S3Service;
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
 import com.sofly.core.domain.workspace.entity.SavedPlace;
@@ -17,6 +18,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.entity.User;
@@ -52,6 +54,7 @@ public class WorkspaceService {
     private final UserRepository userRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final StringRedisTemplate stringRedisTemplate;
+    private final S3Service s3Service;
 
     @Value("${sofly.oauth2.redirect-uri}")
     private String baseUrl;
@@ -113,6 +116,26 @@ public class WorkspaceService {
                 request.getHeadcount(),
                 request.getCoverImageUrl()
         );
+
+        return WorkspaceResponse.from(workspace);
+    }
+
+    // ── 커버 이미지 업로드 ─────────────────────────────────────
+
+    @Transactional
+    public WorkspaceResponse uploadCoverImage(Long userId, Long workspaceId, MultipartFile file) {
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateOwner(workspace, userId);
+
+        String ext = "";
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null && originalFilename.contains(".")) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        }
+        String s3Key = "workspaces/" + workspaceId + "/cover/" + java.util.UUID.randomUUID() + ext;
+
+        String imageUrl = s3Service.uploadFile(file, s3Key);
+        workspace.updateCoverImage(imageUrl);
 
         return WorkspaceResponse.from(workspace);
     }

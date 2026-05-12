@@ -74,4 +74,8 @@ public class Workspace extends BaseTimeEntity {
     public boolean isOwner(Long userId) {
         return this.owner.getId().equals(userId);
     }
+
+    public void updateCoverImage(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
 }
