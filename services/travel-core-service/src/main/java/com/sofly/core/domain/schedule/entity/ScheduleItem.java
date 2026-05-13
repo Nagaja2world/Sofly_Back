@@ -38,6 +38,7 @@ public class ScheduleItem extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;                // 장소/활동 이름
 
+    @Column(columnDefinition = "TEXT")
     private String address;
 
     private Double latitude;
@@ -47,12 +48,13 @@ public class ScheduleItem extends BaseTimeEntity {
     @Column
     private String placeId; // Google places ID (nullable)
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String photoReference; // 대표 사진 resource name (nullable)
 
     @Column(columnDefinition = "TEXT")
     private String memo;
 
+    @Column(columnDefinition = "TEXT")
     private String deepLinkUrl;         // 예약 딥링크 (숙소/교통)
 
     private Double estimatedCost;       // 예상 비용 (원)
