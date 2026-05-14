@@ -29,7 +29,7 @@ public class GooglePlacesClient implements PlaceInfoPort {
         this.props = props;
     }
 
-    @Cacheable(value = "placeSearch", key = "#text", unless = "#result == null || !#result.isPresent()")
+    @Cacheable(value = "placeSearch", key = "#text", unless = "#result == null")
     public Optional<PlacesResponse> searchText(String text) {
         String normalizedText = normalizeSearchText(text);
 
@@ -84,7 +84,7 @@ public class GooglePlacesClient implements PlaceInfoPort {
         }
     }
 
-    @Cacheable(value = "placePhoto", key = "#photoName + '_' + #maxWidthPx", unless = "#result == null || !#result.isPresent()")
+    @Cacheable(value = "placePhoto", key = "#photoName + '_' + #maxWidthPx", unless = "#result == null")
     public Optional<PhotoMedia> getPhotoMedia(String photoName, int maxWidthPx) {
         if (props.apiKey() == null || props.apiKey().isBlank()) {
             log.warn("Google Places API key is not configured");
