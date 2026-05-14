@@ -79,6 +79,10 @@ public class ScheduleItem extends BaseTimeEntity {
         if (longitude != null) this.longitude = longitude;
     }
 
+    public void updateCategory(Category category) {
+        this.category = category;
+    }
+
     public void updateOrder(Integer orderIndex) {
         this.orderIndex = orderIndex;
     }

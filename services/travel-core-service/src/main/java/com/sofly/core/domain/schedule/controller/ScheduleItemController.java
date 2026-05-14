@@ -46,6 +46,19 @@ public class ScheduleItemController {
         return ResponseEntity.ok(scheduleService.updateItem(scheduleId, itemId, request));
     }
 
+    @Operation(summary = "일정 아이템 카테고리 수정")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "404", description = "아이템 없음")
+    })
+    @PatchMapping("/{scheduleId}/items/{itemId}/category")
+    public ResponseEntity<ScheduleItemResponse> updateItemCategory(
+            @Parameter(description = "일정 ID", required = true) @PathVariable Long scheduleId,
+            @Parameter(description = "아이템 ID", required = true) @PathVariable Long itemId,
+            @RequestBody @Valid ScheduleItemCategoryUpdateRequest request) {
+        return ResponseEntity.ok(scheduleService.updateItemCategory(scheduleId, itemId, request.category()));
+    }
+
     @Operation(summary = "일정 아이템 위치 이동 (D&D)", description = "아이템 하나를 목표 위치(day, orderIndex)로 이동합니다. 서버가 나머지 아이템 순서를 자동 조정합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "이동 성공"),

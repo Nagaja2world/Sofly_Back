@@ -181,6 +181,15 @@ public class ScheduleService {
         return ScheduleItemResponse.from(item);
     }
 
+    // 아이템 카테고리만 수정
+    @Transactional
+    public ScheduleItemResponse updateItemCategory(Long scheduleId, Long itemId, ScheduleItem.Category category) {
+        ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
+                .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
+        item.updateCategory(category);
+        return ScheduleItemResponse.from(item);
+    }
+
     // D&D 단일 아이템 이동 (프론트는 itemId + targetDay + targetOrderIndex만 전송)
     @Transactional
     public void moveItem(Long scheduleId, Long itemId, ScheduleItemMoveRequest request) {
