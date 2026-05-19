@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
-import com.sofly.core.domain.workspace.entity.SavedPlace;
+import com.sofly.core.domain.workspace.entity.*;
 import com.sofly.core.domain.workspace.repository.SavedPlaceRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,9 +17,6 @@ import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
-import com.sofly.core.domain.workspace.entity.SavedFlight;
-import com.sofly.core.domain.workspace.entity.Workspace;
-import com.sofly.core.domain.workspace.entity.WorkspaceMember;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
@@ -288,6 +285,14 @@ public class WorkspaceService {
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_PLACE_NOT_FOUND));
 
         savedPlaceRepository.delete(savedPlace);
+    }
+
+    // ── sns ─────────────────────────────────────────────
+    public void changeVisibility(Long userId, Long workspaceId, WorkspaceVisibility workspaceVisibility){
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        workspace.changeVisibility(workspaceVisibility);
     }
 
 
