@@ -107,7 +107,7 @@ public class ChatService {
     // 워크스페이스 소속 ChatRoom 목록 (왼쪽 탭용)
     @Transactional(readOnly = true)
     public List<ChatRoomSummaryResponse> getChatRooms(Long workspaceId) {
-        return chatRoomRepository.findByWorkspaceId(workspaceId)
+        return chatRoomRepository.findByWorkspaceIdOrderByIdDesc(workspaceId)
                 .stream()
                 .map(ChatRoomSummaryResponse::from)
                 .toList();
