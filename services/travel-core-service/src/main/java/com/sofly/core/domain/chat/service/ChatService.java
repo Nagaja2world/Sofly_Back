@@ -84,6 +84,16 @@ public class ChatService {
         );
     }
 
+    // ChatRoom 제목 수정
+    @Transactional
+    public ChatRoomSummaryResponse updateChatRoomTitle(Long roomId, ChatRoomUpdateRequest request) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        room.updateTitle(request.title());
+        return ChatRoomSummaryResponse.from(room);
+    }
+
     // ChatRoom 삭제 (메시지 + AI 메모리 포함)
     @Transactional
     public void deleteChatRoom(Long roomId) {

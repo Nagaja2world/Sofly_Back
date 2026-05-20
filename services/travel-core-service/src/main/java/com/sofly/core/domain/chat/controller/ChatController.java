@@ -2,6 +2,7 @@ package com.sofly.core.domain.chat.controller;
 
 import com.sofly.core.domain.chat.dto.ChatRoomCreateRequest;
 import com.sofly.core.domain.chat.dto.ChatRoomSummaryResponse;
+import com.sofly.core.domain.chat.dto.ChatRoomUpdateRequest;
 import com.sofly.core.domain.chat.service.ChatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +36,19 @@ public class ChatController {
             @PathVariable Long workspaceId
     ) {
         return ResponseEntity.ok(chatService.getChatRooms(workspaceId));
+    }
+
+    @Operation(summary = "ChatRoom 제목 수정", description = "채팅방 제목을 수정합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "제목이 비어 있음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음")
+    })
+    @PatchMapping("/rooms/{roomId}/title")
+    public ResponseEntity<ChatRoomSummaryResponse> updateChatRoomTitle(
+            @PathVariable Long roomId,
+            @RequestBody @Valid ChatRoomUpdateRequest request) {
+        return ResponseEntity.ok(chatService.updateChatRoomTitle(roomId, request));
     }
 
     @Operation(summary = "ChatRoom 삭제", description = "채팅방과 모든 메시지(AI 메모리 포함)를 삭제합니다.")
