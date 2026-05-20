@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,5 +35,17 @@ public class ChatController {
             @PathVariable Long workspaceId
     ) {
         return ResponseEntity.ok(chatService.getChatRooms(workspaceId));
+    }
+
+    @Operation(summary = "ChatRoom 삭제", description = "채팅방과 모든 메시지(AI 메모리 포함)를 삭제합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음")
+    })
+    @DeleteMapping("/rooms/{roomId}")
+    public ResponseEntity<Void> deleteChatRoom(@PathVariable Long roomId) {
+        chatService.deleteChatRoom(roomId);
+        return ResponseEntity.noContent().build();
     }
 }
