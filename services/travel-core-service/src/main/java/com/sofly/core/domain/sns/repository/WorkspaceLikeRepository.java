@@ -19,4 +19,6 @@ public interface WorkspaceLikeRepository extends JpaRepository<WorkspaceLike, Lo
     @Query("SELECT wl.workspace.id, COUNT(wl) FROM WorkspaceLike wl " +
            "WHERE wl.workspace.id IN :workspaceIds GROUP BY wl.workspace.id")
     List<Object[]> countByWorkspaceIds(@Param("workspaceIds") List<Long> workspaceIds);
+
+    void deleteByWorkspaceIdAndUserId(Long workspaceId, Long userId);
 }
