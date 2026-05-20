@@ -115,4 +115,42 @@ public class SavedFlight extends BaseTimeEntity {
     private FlightType flightType = FlightType.OUTBOUND;
 
     public enum FlightType { OUTBOUND, RETURN }
+
+    public void update(
+            String flightNumber, String airline, String airlineLogo, String planeType, String cabinClass,
+            String departureAirport, String departureCity, String departureCountry, String departureTerminal,
+            String arrivalAirport, String arrivalCity, String arrivalCountry, String arrivalTerminal,
+            LocalDateTime departureTime, LocalDateTime arrivalTime, Integer durationMinutes,
+            Integer totalPrice, Integer baseFare, Integer tax, Integer platformFee, String currencyCode,
+            Integer checkedBaggageKg, Integer checkedBaggagePiece, Integer cabinBaggageKg,
+            Boolean personalItemIncluded, String bookingToken, String offerReference, FlightType flightType) {
+        if (flightNumber != null) this.flightNumber = flightNumber;
+        if (airline != null) this.airline = airline;
+        if (airlineLogo != null) this.airlineLogo = airlineLogo;
+        if (planeType != null) this.planeType = planeType;
+        if (cabinClass != null) this.cabinClass = cabinClass;
+        if (departureAirport != null) this.departureAirport = departureAirport;
+        if (departureCity != null) this.departureCity = departureCity;
+        if (departureCountry != null) this.departureCountry = departureCountry;
+        if (departureTerminal != null) this.departureTerminal = departureTerminal;
+        if (arrivalAirport != null) this.arrivalAirport = arrivalAirport;
+        if (arrivalCity != null) this.arrivalCity = arrivalCity;
+        if (arrivalCountry != null) this.arrivalCountry = arrivalCountry;
+        if (arrivalTerminal != null) this.arrivalTerminal = arrivalTerminal;
+        if (departureTime != null) this.departureTime = departureTime;
+        if (arrivalTime != null) this.arrivalTime = arrivalTime;
+        if (durationMinutes != null) this.durationMinutes = durationMinutes;
+        if (totalPrice != null) this.totalPrice = totalPrice;
+        if (baseFare != null) this.baseFare = baseFare;
+        if (tax != null) this.tax = tax;
+        if (platformFee != null) this.platformFee = platformFee;
+        if (currencyCode != null) this.currencyCode = currencyCode;
+        if (checkedBaggageKg != null) this.checkedBaggageKg = checkedBaggageKg;
+        if (checkedBaggagePiece != null) this.checkedBaggagePiece = checkedBaggagePiece;
+        if (cabinBaggageKg != null) this.cabinBaggageKg = cabinBaggageKg;
+        if (personalItemIncluded != null) this.personalItemIncluded = personalItemIncluded;
+        if (bookingToken != null) this.bookingToken = bookingToken;
+        if (offerReference != null) this.offerReference = offerReference;
+        if (flightType != null) this.flightType = flightType;
+    }
 }

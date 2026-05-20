@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.sofly.core.domain.workspace.dto.request.SaveFlightRequest;
+import com.sofly.core.domain.workspace.dto.request.UpdateFlightRequest;
 import com.sofly.core.domain.workspace.dto.response.SavedFlightResponse;
 import com.sofly.core.domain.workspace.service.WorkspaceService;
 import com.sofly.core.global.response.ApiResponse;
@@ -55,6 +56,23 @@ public class WorkspaceFlightController {
             @PathVariable Long workspaceId) {
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(workspaceService.getFlights(userId, workspaceId)));
+    }
+
+    @Operation(summary = "저장된 항공편 수정", description = "워크스페이스에 저장된 항공편 정보를 수정합니다. 전송한 필드만 업데이트됩니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값이 유효하지 않음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스 또는 항공편을 찾을 수 없음")
+    })
+    @PostMapping("/{flightId}")
+    public ResponseEntity<ApiResponse<SavedFlightResponse>> updateFlight(
+            @PathVariable Long workspaceId,
+            @PathVariable Long flightId,
+            @RequestBody UpdateFlightRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(workspaceService.updateFlight(userId, workspaceId, flightId, request)));
     }
 
     @Operation(summary = "저장된 항공편 삭제", description = "워크스페이스에 저장된 항공편을 삭제합니다.")

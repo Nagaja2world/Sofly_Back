@@ -400,6 +400,33 @@ public class WorkspaceService {
                 .toList();
     }
 
+    // ── 항공편 수정 ────────────────────────────────────────────
+
+    @Transactional
+    public SavedFlightResponse updateFlight(Long userId, Long workspaceId, Long flightId, UpdateFlightRequest request) {
+        findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        SavedFlight flight = savedFlightRepository.findByIdAndWorkspaceId(flightId, workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_FLIGHT_NOT_FOUND));
+
+        flight.update(
+                request.getFlightNumber(), request.getAirline(), request.getAirlineLogo(),
+                request.getPlaneType(), request.getCabinClass(),
+                request.getDepartureAirport(), request.getDepartureCity(), request.getDepartureCountry(), request.getDepartureTerminal(),
+                request.getArrivalAirport(), request.getArrivalCity(), request.getArrivalCountry(), request.getArrivalTerminal(),
+                request.getDepartureTime() != null ? request.getDepartureTime().toLocalDateTime() : null,
+                request.getArrivalTime() != null ? request.getArrivalTime().toLocalDateTime() : null,
+                request.getDurationMinutes(),
+                request.getTotalPrice(), request.getBaseFare(), request.getTax(), request.getPlatformFee(), request.getCurrencyCode(),
+                request.getCheckedBaggageKg(), request.getCheckedBaggagePiece(), request.getCabinBaggageKg(),
+                request.getPersonalItemIncluded(), request.getBookingToken(), request.getOfferReference(),
+                request.getFlightType()
+        );
+
+        return SavedFlightResponse.from(flight);
+    }
+
     // ── 항공편 삭제 ────────────────────────────────────────────
 
     @Transactional
