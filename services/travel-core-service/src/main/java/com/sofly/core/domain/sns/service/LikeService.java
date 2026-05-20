@@ -49,7 +49,14 @@ public class LikeService {
     }
 
     //좋아요 되어있는지
+    public boolean islike(Long userId, Long workspaceId){
+        return workspaceLikeRepository.existsByWorkspaceIdAndUserId(workspaceId, userId);
+    }
+
     //좋아요 수
+    public long getLikeCount(Long workspaceId){
+        return workspaceLikeRepository.countByWorkspaceId(workspaceId);
+    }
 
     // ----- 내부 함수 ----------------------------------------------------
 
