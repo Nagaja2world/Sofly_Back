@@ -23,7 +23,7 @@ public interface TravellogRepository extends JpaRepository<TravelLog, Long> {
             )
             FROM TravelLog t
             WHERE t.workspace.id = :workspaceId
-            ORDER BY t.travelDate ASC
+            ORDER BY t.day ASC
             """)
     List<TravellogSummaryResponse> findAllSummaryByWorkspaceId(@Param("workspaceId") Long workspaceId);
 
