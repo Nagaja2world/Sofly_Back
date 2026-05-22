@@ -38,9 +38,9 @@ public class LikeService {
 
     @Transactional
     public void unlike(Long userId, Long workspaceId) {
-        UserWithWorkspace items = getUserAndWorkspaceOrThrow(userId, workspaceId);
-        workspaceLikeRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new SnsException(LIKE_NOT_FOUND));
+        if (!workspaceLikeRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+            throw new SnsException(LIKE_NOT_FOUND);
+        }
         workspaceLikeRepository.deleteByWorkspaceIdAndUserId(workspaceId, userId);
     }
 

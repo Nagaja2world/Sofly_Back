@@ -93,11 +93,7 @@ class LikeServiceTest {
     @Test
     @DisplayName("unlike() 시 좋아요가 없으면 LIKE_NOT_FOUND 예외 발생")
     void unlike_whenNotLiked_throwsSnsException() {
-        User user = stubUser(1L);
-        Workspace ws = stubWorkspace(1L);
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(workspaceRepository.findById(1L)).willReturn(Optional.of(ws));
-        given(workspaceLikeRepository.findByWorkspaceIdAndUserId(1L, 1L)).willReturn(Optional.empty());
+        given(workspaceLikeRepository.existsByWorkspaceIdAndUserId(1L, 1L)).willReturn(false);
 
         assertThatThrownBy(() -> likeService.unlike(1L, 1L))
                 .isInstanceOf(SnsException.class)
