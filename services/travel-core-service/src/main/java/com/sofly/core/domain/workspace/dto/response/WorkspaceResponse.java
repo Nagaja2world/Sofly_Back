@@ -1,6 +1,7 @@
 package com.sofly.core.domain.workspace.dto.response;
 
 import com.sofly.core.domain.workspace.entity.Workspace;
+import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -20,6 +21,7 @@ public class WorkspaceResponse {
     private String coverImageUrl;
     private Long ownerId;
     private int memberCount;
+    private WorkspaceVisibility visibility;
 
     public static WorkspaceResponse from(Workspace workspace) {
         return WorkspaceResponse.builder()
@@ -33,6 +35,7 @@ public class WorkspaceResponse {
                 .coverImageUrl(workspace.getCoverImageUrl())
                 .ownerId(workspace.getOwner().getId())
                 .memberCount(workspace.getMembers().size())
+                .visibility(workspace.getVisibility())
                 .build();
     }
 }
