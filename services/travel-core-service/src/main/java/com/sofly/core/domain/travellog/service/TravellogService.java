@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,6 +56,15 @@ public class TravellogService {
     @RequireWorkspaceMember
     public List<TravellogSummaryResponse> getTravelLogs(Long workspaceId) {
         return travellogRepository.findAllSummaryByWorkspaceId(workspaceId);
+    }
+
+    @RequireWorkspaceMember
+    public List<TravellogResponse> getTravelLogsWithDetails(Long workspaceId) {
+        return travellogRepository.findAllWithDetailsByWorkspaceId(workspaceId)
+                .stream()
+                .sorted(Comparator.comparing(TravelLog::getCreatedAt))
+                .map(TravellogResponse::from)
+                .toList();
     }
 
     // ── 생성 ─────────────────────────────────────────────────
