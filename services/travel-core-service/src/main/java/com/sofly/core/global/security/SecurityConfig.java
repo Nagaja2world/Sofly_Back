@@ -61,6 +61,12 @@ public class SecurityConfig {
                         "/core/swagger-ui/**",
                         "/core/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                        "/api/sns/workspaces/search",
+                        "/api/sns/workspaces/*/comments",
+                        "/api/sns/users/*/profile",
+                        "/api/sns/users/*/follow-stats"
+                ).permitAll()
                 .anyRequest().authenticated()
                 )
                 // OAuth2 로그인 설정
