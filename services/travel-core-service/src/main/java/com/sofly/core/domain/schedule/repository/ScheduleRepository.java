@@ -30,4 +30,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     // workspaceId로 scheduleSummary 가져오기
     @Query("SELECT new com.sofly.core.domain.schedule.dto.ScheduleSummaryResponse(s.id, s.title, s.version, size(s.items), s.createdAt) FROM Schedule s WHERE s.workspace.id = :workspaceId ORDER BY s.version DESC")
     List<ScheduleSummaryResponse> findSummariesByWorkspaceId(@Param("workspaceId") Long workspaceId);
+
+    @Query("SELECT s FROM Schedule s LEFT JOIN FETCH s.items " +
+           "WHERE s.workspace.id = :workspaceId " +
+           "ORDER BY s.version DESC")
+    List<Schedule> findAllWithItemsByWorkspaceId(@Param("workspaceId") Long workspaceId);
 }
