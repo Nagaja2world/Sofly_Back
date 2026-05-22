@@ -43,45 +43,45 @@ class PlaceVerificationToolsTest {
     }
 
     @Test
-    @DisplayName("장소가 존재하면 이름·주소·유형·평점을 포함한 문자열을 반환한다")
+    @DisplayName("장소가 존재하면 이름·주소·유형·평점을 포함한 결과를 반환한다")
     void verifyPlace_존재하는_장소_정보_반환() {
         given(supplyClient.searchPlace("경복궁"))
                 .willReturn(new PlacesResponse(List.of(gyeongbokgung)));
 
-        String result = placeVerificationTools.verifyPlace("경복궁");
+        PlaceVerificationTools.PlaceVerificationResult result = placeVerificationTools.verifyPlace("경복궁");
 
-        assertThat(result)
-                .contains("경복궁")
-                .contains("서울특별시 종로구 사직로 161")
-                .contains("tourist_attraction")
-                .contains("4.6");
+        assertThat(result.found()).isTrue();
+        assertThat(result.name()).isEqualTo("경복궁");
+        assertThat(result.address()).isEqualTo("서울특별시 종로구 사직로 161");
+        assertThat(result.type()).isEqualTo("tourist_attraction");
+        assertThat(result.rating()).isEqualTo(4.6);
         verify(supplyClient).searchPlace("경복궁");
     }
 
     @Test
-    @DisplayName("검색 결과가 비어있으면 찾을 수 없다는 메시지를 반환한다")
+    @DisplayName("검색 결과가 비어있으면 found=false를 반환한다")
     void verifyPlace_결과_없음_메시지_반환() {
         given(supplyClient.searchPlace("없는장소xyz"))
                 .willReturn(new PlacesResponse(List.of()));
 
-        String result = placeVerificationTools.verifyPlace("없는장소xyz");
+        PlaceVerificationTools.PlaceVerificationResult result = placeVerificationTools.verifyPlace("없는장소xyz");
 
-        assertThat(result).contains("찾을 수 없습니다");
+        assertThat(result.found()).isFalse();
     }
 
     @Test
-    @DisplayName("places 필드가 null이면 찾을 수 없다는 메시지를 반환한다")
+    @DisplayName("places 필드가 null이면 found=false를 반환한다")
     void verifyPlace_null_응답_처리() {
         given(supplyClient.searchPlace("테스트"))
                 .willReturn(new PlacesResponse(null));
 
-        String result = placeVerificationTools.verifyPlace("테스트");
+        PlaceVerificationTools.PlaceVerificationResult result = placeVerificationTools.verifyPlace("테스트");
 
-        assertThat(result).contains("찾을 수 없습니다");
+        assertThat(result.found()).isFalse();
     }
 
     @Test
-    @DisplayName("평점이 null인 장소도 '없음'으로 정상 반환한다")
+    @DisplayName("평점이 null인 장소도 정상 반환한다")
     void verifyPlace_평점_없는_장소_처리() {
         var noRatingPlace = new PlacesResponse.Place(
                 "id2",
@@ -94,10 +94,10 @@ class PlaceVerificationToolsTest {
         given(supplyClient.searchPlace("신규 카페"))
                 .willReturn(new PlacesResponse(List.of(noRatingPlace)));
 
-        String result = placeVerificationTools.verifyPlace("신규 카페");
+        PlaceVerificationTools.PlaceVerificationResult result = placeVerificationTools.verifyPlace("신규 카페");
 
-        assertThat(result)
-                .contains("신규 카페")
-                .contains("없음");
+        assertThat(result.found()).isTrue();
+        assertThat(result.name()).isEqualTo("신규 카페");
+        assertThat(result.rating()).isNull();
     }
 }
