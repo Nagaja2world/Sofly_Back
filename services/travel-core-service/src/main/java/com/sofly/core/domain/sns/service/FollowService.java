@@ -3,9 +3,10 @@ package com.sofly.core.domain.sns.service;
 import com.sofly.core.domain.sns.entity.UserFollow;
 import com.sofly.core.domain.sns.exception.SnsException;
 import com.sofly.core.domain.sns.repository.UserFollowRepository;
+import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.entity.User;
+import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,8 +93,8 @@ public class FollowService {
     }
 
     // ------------내부 함수 ------------------------------------------------------
-    private User getUserOrThrow(Long userId){
+    private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다. id=" + userId));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
     }
 }

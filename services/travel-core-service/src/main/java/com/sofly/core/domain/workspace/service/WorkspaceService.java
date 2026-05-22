@@ -289,10 +289,9 @@ public class WorkspaceService {
 
     // ── sns ─────────────────────────────────────────────
     @Transactional
-    public void changeVisibility(Long userId, Long workspaceId, WorkspaceVisibility workspaceVisibility){
+    public void changeVisibility(Long userId, Long workspaceId, WorkspaceVisibility workspaceVisibility) {
         Workspace workspace = findWorkspaceById(workspaceId);
-        validateMember(workspaceId, userId);
-
+        validateOwner(workspace, userId);
         workspace.changeVisibility(workspaceVisibility);
     }
 
