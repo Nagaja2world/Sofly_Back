@@ -28,10 +28,9 @@ public class TravelLog extends BaseTimeEntity {
 
     private LocalDate travelDate;
 
-    @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String content;             // Markdown
 
     @Enumerated(EnumType.STRING)
