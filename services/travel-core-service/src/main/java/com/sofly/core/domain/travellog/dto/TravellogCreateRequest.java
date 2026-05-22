@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 
 public record TravellogCreateRequest(
-        Integer day,
+        String mainTitle,
         LocalDate travelDate,
         @NotBlank String title,
         @NotBlank String content,

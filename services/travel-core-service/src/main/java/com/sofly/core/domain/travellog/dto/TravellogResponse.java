@@ -10,7 +10,7 @@ import java.util.List;
 
 public record TravellogResponse(
         Long id,
-        Integer day,
+        String mainTitle,
         LocalDate travelDate,
         String title,
         String content,
@@ -29,7 +29,7 @@ public record TravellogResponse(
 
         return new TravellogResponse(
                 log.getId(),
-                log.getDay(),
+                log.getMainTitle(),
                 log.getTravelDate(),
                 log.getTitle(),
                 log.getContent(),

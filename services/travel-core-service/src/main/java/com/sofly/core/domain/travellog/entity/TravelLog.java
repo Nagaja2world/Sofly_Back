@@ -24,7 +24,7 @@ public class TravelLog extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer day;
+    private String mainTitle;
 
     private LocalDate travelDate;
 
@@ -63,7 +63,7 @@ public class TravelLog extends BaseTimeEntity {
     // ── 비즈니스 메서드 ──────────────────────────────────────
 
     public void update(TravellogUpdateRequest request) {
-        if (request.day() != null) this.day = request.day();
+        if (request.mainTitle() != null) this.mainTitle = request.mainTitle();
         if (request.travelDate() != null) this.travelDate = request.travelDate();
         if (request.title() != null) this.title = request.title();
         if (request.content() != null) this.content = request.content();

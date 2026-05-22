@@ -68,7 +68,7 @@ public class TravellogService {
                 .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
 
         TravelLog travelLog = TravelLog.builder()
-                .day(request.day())
+                .mainTitle(request.mainTitle())
                 .travelDate(request.travelDate())
                 .title(request.title())
                 .content(request.content())

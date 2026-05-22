@@ -17,13 +17,13 @@ public interface TravellogRepository extends JpaRepository<TravelLog, Long> {
      */
     @Query("""
             SELECT new com.sofly.core.domain.travellog.dto.TravellogSummaryResponse(
-                t.id, t.day, t.travelDate, t.title, t.weather,
+                t.id, t.mainTitle, t.travelDate, t.title, t.weather,
                 SIZE(t.photos),
                 t.createdAt
             )
             FROM TravelLog t
             WHERE t.workspace.id = :workspaceId
-            ORDER BY t.day ASC
+            ORDER BY t.createdAt ASC
             """)
     List<TravellogSummaryResponse> findAllSummaryByWorkspaceId(@Param("workspaceId") Long workspaceId);
 
