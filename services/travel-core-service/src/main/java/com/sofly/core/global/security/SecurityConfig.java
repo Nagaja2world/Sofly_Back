@@ -54,6 +54,7 @@ public class SecurityConfig {
                         "/ws/**",                       // TODO: Websocket 핸드셰이크 경로 허용
                         "/api/v1/messaging/**",
                         "/api/v1/flights/**",
+                        "/api/v1/hotels/**",
                         "/login/oauth2/**",
                         "/oauth2/**",
                         "/api/auth/refresh",
