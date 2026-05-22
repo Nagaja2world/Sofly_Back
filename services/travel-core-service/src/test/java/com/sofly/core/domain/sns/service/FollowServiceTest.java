@@ -93,4 +93,14 @@ class FollowServiceTest {
                 .satisfies(e -> assertThat(((SnsException) e).getErrorCode())
                         .isEqualTo(SnsErrorCode.FOLLOW_NOT_FOUND));
     }
+
+    @Test
+    @DisplayName("unfollow 정상 흐름 — UserFollow 삭제")
+    void unfollow_happy_path() {
+        given(userFollowRepository.existsByFollowerIdAndFollowingId(1L, 2L)).willReturn(true);
+
+        followService.unfollow(1L, 2L);
+
+        verify(userFollowRepository).deleteByFollowerIdAndFollowingId(1L, 2L);
+    }
 }
