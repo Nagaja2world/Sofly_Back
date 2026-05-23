@@ -1,6 +1,7 @@
 package com.sofly.core.domain.workspace.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import com.sofly.core.domain.workspace.dto.request.*;
@@ -51,7 +52,7 @@ public class WorkspaceService {
         Workspace workspace = Workspace.builder()
                 .title(request.getTitle())
                 .destination(request.getDestination())
-                .countryCode(request.getCountryCode())
+                .countryCode(normalizeCountryCode(request.getCountryCode()))
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .headcount(request.getHeadcount())
@@ -313,5 +314,12 @@ public class WorkspaceService {
         if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
         }
+    }
+
+    private String normalizeCountryCode(String countryCode) {
+        if (countryCode == null || countryCode.isBlank()) {
+            return null;
+        }
+        return countryCode.trim().toUpperCase(Locale.ROOT);
     }
 }

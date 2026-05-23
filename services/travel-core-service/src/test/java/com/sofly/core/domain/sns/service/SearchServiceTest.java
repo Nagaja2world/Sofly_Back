@@ -1,8 +1,6 @@
 package com.sofly.core.domain.sns.service;
 
 import com.sofly.core.domain.schedule.repository.ScheduleRepository;
-import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
-import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceCommentRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceLikeRepository;
 import com.sofly.core.domain.user.entity.User;
@@ -20,23 +18,23 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class FeedServiceTest {
+class SearchServiceTest {
 
     @Mock WorkspaceRepository workspaceRepository;
-    @Mock UserFollowRepository userFollowRepository;
     @Mock WorkspaceLikeRepository workspaceLikeRepository;
     @Mock WorkspaceCommentRepository workspaceCommentRepository;
     @Mock ScheduleRepository scheduleRepository;
 
-    @InjectMocks FeedService feedService;
+    @InjectMocks SearchService searchService;
 
     private User stubUser(Long id) {
         return User.builder().id(id).nickname("nick").email("a@b.com")
@@ -45,51 +43,61 @@ class FeedServiceTest {
 
     private Workspace stubWorkspace(Long id) {
         return Workspace.builder()
-                .id(id).title("t").destination("d").countryCode("JP")
+                .id(id).title("Tokyo").destination("Japan").countryCode("JP")
                 .startDate(LocalDate.now()).endDate(LocalDate.now().plusDays(3))
                 .owner(stubUser(99L)).visibility(WorkspaceVisibility.PUBLIC).build();
     }
 
     @Test
-    @DisplayName("팔로잉이 없어도 공개 워크스페이스로 피드를 구성한다")
-    void getFeed_withNoFollowings_returnsPublicWorkspaces() {
-        Workspace ws = stubWorkspace(1L);
+    @DisplayName("검색어가 없으면 키워드 없는 공개 워크스페이스 쿼리를 사용한다")
+    void search_withoutKeyword_usesPublicSearchOnly() {
         PageRequest pageable = PageRequest.of(0, 20);
+        Workspace workspace = stubWorkspace(1L);
 
-        given(userFollowRepository.findFollowingIdsByFollowerId(1L)).willReturn(List.of());
-        given(workspaceRepository.findAllPublic(any()))
-                .willReturn(new PageImpl<>(List.of(ws)));
+        given(workspaceRepository.searchPublic(null, pageable))
+                .willReturn(new PageImpl<>(List.of(workspace)));
         given(workspaceLikeRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
         given(workspaceCommentRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
-        given(workspaceLikeRepository.findLikedWorkspaceIdsByUserId(anyLong(), anyList()))
-                .willReturn(List.of());
         given(scheduleRepository.findAllWithItemsByWorkspaceId(1L)).willReturn(List.of());
 
-        Page<PublicWorkspaceResponse> result = feedService.getFeed(1L, pageable);
+        Page<?> result = searchService.search(null, null, null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().getFirst().getId()).isEqualTo(1L);
+        verify(workspaceRepository).searchPublic(null, pageable);
+        verify(workspaceRepository, never()).searchPublicByKeyword(null, null, pageable);
     }
 
     @Test
-    @DisplayName("좋아요 많은 워크스페이스가 상위에 정렬된다 (score = likeCount×3)")
-    void getFeed_sortsByScore_highLikesFirst() {
-        Workspace lowLike = stubWorkspace(1L);
-        Workspace highLike = stubWorkspace(2L);
+    @DisplayName("검색어가 있으면 키워드 공개 워크스페이스 쿼리를 사용한다")
+    void search_withKeyword_usesKeywordSearch() {
         PageRequest pageable = PageRequest.of(0, 20);
+        Workspace workspace = stubWorkspace(1L);
 
-        given(userFollowRepository.findFollowingIdsByFollowerId(1L)).willReturn(List.of());
-        given(workspaceRepository.findAllPublic(any()))
-                .willReturn(new PageImpl<>(List.of(lowLike, highLike)));
-        given(workspaceLikeRepository.countByWorkspaceIds(anyList()))
-                .willReturn(Collections.singletonList(new Object[]{2L, 10L})); // highLike(id=2)만 10개
+        given(workspaceRepository.searchPublicByKeyword("JP", "Tokyo", pageable))
+                .willReturn(new PageImpl<>(List.of(workspace)));
+        given(workspaceLikeRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
         given(workspaceCommentRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
-        given(workspaceLikeRepository.findLikedWorkspaceIdsByUserId(anyLong(), anyList()))
-                .willReturn(List.of());
-        given(scheduleRepository.findAllWithItemsByWorkspaceId(anyLong())).willReturn(List.of());
+        given(scheduleRepository.findAllWithItemsByWorkspaceId(1L)).willReturn(List.of());
 
-        Page<PublicWorkspaceResponse> result = feedService.getFeed(1L, pageable);
+        Page<?> result = searchService.search(" jp ", " Tokyo ", null, pageable);
 
-        assertThat(result.getContent().getFirst().getId()).isEqualTo(2L);
+        assertThat(result.getContent()).hasSize(1);
+        verify(workspaceRepository).searchPublicByKeyword("JP", "Tokyo", pageable);
+        verify(workspaceRepository, never()).searchPublic("JP", pageable);
+    }
+
+    @Test
+    @DisplayName("요청 페이지가 비어도 전체 개수 메타데이터를 유지한다")
+    void search_emptyPage_keepsTotalElements() {
+        PageRequest pageable = PageRequest.of(1, 2);
+
+        given(workspaceRepository.searchPublic(null, pageable))
+                .willReturn(new PageImpl<>(List.of(), pageable, 2));
+
+        Page<?> result = searchService.search(null, null, null, pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getTotalPages()).isEqualTo(1);
     }
 }

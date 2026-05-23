@@ -52,11 +52,21 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     Page<Workspace> findRecentPublic(@Param("since") LocalDateTime since, Pageable pageable);
 
     @Query("SELECT w FROM Workspace w JOIN FETCH w.owner " +
+           "WHERE w.visibility = 'PUBLIC'")
+    Page<Workspace> findAllPublic(Pageable pageable);
+
+    @Query("SELECT w FROM Workspace w JOIN FETCH w.owner " +
            "WHERE w.visibility = 'PUBLIC' " +
-           "AND (:countryCode IS NULL OR w.countryCode = :countryCode) " +
-           "AND (:keyword IS NULL OR LOWER(w.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "     OR LOWER(w.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+           "AND (:countryCode IS NULL OR UPPER(w.countryCode) = :countryCode)")
     Page<Workspace> searchPublic(@Param("countryCode") String countryCode,
-                                 @Param("keyword") String keyword,
                                  Pageable pageable);
+
+    @Query("SELECT w FROM Workspace w JOIN FETCH w.owner " +
+           "WHERE w.visibility = 'PUBLIC' " +
+           "AND (:countryCode IS NULL OR UPPER(w.countryCode) = :countryCode) " +
+           "AND (LOWER(w.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "     OR LOWER(w.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Workspace> searchPublicByKeyword(@Param("countryCode") String countryCode,
+                                          @Param("keyword") String keyword,
+                                          Pageable pageable);
 }

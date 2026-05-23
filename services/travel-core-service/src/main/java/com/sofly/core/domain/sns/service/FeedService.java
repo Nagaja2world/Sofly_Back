@@ -51,7 +51,7 @@ public class FeedService {
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), sorted.size());
-        if (start >= sorted.size()) return Page.empty(pageable);
+        if (start >= sorted.size()) return new PageImpl<>(List.of(), pageable, sorted.size());
 
         List<PublicWorkspaceResponse> responses = sorted.subList(start, end).stream()
                 .map(w -> {
@@ -79,8 +79,7 @@ public class FeedService {
                     .getContent().forEach(w -> { if (seen.add(w.getId())) candidates.add(w); });
         }
 
-        LocalDateTime since = LocalDateTime.now().minusDays(7);
-        workspaceRepository.findRecentPublic(since, bulk)
+        workspaceRepository.findAllPublic(bulk)
                 .getContent().forEach(w -> { if (seen.add(w.getId())) candidates.add(w); });
 
         return candidates;

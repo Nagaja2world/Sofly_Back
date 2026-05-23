@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,9 +32,15 @@ public class SearchService {
 
     public Page<PublicWorkspaceResponse> search(String countryCode, String keyword,
                                                  Long viewerIdOrNull, Pageable pageable) {
-        Page<Workspace> workspacePage = workspaceRepository.searchPublic(countryCode, keyword, pageable);
+        String normalizedCountryCode = normalizeCountryCode(countryCode);
+        String normalizedKeyword = normalize(keyword);
+        Page<Workspace> workspacePage = normalizedKeyword == null
+                ? workspaceRepository.searchPublic(normalizedCountryCode, pageable)
+                : workspaceRepository.searchPublicByKeyword(normalizedCountryCode, normalizedKeyword, pageable);
         List<Workspace> workspaces = workspacePage.getContent();
-        if (workspaces.isEmpty()) return Page.empty(pageable);
+        if (workspaces.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, workspacePage.getTotalElements());
+        }
 
         List<Long> ids = workspaces.stream().map(Workspace::getId).toList();
         Map<Long, Long> likeCounts = toMap(workspaceLikeRepository.countByWorkspaceIds(ids));
@@ -67,5 +74,17 @@ public class SearchService {
 
     private Map<Long, Long> toMap(List<Object[]> rows) {
         return rows.stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
+    }
+
+    private String normalize(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private String normalizeCountryCode(String countryCode) {
+        String normalized = normalize(countryCode);
+        return normalized == null ? null : normalized.toUpperCase(Locale.ROOT);
     }
 }
