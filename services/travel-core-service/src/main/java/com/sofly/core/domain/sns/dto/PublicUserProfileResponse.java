@@ -1,6 +1,6 @@
 package com.sofly.core.domain.sns.dto;
 
-import org.springframework.data.domain.Page;
+import com.sofly.core.global.response.PageResponse;
 
 public record PublicUserProfileResponse(
         Long userId,
@@ -9,5 +9,5 @@ public record PublicUserProfileResponse(
         long followerCount,
         long followingCount,
         boolean isFollowing,
-        Page<PublicWorkspaceResponse> publicWorkspaces
+        PageResponse<PublicWorkspaceResponse> publicWorkspaces
 ) {}

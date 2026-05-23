@@ -23,7 +23,7 @@ public class PublicProfileController {
     private final PublicProfileService publicProfileService;
 
     @Operation(summary = "공개 프로필 조회",
-               description = "미인증 접근 가능. 공개 워크스페이스 목록 포함. 초대 코드 미노출.")
+               description = "미인증 접근 가능. page는 0부터 시작합니다. 공개 워크스페이스 목록 포함. 초대 코드 미노출.")
     @GetMapping("/{targetUserId}/profile")
     public ResponseEntity<ApiResponse<PublicUserProfileResponse>> getProfile(
             @Parameter(description = "조회할 유저 ID") @PathVariable Long targetUserId,

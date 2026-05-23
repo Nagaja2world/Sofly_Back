@@ -13,6 +13,7 @@ import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
+import com.sofly.core.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -47,7 +48,8 @@ public class PublicProfileService {
                 userFollowRepository.existsByFollowerIdAndFollowingId(viewerIdOrNull, targetUserId);
 
         Page<Workspace> workspacePage = workspaceRepository.findPublicByUserId(targetUserId, pageable);
-        Page<PublicWorkspaceResponse> publicWorkspaces = toPublicPage(workspacePage, viewerIdOrNull, pageable);
+        PageResponse<PublicWorkspaceResponse> publicWorkspaces =
+                PageResponse.from(toPublicPage(workspacePage, viewerIdOrNull, pageable));
 
         return new PublicUserProfileResponse(
                 target.getId(),
@@ -64,7 +66,9 @@ public class PublicProfileService {
                                                         Long viewerIdOrNull,
                                                         Pageable pageable) {
         List<Workspace> workspaces = workspacePage.getContent();
-        if (workspaces.isEmpty()) return Page.empty(pageable);
+        if (workspaces.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, workspacePage.getTotalElements());
+        }
 
         List<Long> ids = workspaces.stream().map(Workspace::getId).toList();
         Map<Long, Long> likeCounts = toMap(workspaceLikeRepository.countByWorkspaceIds(ids));
