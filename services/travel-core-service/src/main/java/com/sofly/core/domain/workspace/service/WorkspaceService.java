@@ -152,6 +152,7 @@ public class WorkspaceService {
     public void deleteWorkspace(Long userId, Long workspaceId) {
         Workspace workspace = findWorkspaceById(workspaceId);
         validateOwner(workspace, userId);
+        workspaceInvitationRepository.deleteAllByWorkspaceId(workspaceId);
         workspaceRepository.delete(workspace);
     }
 

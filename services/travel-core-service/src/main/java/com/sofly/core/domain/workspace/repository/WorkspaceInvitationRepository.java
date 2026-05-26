@@ -14,6 +14,8 @@ public interface WorkspaceInvitationRepository extends JpaRepository<WorkspaceIn
 
     boolean existsByWorkspaceIdAndInviteeIdAndStatus(Long workspaceId, Long inviteeId, InvitationStatus status);
 
+    void deleteAllByWorkspaceId(Long workspaceId);
+
     @Query("SELECT i FROM WorkspaceInvitation i JOIN FETCH i.workspace JOIN FETCH i.inviter WHERE i.invitee.id = :inviteeId AND i.status = :status")
     List<WorkspaceInvitation> findAllByInviteeIdAndStatus(@Param("inviteeId") Long inviteeId, @Param("status") InvitationStatus status);
 
