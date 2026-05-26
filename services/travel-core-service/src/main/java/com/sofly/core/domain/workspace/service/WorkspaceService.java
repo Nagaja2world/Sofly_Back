@@ -33,6 +33,10 @@ import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
+import com.sofly.core.domain.messaging.entity.MessagingRoomMember;
+import com.sofly.core.domain.messaging.enums.ChatRoomType;
+import com.sofly.core.domain.messaging.repository.MessagingRoomMemberRepository;
+import com.sofly.core.domain.messaging.repository.MessagingRoomRepository;
 import com.sofly.core.global.kafka.dto.FlightSavedMessage;
 import com.sofly.core.global.kafka.dto.InvitationCreatedMessage;
 
@@ -52,6 +56,8 @@ public class WorkspaceService {
     private final SavedFlightRepository savedFlightRepository;
     private final SavedPlaceRepository savedPlaceRepository;
     private final UserRepository userRepository;
+    private final MessagingRoomRepository messagingRoomRepository;
+    private final MessagingRoomMemberRepository messagingRoomMemberRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final StringRedisTemplate stringRedisTemplate;
     private final S3Service s3Service;
@@ -237,6 +243,8 @@ public class WorkspaceService {
         WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, invitee);
         workspace.addMember(newMember);
 
+        addToWorkspaceMessagingRoom(workspace.getId(), invitee.getId());
+
         return WorkspaceMemberResponse.from(newMember);
     }
 
@@ -282,6 +290,8 @@ public class WorkspaceService {
 
         WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, user);
         workspace.addMember(newMember);
+
+        addToWorkspaceMessagingRoom(workspace.getId(), userId);
 
         return WorkspaceResponse.from(workspace);
     }
@@ -490,6 +500,22 @@ public class WorkspaceService {
 
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────
+
+    private void addToWorkspaceMessagingRoom(Long workspaceId, Long userId) {
+        messagingRoomRepository.findByTypeAndWorkspaceId(ChatRoomType.WORKSPACE, workspaceId)
+                .ifPresent(room -> {
+                    boolean alreadyMember = messagingRoomMemberRepository
+                            .existsByMessagingRoomIdAndUserId(room.getId(), userId);
+                    if (!alreadyMember) {
+                        messagingRoomMemberRepository.save(
+                                MessagingRoomMember.builder()
+                                        .messagingRoom(room)
+                                        .userId(userId)
+                                        .build()
+                        );
+                    }
+                });
+    }
 
     private Workspace findWorkspaceById(Long workspaceId) {
         return workspaceRepository.findWithOwnerById(workspaceId)
