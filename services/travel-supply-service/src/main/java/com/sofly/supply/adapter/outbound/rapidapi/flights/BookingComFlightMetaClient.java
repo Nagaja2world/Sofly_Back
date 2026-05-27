@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -52,6 +53,10 @@ public class BookingComFlightMetaClient implements FlightMetaPort {
             }
 
             for (JsonNode item : response.get("data")) {
+                if (Objects.equals(RapidApiJsonUtils.textOrNull(item, "type"), "CITY")){
+                    continue;
+                }
+
                 FlightDestination.DistanceToCity distanceToCity = null;
                 if (item.hasNonNull("distanceToCity")) {
                     JsonNode d = item.get("distanceToCity");
