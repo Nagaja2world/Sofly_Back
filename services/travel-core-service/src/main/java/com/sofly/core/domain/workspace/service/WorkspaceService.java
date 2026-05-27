@@ -7,9 +7,11 @@ import java.util.Locale;
 import java.util.UUID;
 
 import com.sofly.core.domain.album.service.S3Service;
+import com.sofly.core.domain.conquest.service.AirportInfoService;
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
 import com.sofly.core.domain.workspace.entity.*;
+import com.sofly.core.domain.workspace.entity.WorkspaceInvitation.InvitationStatus;
 import com.sofly.core.domain.workspace.repository.SavedPlaceRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceInvitationRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +54,7 @@ public class WorkspaceService {
     private final SavedFlightRepository savedFlightRepository;
     private final SavedPlaceRepository savedPlaceRepository;
     private final UserRepository userRepository;
+    private final AirportInfoService airportInfoService;
     private final MessagingRoomRepository messagingRoomRepository;
     private final MessagingRoomMemberRepository messagingRoomMemberRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -384,6 +387,10 @@ public class WorkspaceService {
                 .build();
 
         savedFlightRepository.save(flight);
+
+        // 도착 공항의 국가코드로 워크스페이스 countryCode 자동 업데이트
+        airportInfoService.findByIata(request.getArrivalAirport())
+                .ifPresent(info -> workspace.updateCountryCode(info.countryCode()));
 
         // 정복 지도: 도착 국가/도시를 PLANNED 상태로 자동 반영
         List<Long> memberIds = workspace.getMembers().stream()
