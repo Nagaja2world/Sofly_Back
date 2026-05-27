@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.sofly.core.domain.workspace.dto.request.ChangeVisibilityRequest;
 import com.sofly.core.domain.workspace.dto.request.CreateWorkspaceRequest;
 import com.sofly.core.domain.workspace.dto.request.UpdateWorkspaceRequest;
 import com.sofly.core.domain.workspace.dto.response.WorkspaceResponse;
@@ -111,6 +112,23 @@ public class WorkspaceController {
             @PathVariable Long workspaceId) {
         Long userId = SecurityUtils.getCurrentUserId();
         workspaceService.deleteWorkspace(userId, workspaceId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "워크스페이스 공개 범위 변경", description = "워크스페이스의 공개 범위를 PUBLIC 또는 PRIVATE으로 변경합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "변경 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값이 유효하지 않음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음")
+    })
+    @PatchMapping("/{workspaceId}/visibility")
+    public ResponseEntity<Void> changeVisibility(
+            @PathVariable Long workspaceId,
+            @Valid @RequestBody ChangeVisibilityRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        workspaceService.changeVisibility(userId, workspaceId, request.getVisibility());
         return ResponseEntity.noContent().build();
     }
 }

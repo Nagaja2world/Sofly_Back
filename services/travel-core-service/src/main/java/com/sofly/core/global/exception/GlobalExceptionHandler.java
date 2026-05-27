@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.sofly.core.domain.conquest.exception.ConquestException;
+import com.sofly.core.domain.sns.exception.SnsException;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.global.response.ApiResponse;
@@ -46,6 +47,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConquestException.class)
     public ResponseEntity<ApiResponse<Void>> handleConquestException(ConquestException e) {
         log.warn("ConquestException: {}", e.getMessage());
+        BaseErrorCode errorCode = e.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ApiResponse.fail(errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(SnsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSnsException(SnsException e) {
+        log.warn("SnsException: {}", e.getMessage());
         BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())

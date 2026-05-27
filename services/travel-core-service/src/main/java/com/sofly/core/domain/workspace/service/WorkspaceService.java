@@ -3,14 +3,13 @@ package com.sofly.core.domain.workspace.service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import com.sofly.core.domain.album.service.S3Service;
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
-import com.sofly.core.domain.workspace.entity.SavedPlace;
-import com.sofly.core.domain.workspace.entity.WorkspaceInvitation;
-import com.sofly.core.domain.workspace.entity.WorkspaceInvitation.InvitationStatus;
+import com.sofly.core.domain.workspace.entity.*;
 import com.sofly.core.domain.workspace.repository.SavedPlaceRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceInvitationRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,9 +24,6 @@ import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
-import com.sofly.core.domain.workspace.entity.SavedFlight;
-import com.sofly.core.domain.workspace.entity.Workspace;
-import com.sofly.core.domain.workspace.entity.WorkspaceMember;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
@@ -75,7 +71,7 @@ public class WorkspaceService {
         Workspace workspace = Workspace.builder()
                 .title(request.getTitle())
                 .destination(request.getDestination())
-                .countryCode(request.getCountryCode())
+                .countryCode(normalizeCountryCode(request.getCountryCode()))
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .headcount(request.getHeadcount())
@@ -498,6 +494,14 @@ public class WorkspaceService {
         savedPlaceRepository.delete(savedPlace);
     }
 
+    // ── sns ─────────────────────────────────────────────
+    @Transactional
+    public void changeVisibility(Long userId, Long workspaceId, WorkspaceVisibility workspaceVisibility) {
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateOwner(workspace, userId);
+        workspace.changeVisibility(workspaceVisibility);
+    }
+
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────
 
@@ -532,5 +536,12 @@ public class WorkspaceService {
         if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
         }
+    }
+
+    private String normalizeCountryCode(String countryCode) {
+        if (countryCode == null || countryCode.isBlank()) {
+            return null;
+        }
+        return countryCode.trim().toUpperCase(Locale.ROOT);
     }
 }

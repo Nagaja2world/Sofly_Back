@@ -37,4 +37,12 @@ public class SecurityUtils {
 
         throw new AuthException(AuthErrorCode.EMPTY_AUTHENTICATION);
     }
+
+    public static Long tryGetCurrentUserId() {
+        try {
+            return getCurrentUserId();
+        } catch (AuthException e) {
+            return null;
+        }
+    }
 }

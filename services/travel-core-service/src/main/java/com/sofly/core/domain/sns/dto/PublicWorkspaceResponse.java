@@ -1,4 +1,4 @@
-package com.sofly.core.domain.workspace.dto.response;
+package com.sofly.core.domain.sns.dto;
 
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
@@ -6,10 +6,11 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class WorkspaceResponse {
+public class PublicWorkspaceResponse {
 
     private Long id;
     private String title;
@@ -19,12 +20,18 @@ public class WorkspaceResponse {
     private LocalDate endDate;
     private Integer headcount;
     private String coverImageUrl;
-    private Long ownerId;
-    private int memberCount;
     private WorkspaceVisibility visibility;
+    private AuthorInfo author;
+    private long likeCount;
+    private long commentCount;
+    private Boolean isLiked;
+    private LocalDateTime createdAt;
 
-    public static WorkspaceResponse from(Workspace workspace) {
-        return WorkspaceResponse.builder()
+    public static PublicWorkspaceResponse of(Workspace workspace,
+                                              long likeCount,
+                                              long commentCount,
+                                              Boolean isLiked) {
+        return PublicWorkspaceResponse.builder()
                 .id(workspace.getId())
                 .title(workspace.getTitle())
                 .destination(workspace.getDestination())
@@ -33,9 +40,12 @@ public class WorkspaceResponse {
                 .endDate(workspace.getEndDate())
                 .headcount(workspace.getHeadcount())
                 .coverImageUrl(workspace.getCoverImageUrl())
-                .ownerId(workspace.getOwner().getId())
-                .memberCount(workspace.getMembers().size())
                 .visibility(workspace.getVisibility())
+                .author(AuthorInfo.from(workspace.getOwner()))
+                .likeCount(likeCount)
+                .commentCount(commentCount)
+                .isLiked(isLiked)
+                .createdAt(workspace.getCreatedAt())
                 .build();
     }
 }
