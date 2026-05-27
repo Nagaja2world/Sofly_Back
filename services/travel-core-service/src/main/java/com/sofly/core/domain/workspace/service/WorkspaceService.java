@@ -5,10 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.sofly.core.domain.album.repository.AlbumRepository;
 import com.sofly.core.domain.album.service.S3Service;
-import com.sofly.core.domain.schedule.repository.ScheduleRepository;
-import com.sofly.core.domain.travellog.repository.TravellogRepository;
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
 import com.sofly.core.domain.workspace.entity.SavedPlace;
@@ -59,9 +56,6 @@ public class WorkspaceService {
     private final SavedFlightRepository savedFlightRepository;
     private final SavedPlaceRepository savedPlaceRepository;
     private final UserRepository userRepository;
-    private final ScheduleRepository scheduleRepository;
-    private final AlbumRepository albumRepository;
-    private final TravellogRepository travellogRepository;
     private final MessagingRoomRepository messagingRoomRepository;
     private final MessagingRoomMemberRepository messagingRoomMemberRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -158,14 +152,7 @@ public class WorkspaceService {
     public void deleteWorkspace(Long userId, Long workspaceId) {
         Workspace workspace = findWorkspaceById(workspaceId);
         validateOwner(workspace, userId);
-        // 자식 레코드를 FK 의존 순서대로 먼저 삭제
-        travellogRepository.deleteAllByWorkspaceId(workspaceId);  // travel_log_photos join table 포함
-        scheduleRepository.deleteAllByWorkspaceId(workspaceId);   // schedule_items cascade
-        albumRepository.deleteByWorkspaceId(workspaceId);         // photos cascade
-        savedFlightRepository.deleteAllByWorkspaceId(workspaceId);
-        savedPlaceRepository.deleteAllByWorkspaceId(workspaceId);
-        workspaceInvitationRepository.deleteAllByWorkspaceId(workspaceId);
-        workspaceRepository.delete(workspace);                    // workspace_members cascade
+        workspaceRepository.delete(workspace);
     }
 
     // ── 초대 코드 생성 ─────────────────────────────────────────

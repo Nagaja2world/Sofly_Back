@@ -12,6 +12,4 @@ public interface SavedPlaceRepository extends JpaRepository<SavedPlace, Long> {
     boolean existsByWorkspaceIdAndPlaceId(Long workspaceId, String placeId);
 
     Optional<SavedPlace> findByIdAndWorkspaceId(Long id, Long workspaceId);
-
-    void deleteAllByWorkspaceId(Long workspaceId);
 }

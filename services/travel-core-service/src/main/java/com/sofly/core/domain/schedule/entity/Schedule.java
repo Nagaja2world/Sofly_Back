@@ -23,6 +23,7 @@ public class Schedule extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
     private Workspace workspace;
 
     private String title;               // 일정 버전 제목 (예: "1차 생성", "수정본")

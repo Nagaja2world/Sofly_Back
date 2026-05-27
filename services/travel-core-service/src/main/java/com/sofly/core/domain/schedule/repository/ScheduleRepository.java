@@ -27,8 +27,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     // 워크스페이스에 일정이 존재하는지 확인
     boolean existsByWorkspaceId(Long workspaceId);
 
-    void deleteAllByWorkspaceId(Long workspaceId);
-
     // workspaceId로 scheduleSummary 가져오기
     @Query("SELECT new com.sofly.core.domain.schedule.dto.ScheduleSummaryResponse(s.id, s.title, s.version, size(s.items), s.createdAt) FROM Schedule s WHERE s.workspace.id = :workspaceId ORDER BY s.version DESC")
     List<ScheduleSummaryResponse> findSummariesByWorkspaceId(@Param("workspaceId") Long workspaceId);

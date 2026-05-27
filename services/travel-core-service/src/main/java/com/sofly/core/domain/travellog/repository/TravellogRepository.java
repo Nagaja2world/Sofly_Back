@@ -33,6 +33,4 @@ public interface TravellogRepository extends JpaRepository<TravelLog, Long> {
     /** 전체 목록을 photos·author 포함해서 한 번에 조회 (N+1 제거용) */
     @Query("SELECT DISTINCT t FROM TravelLog t LEFT JOIN FETCH t.photos JOIN FETCH t.author JOIN FETCH t.workspace WHERE t.workspace.id = :workspaceId")
     List<TravelLog> findAllWithDetailsByWorkspaceId(@Param("workspaceId") Long workspaceId);
-
-    void deleteAllByWorkspaceId(Long workspaceId);
 }

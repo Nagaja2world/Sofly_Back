@@ -53,6 +53,7 @@ public class TravelLog extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
     private Workspace workspace;
 
     @ManyToOne(fetch = FetchType.LAZY)
