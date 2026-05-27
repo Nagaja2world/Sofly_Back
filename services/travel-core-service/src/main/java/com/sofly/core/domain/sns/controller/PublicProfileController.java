@@ -8,9 +8,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +27,10 @@ public class PublicProfileController {
     @GetMapping("/{targetUserId}/profile")
     public ResponseEntity<ApiResponse<PublicUserProfileResponse>> getProfile(
             @Parameter(description = "조회할 유저 ID") @PathVariable Long targetUserId,
-            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
         Long viewerId = SecurityUtils.tryGetCurrentUserId();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(ApiResponse.success(
                 publicProfileService.getProfile(targetUserId, viewerId, pageable)));
     }
