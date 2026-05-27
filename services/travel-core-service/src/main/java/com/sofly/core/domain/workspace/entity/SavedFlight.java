@@ -110,6 +110,9 @@ public class SavedFlight extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String offerReference;      // d6a1f_3212210372
 
+    @Column(columnDefinition = "TEXT")
+    private String deepLinkUrl;         // Booking.com 예약 딥링크
+
     // ── 타입 ──────────────────────────────────────────
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -124,7 +127,8 @@ public class SavedFlight extends BaseTimeEntity {
             LocalDateTime departureTime, LocalDateTime arrivalTime, Integer durationMinutes,
             Integer totalPrice, Integer baseFare, Integer tax, Integer platformFee, String currencyCode,
             Integer checkedBaggageKg, Integer checkedBaggagePiece, Integer cabinBaggageKg,
-            Boolean personalItemIncluded, String bookingToken, String offerReference, FlightType flightType) {
+            Boolean personalItemIncluded, String bookingToken, String offerReference,
+            String deepLinkUrl, FlightType flightType) {
         if (flightNumber != null) this.flightNumber = flightNumber;
         if (airline != null) this.airline = airline;
         if (airlineLogo != null) this.airlineLogo = airlineLogo;
@@ -152,6 +156,7 @@ public class SavedFlight extends BaseTimeEntity {
         if (personalItemIncluded != null) this.personalItemIncluded = personalItemIncluded;
         if (bookingToken != null) this.bookingToken = bookingToken;
         if (offerReference != null) this.offerReference = offerReference;
+        if (deepLinkUrl != null) this.deepLinkUrl = deepLinkUrl;
         if (flightType != null) this.flightType = flightType;
     }
 }

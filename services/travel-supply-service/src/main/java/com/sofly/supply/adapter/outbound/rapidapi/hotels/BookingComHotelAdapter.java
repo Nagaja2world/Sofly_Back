@@ -1,6 +1,8 @@
 package com.sofly.supply.adapter.outbound.rapidapi.hotels;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sofly.supply.adapter.outbound.rapidapi.BookingDeepLinkBuilder;
 import com.sofly.supply.adapter.outbound.rapidapi.RapidApiJsonUtils;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.port.outbound.HotelSupplierPort;
@@ -67,6 +69,36 @@ public class BookingComHotelAdapter implements HotelSupplierPort {
                 .block();
 
         if (response == null) return RapidApiJsonUtils.nullNode();
-        return RapidApiJsonUtils.parseJson(response);
+
+        JsonNode root = RapidApiJsonUtils.parseJson(response);
+        injectHotelDeepLinks(root, request);
+        return root;
+    }
+
+    /**
+     * 각 호텔의 property 노드에 bookingUrl 필드를 추가한다.
+     * 호텔 slug는 API가 제공하지 않으므로 property.name을 slugify하여 사용.
+     */
+    private void injectHotelDeepLinks(JsonNode root, HotelSearchRequest request) {
+        JsonNode hotels = root.path("data").path("hotels");
+        if (!hotels.isArray()) return;
+
+        int adults = request.getAdults() != null ? request.getAdults() : 1;
+        String checkin = request.getArrivalDate() != null ? request.getArrivalDate().toString() : null;
+        String checkout = request.getDepartureDate() != null ? request.getDepartureDate().toString() : null;
+
+        for (JsonNode hotel : hotels) {
+            JsonNode property = hotel.path("property");
+            if (!property.isObject()) continue;
+
+            String name = property.path("name").asText(null);
+            String countryCode = property.path("countryCode").asText(null);
+
+            if (name != null && countryCode != null && checkin != null && checkout != null) {
+                String bookingUrl = BookingDeepLinkBuilder.buildHotelUrl(
+                        name, countryCode, checkin, checkout, adults);
+                ((ObjectNode) property).put("bookingUrl", bookingUrl);
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sofly.supply.adapter.outbound.rapidapi.BookingDeepLinkBuilder;
 
 import java.util.List;
 import java.util.Set;
@@ -111,9 +112,34 @@ class BookingComFlightResponseFilter {
 
     private static ObjectNode filterOffer(JsonNode offer) {
         ObjectNode node = MAPPER.createObjectNode();
-        node.put("token", offer.path("token").asText());
-        node.put("tripType", offer.path("tripType").asText());
+
+        String token = offer.path("token").asText();
+        String tripType = offer.path("tripType").asText();
+
+        node.put("token", token);
+        node.put("tripType", tripType);
         node.put("offerKeyToHighlight", offer.path("offerKeyToHighlight").asText());
+
+        // 예약 딥링크 생성
+        JsonNode segments = offer.path("segments");
+        if (!segments.isEmpty()) {
+            JsonNode firstSeg = segments.get(0);
+            JsonNode lastSeg = segments.get(segments.size() - 1);
+
+            String origin = firstSeg.path("departureAirport").path("code").asText();
+            String dest = firstSeg.path("arrivalAirport").path("code").asText();
+            String departDate = extractDate(firstSeg.path("departureTime").asText());
+            String returnDate = "ROUNDTRIP".equalsIgnoreCase(tripType)
+                    ? extractDate(lastSeg.path("departureTime").asText())
+                    : null;
+            String cabinClass = extractCabinClass(offer);
+
+            if (!token.isEmpty() && !origin.isEmpty() && !dest.isEmpty() && departDate != null) {
+                String bookingUrl = BookingDeepLinkBuilder.buildFlightUrl(
+                        token, origin, dest, departDate, returnDate, tripType, cabinClass, 1);
+                node.put("bookingUrl", bookingUrl);
+            }
+        }
 
         JsonNode seat = offer.path("seatAvailability");
         if (!seat.isMissingNode()) node.set("seatAvailability", seat);
@@ -177,6 +203,22 @@ class BookingComFlightResponseFilter {
         String terminal = airport.path("terminal").asText(null);
         if (terminal != null && !terminal.isEmpty()) node.put("terminal", terminal);
         return node;
+    }
+
+    /** "2026-07-06T10:30:00" → "2026-07-06", 파싱 실패 시 null */
+    private static String extractDate(String dateTime) {
+        if (dateTime == null || dateTime.length() < 10) return null;
+        return dateTime.substring(0, 10);
+    }
+
+    /** 첫 번째 leg의 cabinClass 반환, 없으면 "ECONOMY" */
+    private static String extractCabinClass(JsonNode offer) {
+        JsonNode legs = offer.path("segments").path(0).path("legs");
+        if (!legs.isEmpty()) {
+            String cabin = legs.get(0).path("cabinClass").asText();
+            if (!cabin.isEmpty()) return cabin;
+        }
+        return "ECONOMY";
     }
 
     private static ArrayNode filterLegs(JsonNode legs) {

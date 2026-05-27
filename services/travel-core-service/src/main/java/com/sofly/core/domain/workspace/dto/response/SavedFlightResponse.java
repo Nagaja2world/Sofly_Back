@@ -53,6 +53,7 @@ public class SavedFlightResponse {
     // 예약
     private String bookingToken;
     private String offerReference;
+    private String deepLinkUrl;
 
     private FlightType flightType;
 
@@ -86,6 +87,7 @@ public class SavedFlightResponse {
                 .personalItemIncluded(flight.getPersonalItemIncluded())
                 .bookingToken(flight.getBookingToken())
                 .offerReference(flight.getOfferReference())
+                .deepLinkUrl(flight.getDeepLinkUrl())
                 .flightType(flight.getFlightType())
                 .build();
     }
