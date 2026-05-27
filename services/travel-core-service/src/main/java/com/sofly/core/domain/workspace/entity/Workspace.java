@@ -21,18 +21,14 @@ public class Workspace extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String title;               // 여행 제목
 
-    @Column(nullable = false)
     private String destination;         // 목적지 (도시/국가명)
 
     private String countryCode;         // ISO 3166-1 alpha-2 (정복도용, 예: JP)
 
-    @Column(nullable = false)
     private LocalDate startDate;
 
-    @Column(nullable = false)
     private LocalDate endDate;
 
     private Integer headcount;          // 동행 인원
