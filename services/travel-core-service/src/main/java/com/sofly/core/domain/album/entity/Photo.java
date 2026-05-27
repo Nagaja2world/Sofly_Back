@@ -21,6 +21,7 @@ public class Photo extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "album_id", nullable = false)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
     private Album album;
 
     @ManyToOne(fetch = FetchType.LAZY)
