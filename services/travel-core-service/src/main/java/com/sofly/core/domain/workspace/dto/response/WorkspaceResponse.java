@@ -35,7 +35,7 @@ public class WorkspaceResponse {
                 .coverImageUrl(workspace.getCoverImageUrl())
                 .ownerId(workspace.getOwner().getId())
                 .memberCount(workspace.getMembers().size())
-                .visibility(workspace.getVisibility())
+                .visibility(workspace.getVisibility() != null ? workspace.getVisibility() : WorkspaceVisibility.PRIVATE)
                 .build();
     }
 }
