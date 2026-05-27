@@ -2,6 +2,7 @@ package com.sofly.core.global.exception;
 
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -33,7 +34,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(errorCode.getMessage()));
     }
 
-    // GlobalExceptionHandler에 추가
     @ExceptionHandler(WorkspaceException.class)
     public ResponseEntity<ApiResponse<Void>> handleWorkspaceException(WorkspaceException e) {
         log.warn("WorkspaceException: {}", e.getMessage());
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.fail(errorCode.getMessage()));
+                .body(ApiResponse.fail(errorCode));
     }
 
     @ExceptionHandler(ConquestException.class)
@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.fail(errorCode.getMessage()));
+                .body(ApiResponse.fail(errorCode));
     }
 
     @ExceptionHandler(SnsException.class)
@@ -61,17 +61,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.fail(errorCode.getMessage()));
+                .body(ApiResponse.fail(errorCode));
     }
 
     @ExceptionHandler(UserException.class)
-    public ResponseEntity<ApiResponse<Void>> handleUserProfileException(UserException e) {
+    public ResponseEntity<ApiResponse<Void>> handleUserException(UserException e) {
         log.warn("UserException: {}", e.getMessage());
         BaseErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.fail(errorCode.getMessage()));
+                .body(ApiResponse.fail(errorCode));
     }
 
     // ── @Valid 유효성 검사 실패 ───────────────────────────
@@ -86,6 +86,16 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.INVALID_INPUT.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(message));
+    }
+
+    // ── DB 제약 조건 위반 (중복 키 등) ──────────────────
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        log.warn("DataIntegrityViolation: {}", e.getMessage());
+        return ResponseEntity
+                .status(org.springframework.http.HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ApiResponse.fail("중복된 데이터입니다."));
     }
 
     // ── 그 외 예외 ───────────────────────────────────────
