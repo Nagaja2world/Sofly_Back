@@ -24,4 +24,6 @@ public class UpdateWorkspaceRequest {
     private Integer headcount;
 
     private String coverImageUrl;
+
+    private String countryCode;
 }

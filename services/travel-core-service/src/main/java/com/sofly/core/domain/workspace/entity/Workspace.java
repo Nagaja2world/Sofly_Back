@@ -62,10 +62,11 @@ public class Workspace extends BaseTimeEntity {
         this.members.add(member);
         member.setWorkspace(this);
     }
-    public void update(String title, String destination, LocalDate startDate,
-                       LocalDate endDate, Integer headcount, String coverImageUrl) {
+    public void update(String title, String destination, String countryCode,
+                       LocalDate startDate, LocalDate endDate, Integer headcount, String coverImageUrl) {
         this.title = title;
         this.destination = destination;
+        this.countryCode = countryCode;
         this.startDate = startDate;
         this.endDate = endDate;
         this.headcount = headcount;

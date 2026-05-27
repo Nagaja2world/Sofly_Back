@@ -113,6 +113,7 @@ public class WorkspaceService {
         workspace.update(
                 request.getTitle(),
                 request.getDestination(),
+                request.getCountryCode(),
                 request.getStartDate(),
                 request.getEndDate(),
                 request.getHeadcount(),
