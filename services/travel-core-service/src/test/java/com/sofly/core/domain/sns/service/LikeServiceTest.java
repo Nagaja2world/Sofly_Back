@@ -3,6 +3,7 @@ package com.sofly.core.domain.sns.service;
 import com.sofly.core.domain.sns.code.SnsErrorCode;
 import com.sofly.core.domain.sns.entity.WorkspaceLike;
 import com.sofly.core.domain.sns.exception.SnsException;
+import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceLikeRepository;
 import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.entity.User;
@@ -35,6 +36,7 @@ class LikeServiceTest {
     @Mock WorkspaceLikeRepository workspaceLikeRepository;
     @Mock UserRepository userRepository;
     @Mock WorkspaceRepository workspaceRepository;
+    @Mock UserFollowRepository userFollowRepository;
 
     @InjectMocks LikeService likeService;
 
@@ -43,11 +45,11 @@ class LikeServiceTest {
                 .provider(User.Provider.GOOGLE).providerId("p").build();
     }
 
-    private Workspace stubWorkspace(Long id) {
+    private Workspace stubWorkspace(Long id, WorkspaceVisibility visibility) {
         return Workspace.builder().id(id).title("t").destination("d")
                 .countryCode("JP").startDate(LocalDate.now())
                 .endDate(LocalDate.now().plusDays(3))
-                .owner(stubUser(99L)).visibility(WorkspaceVisibility.PUBLIC).build();
+                .owner(stubUser(99L)).visibility(visibility).build();
     }
 
     @Test
@@ -79,7 +81,7 @@ class LikeServiceTest {
     @DisplayName("like() 정상 호출 시 WorkspaceLike 저장")
     void like_happy_path() {
         User user = stubUser(1L);
-        Workspace ws = stubWorkspace(1L);
+        Workspace ws = stubWorkspace(1L, WorkspaceVisibility.PUBLIC);
 
         given(workspaceLikeRepository.existsByWorkspaceIdAndUserId(1L, 1L)).willReturn(false);
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
@@ -88,6 +90,24 @@ class LikeServiceTest {
         likeService.like(1L, 1L);
 
         verify(workspaceLikeRepository).save(any(WorkspaceLike.class));
+    }
+
+    @Test
+    @DisplayName("PRIVATE 워크스페이스에 like() 호출 시 WORKSPACE_NOT_PUBLIC 발생")
+    void like_onPrivateWorkspace_throwsWorkspaceNotPublic() {
+        User user = stubUser(1L);
+        Workspace ws = stubWorkspace(1L, WorkspaceVisibility.PRIVATE);
+
+        given(workspaceLikeRepository.existsByWorkspaceIdAndUserId(1L, 1L)).willReturn(false);
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(workspaceRepository.findById(1L)).willReturn(Optional.of(ws));
+
+        assertThatThrownBy(() -> likeService.like(1L, 1L))
+                .isInstanceOf(SnsException.class)
+                .satisfies(e -> assertThat(((SnsException) e).getErrorCode())
+                        .isEqualTo(SnsErrorCode.WORKSPACE_NOT_PUBLIC));
+
+        verify(workspaceLikeRepository, never()).save(any());
     }
 
     @Test

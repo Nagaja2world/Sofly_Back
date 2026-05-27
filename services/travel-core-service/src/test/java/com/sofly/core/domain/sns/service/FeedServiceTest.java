@@ -1,6 +1,5 @@
 package com.sofly.core.domain.sns.service;
 
-import com.sofly.core.domain.schedule.repository.ScheduleRepository;
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
 import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceCommentRepository;
@@ -34,7 +33,6 @@ class FeedServiceTest {
     @Mock UserFollowRepository userFollowRepository;
     @Mock WorkspaceLikeRepository workspaceLikeRepository;
     @Mock WorkspaceCommentRepository workspaceCommentRepository;
-    @Mock ScheduleRepository scheduleRepository;
 
     @InjectMocks FeedService feedService;
 
@@ -63,7 +61,6 @@ class FeedServiceTest {
         given(workspaceCommentRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
         given(workspaceLikeRepository.findLikedWorkspaceIdsByUserId(anyLong(), anyList()))
                 .willReturn(List.of());
-        given(scheduleRepository.findAllWithItemsByWorkspaceId(1L)).willReturn(List.of());
 
         Page<PublicWorkspaceResponse> result = feedService.getFeed(1L, pageable);
 
@@ -86,7 +83,6 @@ class FeedServiceTest {
         given(workspaceCommentRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
         given(workspaceLikeRepository.findLikedWorkspaceIdsByUserId(anyLong(), anyList()))
                 .willReturn(List.of());
-        given(scheduleRepository.findAllWithItemsByWorkspaceId(anyLong())).willReturn(List.of());
 
         Page<PublicWorkspaceResponse> result = feedService.getFeed(1L, pageable);
 

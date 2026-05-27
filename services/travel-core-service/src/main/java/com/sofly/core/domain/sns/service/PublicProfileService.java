@@ -1,7 +1,5 @@
 package com.sofly.core.domain.sns.service;
 
-import com.sofly.core.domain.schedule.entity.Schedule;
-import com.sofly.core.domain.schedule.repository.ScheduleRepository;
 import com.sofly.core.domain.sns.dto.PublicUserProfileResponse;
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
 import com.sofly.core.domain.sns.repository.UserFollowRepository;
@@ -36,7 +34,6 @@ public class PublicProfileService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceLikeRepository workspaceLikeRepository;
     private final WorkspaceCommentRepository workspaceCommentRepository;
-    private final ScheduleRepository scheduleRepository;
 
     public PublicUserProfileResponse getProfile(Long targetUserId, Long viewerIdOrNull, Pageable pageable) {
         User target = userRepository.findById(targetUserId)
@@ -77,16 +74,12 @@ public class PublicProfileService {
                 : Set.copyOf(workspaceLikeRepository.findLikedWorkspaceIdsByUserId(viewerIdOrNull, ids));
 
         List<PublicWorkspaceResponse> responses = workspaces.stream().map(w -> {
-            Schedule latestSchedule = scheduleRepository
-                    .findAllWithItemsByWorkspaceId(w.getId())
-                    .stream().findFirst().orElse(null);
             Boolean isLiked = viewerIdOrNull == null ? null : likedByViewer.contains(w.getId());
             return PublicWorkspaceResponse.of(
                     w,
                     likeCounts.getOrDefault(w.getId(), 0L),
                     commentCounts.getOrDefault(w.getId(), 0L),
-                    isLiked,
-                    latestSchedule);
+                    isLiked);
         }).toList();
 
         return new PageImpl<>(responses, pageable, workspacePage.getTotalElements());

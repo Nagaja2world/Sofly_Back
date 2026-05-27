@@ -1,7 +1,5 @@
 package com.sofly.core.domain.sns.service;
 
-import com.sofly.core.domain.schedule.entity.Schedule;
-import com.sofly.core.domain.schedule.repository.ScheduleRepository;
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
 import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceCommentRepository;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,7 +27,6 @@ public class FeedService {
     private final UserFollowRepository userFollowRepository;
     private final WorkspaceLikeRepository workspaceLikeRepository;
     private final WorkspaceCommentRepository workspaceCommentRepository;
-    private final ScheduleRepository scheduleRepository;
 
     public Page<PublicWorkspaceResponse> getFeed(Long userId, Pageable pageable) {
         Pageable bulk = PageRequest.of(0, CANDIDATE_LIMIT, Sort.by("createdAt").descending());
@@ -43,7 +41,7 @@ public class FeedService {
         Set<Long> likedByUser = Set.copyOf(
                 workspaceLikeRepository.findLikedWorkspaceIdsByUserId(userId, ids));
 
-        LocalDateTime recencyCutoff = LocalDateTime.now().minusDays(7);
+        LocalDateTime recencyCutoff = LocalDateTime.now(ZoneOffset.UTC).minusDays(7);
         List<Workspace> sorted = candidates.stream()
                 .sorted(Comparator.comparingLong(
                         (Workspace w) -> score(w, likeCounts, commentCounts, recencyCutoff)).reversed())
@@ -54,17 +52,11 @@ public class FeedService {
         if (start >= sorted.size()) return new PageImpl<>(List.of(), pageable, sorted.size());
 
         List<PublicWorkspaceResponse> responses = sorted.subList(start, end).stream()
-                .map(w -> {
-                    Schedule latestSchedule = scheduleRepository
-                            .findAllWithItemsByWorkspaceId(w.getId())
-                            .stream().findFirst().orElse(null);
-                    return PublicWorkspaceResponse.of(
-                            w,
-                            likeCounts.getOrDefault(w.getId(), 0L),
-                            commentCounts.getOrDefault(w.getId(), 0L),
-                            likedByUser.contains(w.getId()),
-                            latestSchedule);
-                })
+                .map(w -> PublicWorkspaceResponse.of(
+                        w,
+                        likeCounts.getOrDefault(w.getId(), 0L),
+                        commentCounts.getOrDefault(w.getId(), 0L),
+                        likedByUser.contains(w.getId())))
                 .toList();
 
         return new PageImpl<>(responses, pageable, sorted.size());

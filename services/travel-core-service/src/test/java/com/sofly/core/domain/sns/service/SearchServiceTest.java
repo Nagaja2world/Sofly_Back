@@ -58,7 +58,6 @@ class SearchServiceTest {
                 .willReturn(new PageImpl<>(List.of(workspace)));
         given(workspaceLikeRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
         given(workspaceCommentRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
-        given(scheduleRepository.findAllWithItemsByWorkspaceId(1L)).willReturn(List.of());
 
         Page<?> result = searchService.search(null, null, null, pageable);
 
@@ -68,22 +67,38 @@ class SearchServiceTest {
     }
 
     @Test
-    @DisplayName("검색어가 있으면 키워드 공개 워크스페이스 쿼리를 사용한다")
+    @DisplayName("검색어가 있으면 키워드 공개 워크스페이스 쿼리를 사용한다 (와일드카드 이스케이프 적용)")
     void search_withKeyword_usesKeywordSearch() {
         PageRequest pageable = PageRequest.of(0, 20);
         Workspace workspace = stubWorkspace(1L);
 
+        // 와일드카드 이스케이프 후 "Tokyo" → "Tokyo" (특수문자 없으면 그대로)
         given(workspaceRepository.searchPublicByKeyword("JP", "Tokyo", pageable))
                 .willReturn(new PageImpl<>(List.of(workspace)));
         given(workspaceLikeRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
         given(workspaceCommentRepository.countByWorkspaceIds(anyList())).willReturn(List.of());
-        given(scheduleRepository.findAllWithItemsByWorkspaceId(1L)).willReturn(List.of());
 
         Page<?> result = searchService.search(" jp ", " Tokyo ", null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
         verify(workspaceRepository).searchPublicByKeyword("JP", "Tokyo", pageable);
         verify(workspaceRepository, never()).searchPublic("JP", pageable);
+    }
+
+    @Test
+    @DisplayName("검색어에 % 특수문자가 포함되면 이스케이프 처리된다")
+    void search_withWildcardKeyword_escapesSpecialChars() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        // "100%_trip" → 이스케이프 후 "100\%\_trip"
+        String escaped = "100\\%\\_trip";
+
+        given(workspaceRepository.searchPublicByKeyword(null, escaped, pageable))
+                .willReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        Page<?> result = searchService.search(null, "100%_trip", null, pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        verify(workspaceRepository).searchPublicByKeyword(null, escaped, pageable);
     }
 
     @Test

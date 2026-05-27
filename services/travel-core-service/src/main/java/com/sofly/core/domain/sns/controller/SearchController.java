@@ -1,6 +1,7 @@
 package com.sofly.core.domain.sns.controller;
 
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
+import com.sofly.core.domain.sns.dto.ScheduleSummary;
 import com.sofly.core.domain.sns.service.SearchService;
 import com.sofly.core.global.response.ApiResponse;
 import com.sofly.core.global.response.PageResponse;
@@ -33,5 +34,13 @@ public class SearchController {
         Long viewerId = SecurityUtils.tryGetCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
                 PageResponse.from(searchService.search(countryCode, keyword, viewerId, pageable))));
+    }
+
+    @Operation(summary = "공개 워크스페이스 최신 일정 조회 (on-demand)",
+               description = "미인증 접근 가능. 피드/검색 목록에서 특정 워크스페이스의 일정 상세가 필요할 때 호출합니다.")
+    @GetMapping("/{workspaceId}/latest-schedule")
+    public ResponseEntity<ApiResponse<ScheduleSummary>> getLatestSchedule(
+            @Parameter(description = "워크스페이스 ID") @PathVariable Long workspaceId) {
+        return ResponseEntity.ok(ApiResponse.success(searchService.getLatestSchedule(workspaceId)));
     }
 }

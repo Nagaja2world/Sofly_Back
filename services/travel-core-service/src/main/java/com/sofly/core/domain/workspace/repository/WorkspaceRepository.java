@@ -64,8 +64,8 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     @Query("SELECT w FROM Workspace w JOIN FETCH w.owner " +
            "WHERE w.visibility = 'PUBLIC' " +
            "AND (:countryCode IS NULL OR UPPER(w.countryCode) = :countryCode) " +
-           "AND (LOWER(w.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "     OR LOWER(w.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+           "AND (LOWER(w.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' " +
+           "     OR LOWER(w.title) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\')")
     Page<Workspace> searchPublicByKeyword(@Param("countryCode") String countryCode,
                                           @Param("keyword") String keyword,
                                           Pageable pageable);

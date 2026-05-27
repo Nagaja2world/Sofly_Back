@@ -27,12 +27,13 @@ public class WorkspaceCommentController {
 
     private final CommentService commentService;
 
-    @Operation(summary = "댓글 목록 조회", description = "미인증 접근 가능. 기본 20개, 생성일 오름차순.")
+    @Operation(summary = "댓글 목록 조회", description = "미인증 접근 가능. 기본 20개, 생성일 오름차순. PRIVATE 워크스페이스는 접근 불가, FOLLOWERS_ONLY는 팔로워 이상만 조회 가능.")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<CommentResponse>>> getComments(
             @PathVariable Long workspaceId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(commentService.getComments(workspaceId, pageable)));
+        Long viewerId = SecurityUtils.tryGetCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(commentService.getComments(workspaceId, viewerId, pageable)));
     }
 
     @Operation(summary = "댓글 작성")

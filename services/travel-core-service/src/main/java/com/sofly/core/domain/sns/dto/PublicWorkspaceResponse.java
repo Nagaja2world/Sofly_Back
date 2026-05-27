@@ -1,6 +1,5 @@
 package com.sofly.core.domain.sns.dto;
 
-import com.sofly.core.domain.schedule.entity.Schedule;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
 import lombok.Builder;
@@ -26,14 +25,12 @@ public class PublicWorkspaceResponse {
     private long likeCount;
     private long commentCount;
     private Boolean isLiked;
-    private ScheduleSummary latestSchedule;
     private LocalDateTime createdAt;
 
     public static PublicWorkspaceResponse of(Workspace workspace,
                                               long likeCount,
                                               long commentCount,
-                                              Boolean isLiked,
-                                              Schedule latestSchedule) {
+                                              Boolean isLiked) {
         return PublicWorkspaceResponse.builder()
                 .id(workspace.getId())
                 .title(workspace.getTitle())
@@ -48,7 +45,6 @@ public class PublicWorkspaceResponse {
                 .likeCount(likeCount)
                 .commentCount(commentCount)
                 .isLiked(isLiked)
-                .latestSchedule(latestSchedule != null ? ScheduleSummary.from(latestSchedule) : null)
                 .createdAt(workspace.getCreatedAt())
                 .build();
     }

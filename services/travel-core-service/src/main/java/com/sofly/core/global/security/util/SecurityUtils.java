@@ -41,7 +41,7 @@ public class SecurityUtils {
     public static Long tryGetCurrentUserId() {
         try {
             return getCurrentUserId();
-        } catch (Exception e) {
+        } catch (AuthException e) {
             return null;
         }
     }
