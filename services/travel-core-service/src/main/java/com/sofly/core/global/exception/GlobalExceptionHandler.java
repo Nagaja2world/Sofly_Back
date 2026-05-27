@@ -10,6 +10,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.sofly.core.domain.conquest.exception.ConquestException;
 import com.sofly.core.domain.sns.exception.SnsException;
 import com.sofly.core.domain.user.exception.UserException;
@@ -76,12 +78,13 @@ public class GlobalExceptionHandler {
 
     // ── @Valid 유효성 검사 실패 ───────────────────────────
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResponse<Void>> handleValidException(MethodArgumentNotValidException e,
+                                                                   HttpServletRequest request) {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining(", "));
 
-        log.warn("Validation 실패: {}", message);
+        log.warn("Validation 실패 [{} {}]: {}", request.getMethod(), request.getRequestURI(), message);
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
