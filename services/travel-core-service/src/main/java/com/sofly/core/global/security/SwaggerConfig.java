@@ -52,7 +52,14 @@ public class SwaggerConfig {
                 new Tag().name("Album").description("워크스페이스 앨범 조회 API"),
                 new Tag().name("Album Photo").description("앨범 사진 업로드·삭제·다운로드 API"),
                 new Tag().name("TravelLog").description("여행 기록 API"),
-                new Tag().name("TravelLog Photo").description("여행 기록 사진 첨부·해제 API")
+                new Tag().name("TravelLog Photo").description("여행 기록 사진 첨부·해제 API"),
+                new Tag().name("Feed").description("알고리즘 피드"),
+                new Tag().name("Follow").description("팔로우/언팔로우 관리"),
+                new Tag().name("PublicProfile").description("공개 프로필 조회"),
+                new Tag().name("Search").description("공개 워크스페이스 검색"),
+                new Tag().name("WorkspaceLike").description("워크스페이스 좋아요"),
+                new Tag().name("WorkspaceComment").description("워크스페이스 댓글"),
+                new Tag().name("SNS - 워크스페이스 가져오기").description("다른 유저의 공개 워크스페이스를 내 워크스페이스로 복제")
         ));
     }
 }
