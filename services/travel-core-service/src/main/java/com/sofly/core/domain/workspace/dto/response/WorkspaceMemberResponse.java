@@ -11,16 +11,18 @@ public class WorkspaceMemberResponse {
 
     private Long memberId;
     private Long userId;
-    private String nickname;       // name → nickname
+    private String nickname;
     private String userEmail;
+    private String profileImageUrl;
     private MemberRole role;
 
     public static WorkspaceMemberResponse from(WorkspaceMember member) {
         return WorkspaceMemberResponse.builder()
                 .memberId(member.getId())
                 .userId(member.getUser().getId())
-                .nickname(member.getUser().getNickname()) // getNickname()으로 수정
+                .nickname(member.getUser().getNickname())
                 .userEmail(member.getUser().getEmail())
+                .profileImageUrl(member.getUser().getProfileImageUrl())
                 .role(member.getRole())
                 .build();
     }

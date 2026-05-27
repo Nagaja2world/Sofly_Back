@@ -1,6 +1,8 @@
 package com.sofly.core.domain.album.repository;
 
 import com.sofly.core.domain.album.entity.Photo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +15,11 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     /** N+1 방지: uploadedBy를 JOIN FETCH로 한 번에 로드 */
     @Query("SELECT p FROM Photo p JOIN FETCH p.uploadedBy WHERE p.album.id = :albumId ORDER BY p.createdAt DESC")
     List<Photo> findByAlbumIdWithUploaderOrderByCreatedAtDesc(@Param("albumId") Long albumId);
+
+    /** 페이징 조회 — uploadedBy JOIN FETCH, countQuery 별도 지정 */
+    @Query(value = "SELECT p FROM Photo p JOIN FETCH p.uploadedBy WHERE p.album.id = :albumId ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Photo p WHERE p.album.id = :albumId")
+    Page<Photo> findPageByAlbumIdWithUploader(@Param("albumId") Long albumId, Pageable pageable);
 
     /** 권한 확인 및 상세 조회용: uploader, album, workspace를 한 번에 로드 */
     @Query("SELECT p FROM Photo p JOIN FETCH p.uploadedBy JOIN FETCH p.album a JOIN FETCH a.workspace WHERE p.id = :photoId")

@@ -21,6 +21,7 @@ public class ScheduleItem extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
     private Schedule schedule;
 
     @Column(nullable = false)
@@ -38,6 +39,7 @@ public class ScheduleItem extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;                // 장소/활동 이름
 
+    @Column(columnDefinition = "TEXT")
     private String address;
 
     private Double latitude;
@@ -47,12 +49,13 @@ public class ScheduleItem extends BaseTimeEntity {
     @Column
     private String placeId; // Google places ID (nullable)
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String photoReference; // 대표 사진 resource name (nullable)
 
     @Column(columnDefinition = "TEXT")
     private String memo;
 
+    @Column(columnDefinition = "TEXT")
     private String deepLinkUrl;         // 예약 딥링크 (숙소/교통)
 
     private Double estimatedCost;       // 예상 비용 (원)
@@ -75,6 +78,10 @@ public class ScheduleItem extends BaseTimeEntity {
         if (photoReference != null) this.photoReference = photoReference;
         if (latitude != null) this.latitude = latitude;
         if (longitude != null) this.longitude = longitude;
+    }
+
+    public void updateCategory(Category category) {
+        this.category = category;
     }
 
     public void updateOrder(Integer orderIndex) {

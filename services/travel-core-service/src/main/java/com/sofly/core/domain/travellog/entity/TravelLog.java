@@ -24,14 +24,13 @@ public class TravelLog extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer day;
+    private String mainTitle;
 
     private LocalDate travelDate;
 
-    @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String content;             // Markdown
 
     @Enumerated(EnumType.STRING)
@@ -54,6 +53,7 @@ public class TravelLog extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
     private Workspace workspace;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -63,7 +63,7 @@ public class TravelLog extends BaseTimeEntity {
     // ── 비즈니스 메서드 ──────────────────────────────────────
 
     public void update(TravellogUpdateRequest request) {
-        if (request.day() != null) this.day = request.day();
+        if (request.mainTitle() != null) this.mainTitle = request.mainTitle();
         if (request.travelDate() != null) this.travelDate = request.travelDate();
         if (request.title() != null) this.title = request.title();
         if (request.content() != null) this.content = request.content();

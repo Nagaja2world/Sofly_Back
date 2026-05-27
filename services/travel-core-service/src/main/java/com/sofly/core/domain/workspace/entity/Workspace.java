@@ -83,4 +83,8 @@ public class Workspace extends BaseTimeEntity {
     public void changeVisibility(WorkspaceVisibility visibility) {
         this.visibility = visibility;
     }
+  
+    public void updateCoverImage(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
 }

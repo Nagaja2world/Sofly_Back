@@ -31,13 +31,21 @@ public class RedisCacheConfig {
         // getFilter는 JsonNode 반환, TTL 24시간
         RedisCacheConfiguration jsonNodeMetaConfig = jsonNodeCacheConfig(Duration.ofHours(24));
 
+        // 장소 검색 결과: POJO, TTL 1시간
+        RedisCacheConfiguration placeSearchConfig = pojoCacheConfig(Duration.ofHours(1));
+
+        // 장소 사진 URL: POJO, TTL 24시간 (URL이 잘 안 바뀜)
+        RedisCacheConfiguration placePhotoConfig = pojoCacheConfig(Duration.ofHours(24));
+
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(searchConfig)
                 .withInitialCacheConfigurations(Map.of(
                         "flightDestinations", pojoMetaConfig,
                         "hotelDestinations",  pojoMetaConfig,
                         "hotelSortBy",        pojoMetaConfig,
-                        "hotelFilter",        jsonNodeMetaConfig
+                        "hotelFilter",        jsonNodeMetaConfig,
+                        "placeSearch",        placeSearchConfig,
+                        "placePhoto",         placePhotoConfig
                 ))
                 .build();
     }

@@ -1,17 +1,23 @@
 package com.sofly.core.domain.workspace.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.sofly.core.domain.album.service.S3Service;
 import com.sofly.core.domain.workspace.dto.request.*;
 import com.sofly.core.domain.workspace.dto.response.*;
 import com.sofly.core.domain.workspace.entity.*;
 import com.sofly.core.domain.workspace.repository.SavedPlaceRepository;
+import com.sofly.core.domain.workspace.repository.WorkspaceInvitationRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.entity.User;
@@ -23,7 +29,12 @@ import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.SavedFlightRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
+import com.sofly.core.domain.messaging.entity.MessagingRoomMember;
+import com.sofly.core.domain.messaging.enums.ChatRoomType;
+import com.sofly.core.domain.messaging.repository.MessagingRoomMemberRepository;
+import com.sofly.core.domain.messaging.repository.MessagingRoomRepository;
 import com.sofly.core.global.kafka.dto.FlightSavedMessage;
+import com.sofly.core.global.kafka.dto.InvitationCreatedMessage;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,12 +43,20 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class WorkspaceService {
 
+    private static final String INVITE_REDIS_KEY_PREFIX = "invite:";
+    private static final Duration INVITE_TTL = Duration.ofDays(7);
+
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final WorkspaceInvitationRepository workspaceInvitationRepository;
     private final SavedFlightRepository savedFlightRepository;
     private final SavedPlaceRepository savedPlaceRepository;
     private final UserRepository userRepository;
+    private final MessagingRoomRepository messagingRoomRepository;
+    private final MessagingRoomMemberRepository messagingRoomMemberRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final S3Service s3Service;
 
     @Value("${sofly.oauth2.redirect-uri}")
     private String baseUrl;
@@ -103,6 +122,26 @@ public class WorkspaceService {
         return WorkspaceResponse.from(workspace);
     }
 
+    // ── 커버 이미지 업로드 ─────────────────────────────────────
+
+    @Transactional
+    public WorkspaceResponse uploadCoverImage(Long userId, Long workspaceId, MultipartFile file) {
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateOwner(workspace, userId);
+
+        String ext = "";
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null && originalFilename.contains(".")) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        }
+        String s3Key = "workspaces/" + workspaceId + "/cover/" + java.util.UUID.randomUUID() + ext;
+
+        String imageUrl = s3Service.uploadFile(file, s3Key, true);
+        workspace.updateCoverImage(imageUrl);
+
+        return WorkspaceResponse.from(workspace);
+    }
+
     // ── 워크스페이스 삭제 ──────────────────────────────────────
 
     @Transactional
@@ -125,6 +164,112 @@ public class WorkspaceService {
         return InviteCodeResponse.of(code, baseUrl);
     }
 
+    // ── 초대 요청 생성 ─────────────────────────────────────────
+
+    @Transactional
+    public InvitationResponse inviteMember(Long requesterId, Long workspaceId, Long targetUserId) {
+        if (requesterId.equals(targetUserId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.CANNOT_INVITE_SELF);
+        }
+
+        Workspace workspace = findWorkspaceById(workspaceId);
+        validateOwner(workspace, requesterId);
+
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, targetUserId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_WORKSPACE_MEMBER);
+        }
+        if (workspaceInvitationRepository.existsByWorkspaceIdAndInviteeIdAndStatus(
+                workspaceId, targetUserId, InvitationStatus.PENDING)) {
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_PENDING_INVITATION);
+        }
+
+        User inviter = userRepository.findById(requesterId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User invitee = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .inviter(inviter)
+                .invitee(invitee)
+                .expiresAt(LocalDateTime.now().plus(INVITE_TTL))
+                .build();
+
+        workspaceInvitationRepository.save(invitation);
+
+        // Redis에 TTL과 함께 토큰 등록
+        stringRedisTemplate.opsForValue().set(
+                INVITE_REDIS_KEY_PREFIX + invitation.getId(), "1", INVITE_TTL);
+
+        // Kafka로 알림 이벤트 발행
+        kafkaTemplate.send("workspace.invitation", new InvitationCreatedMessage(
+                invitation.getId(), workspace.getId(), workspace.getTitle(),
+                inviter.getNickname(), targetUserId));
+
+        return InvitationResponse.from(invitation);
+    }
+
+    // ── 초대 수락 ──────────────────────────────────────────────
+
+    @Transactional
+    public WorkspaceMemberResponse acceptInvitation(Long userId, Long invitationId) {
+        WorkspaceInvitation invitation = workspaceInvitationRepository
+                .findByIdAndInviteeId(invitationId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
+
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
+        }
+
+        String redisKey = INVITE_REDIS_KEY_PREFIX + invitationId;
+        if (Boolean.FALSE.equals(stringRedisTemplate.hasKey(redisKey))) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_EXPIRED);
+        }
+
+        Workspace workspace = invitation.getWorkspace();
+
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.ALREADY_WORKSPACE_MEMBER);
+        }
+
+        invitation.accept();
+        stringRedisTemplate.delete(redisKey);
+
+        User invitee = invitation.getInvitee();
+        WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, invitee);
+        workspace.addMember(newMember);
+
+        addToWorkspaceMessagingRoom(workspace.getId(), invitee.getId());
+
+        return WorkspaceMemberResponse.from(newMember);
+    }
+
+    // ── 초대 거절 ──────────────────────────────────────────────
+
+    @Transactional
+    public void rejectInvitation(Long userId, Long invitationId) {
+        WorkspaceInvitation invitation = workspaceInvitationRepository
+                .findByIdAndInviteeId(invitationId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
+
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
+        }
+
+        invitation.reject();
+        stringRedisTemplate.delete(INVITE_REDIS_KEY_PREFIX + invitationId);
+    }
+
+    // ── 내 초대 목록 조회 ──────────────────────────────────────
+
+    public List<InvitationResponse> getMyInvitations(Long userId) {
+        return workspaceInvitationRepository
+                .findAllByInviteeIdAndStatus(userId, InvitationStatus.PENDING).stream()
+                .filter(i -> !i.isExpired())
+                .map(InvitationResponse::from)
+                .toList();
+    }
+
     // ── 초대 코드로 멤버 가입 ──────────────────────────────────
 
     @Transactional
@@ -141,6 +286,8 @@ public class WorkspaceService {
 
         WorkspaceMember newMember = WorkspaceMember.ofViewer(workspace, user);
         workspace.addMember(newMember);
+
+        addToWorkspaceMessagingRoom(workspace.getId(), userId);
 
         return WorkspaceResponse.from(workspace);
     }
@@ -207,12 +354,31 @@ public class WorkspaceService {
                 .workspace(workspace)
                 .flightNumber(request.getFlightNumber())
                 .airline(request.getAirline())
+                .airlineLogo(request.getAirlineLogo())
+                .planeType(request.getPlaneType())
+                .cabinClass(request.getCabinClass())
                 .departureAirport(request.getDepartureAirport())
+                .departureCity(request.getDepartureCity())
+                .departureCountry(request.getDepartureCountry())
+                .departureTerminal(request.getDepartureTerminal())
                 .arrivalAirport(request.getArrivalAirport())
+                .arrivalCity(request.getArrivalCity())
+                .arrivalCountry(request.getArrivalCountry())
+                .arrivalTerminal(request.getArrivalTerminal())
                 .departureTime(request.getDepartureTime().toLocalDateTime())
                 .arrivalTime(request.getArrivalTime().toLocalDateTime())
-                .duration(request.getDuration())
-                .price(request.getPrice())
+                .durationMinutes(request.getDurationMinutes())
+                .totalPrice(request.getTotalPrice())
+                .baseFare(request.getBaseFare())
+                .tax(request.getTax())
+                .platformFee(request.getPlatformFee())
+                .currencyCode(request.getCurrencyCode())
+                .checkedBaggageKg(request.getCheckedBaggageKg())
+                .checkedBaggagePiece(request.getCheckedBaggagePiece())
+                .cabinBaggageKg(request.getCabinBaggageKg())
+                .personalItemIncluded(request.getPersonalItemIncluded())
+                .bookingToken(request.getBookingToken())
+                .offerReference(request.getOfferReference())
                 .flightType(request.getFlightType())
                 .build();
 
@@ -238,6 +404,46 @@ public class WorkspaceService {
         return savedFlightRepository.findAllByWorkspaceId(workspaceId).stream()
                 .map(SavedFlightResponse::from)
                 .toList();
+    }
+
+    // ── 항공편 수정 ────────────────────────────────────────────
+
+    @Transactional
+    public SavedFlightResponse updateFlight(Long userId, Long workspaceId, Long flightId, UpdateFlightRequest request) {
+        findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        SavedFlight flight = savedFlightRepository.findByIdAndWorkspaceId(flightId, workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_FLIGHT_NOT_FOUND));
+
+        flight.update(
+                request.getFlightNumber(), request.getAirline(), request.getAirlineLogo(),
+                request.getPlaneType(), request.getCabinClass(),
+                request.getDepartureAirport(), request.getDepartureCity(), request.getDepartureCountry(), request.getDepartureTerminal(),
+                request.getArrivalAirport(), request.getArrivalCity(), request.getArrivalCountry(), request.getArrivalTerminal(),
+                request.getDepartureTime() != null ? request.getDepartureTime().toLocalDateTime() : null,
+                request.getArrivalTime() != null ? request.getArrivalTime().toLocalDateTime() : null,
+                request.getDurationMinutes(),
+                request.getTotalPrice(), request.getBaseFare(), request.getTax(), request.getPlatformFee(), request.getCurrencyCode(),
+                request.getCheckedBaggageKg(), request.getCheckedBaggagePiece(), request.getCabinBaggageKg(),
+                request.getPersonalItemIncluded(), request.getBookingToken(), request.getOfferReference(),
+                request.getFlightType()
+        );
+
+        return SavedFlightResponse.from(flight);
+    }
+
+    // ── 항공편 삭제 ────────────────────────────────────────────
+
+    @Transactional
+    public void deleteFlight(Long userId, Long workspaceId, Long flightId) {
+        findWorkspaceById(workspaceId);
+        validateMember(workspaceId, userId);
+
+        SavedFlight flight = savedFlightRepository.findByIdAndWorkspaceId(flightId, workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_FLIGHT_NOT_FOUND));
+
+        savedFlightRepository.delete(flight);
     }
 
     // ── savedPlace ───────────────────────────────────────
@@ -298,6 +504,22 @@ public class WorkspaceService {
 
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────
+
+    private void addToWorkspaceMessagingRoom(Long workspaceId, Long userId) {
+        messagingRoomRepository.findByTypeAndWorkspaceId(ChatRoomType.WORKSPACE, workspaceId)
+                .ifPresent(room -> {
+                    boolean alreadyMember = messagingRoomMemberRepository
+                            .existsByMessagingRoomIdAndUserId(room.getId(), userId);
+                    if (!alreadyMember) {
+                        messagingRoomMemberRepository.save(
+                                MessagingRoomMember.builder()
+                                        .messagingRoom(room)
+                                        .userId(userId)
+                                        .build()
+                        );
+                    }
+                });
+    }
 
     private Workspace findWorkspaceById(Long workspaceId) {
         return workspaceRepository.findWithOwnerById(workspaceId)

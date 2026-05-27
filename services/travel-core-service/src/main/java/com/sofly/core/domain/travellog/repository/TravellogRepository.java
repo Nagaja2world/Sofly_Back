@@ -17,16 +17,20 @@ public interface TravellogRepository extends JpaRepository<TravelLog, Long> {
      */
     @Query("""
             SELECT new com.sofly.core.domain.travellog.dto.TravellogSummaryResponse(
-                t.id, t.day, t.travelDate, t.title, t.weather,
+                t.id, t.mainTitle, t.travelDate, t.title, t.weather,
                 SIZE(t.photos),
                 t.createdAt
             )
             FROM TravelLog t
             WHERE t.workspace.id = :workspaceId
-            ORDER BY t.travelDate ASC
+            ORDER BY t.createdAt ASC
             """)
     List<TravellogSummaryResponse> findAllSummaryByWorkspaceId(@Param("workspaceId") Long workspaceId);
 
     @Query("SELECT t FROM TravelLog t LEFT JOIN FETCH t.photos JOIN FETCH t.workspace JOIN FETCH t.author WHERE t.id = :id")
     Optional<TravelLog> findByIdWithPhotos(@Param("id") Long id);
+
+    /** 전체 목록을 photos·author 포함해서 한 번에 조회 (N+1 제거용) */
+    @Query("SELECT DISTINCT t FROM TravelLog t LEFT JOIN FETCH t.photos JOIN FETCH t.author JOIN FETCH t.workspace WHERE t.workspace.id = :workspaceId")
+    List<TravelLog> findAllWithDetailsByWorkspaceId(@Param("workspaceId") Long workspaceId);
 }

@@ -16,6 +16,8 @@ import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,19 +45,25 @@ public class AlbumService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
-    /** 앨범 + 사진 목록 조회 (앨범 없으면 빈 목록 반환) */
-    public AlbumResponse getAlbum(Long workspaceId, Long userId) {
+    /** 앨범 + 사진 목록 조회 — 페이징 (앨범 없으면 빈 목록 반환) */
+    public AlbumResponse getAlbum(Long workspaceId, Long userId, Pageable pageable) {
         validateMember(workspaceId, userId);
         return albumRepository.findByWorkspaceId(workspaceId)
                 .map(album -> {
-                    List<PhotoResponse> photos = photoRepository
-                            .findByAlbumIdWithUploaderOrderByCreatedAtDesc(album.getId())
-                            .stream()
+                    Page<Photo> photoPage = photoRepository
+                            .findPageByAlbumIdWithUploader(album.getId(), pageable);
+                    List<PhotoResponse> photos = photoPage.getContent().stream()
                             .map(PhotoResponse::from)
                             .toList();
-                    return new AlbumResponse(album.getId(), workspaceId, photos);
+                    return new AlbumResponse(
+                            album.getId(), workspaceId, photos,
+                            photoPage.getNumber(), photoPage.getSize(),
+                            photoPage.getTotalElements(), photoPage.getTotalPages(),
+                            photoPage.hasNext()
+                    );
                 })
-                .orElse(new AlbumResponse(null, workspaceId, List.of()));
+                .orElse(new AlbumResponse(null, workspaceId, List.of(),
+                        0, pageable.getPageSize(), 0, 0, false));
     }
 
     /** 사진 업로드 (단건 또는 다건) */

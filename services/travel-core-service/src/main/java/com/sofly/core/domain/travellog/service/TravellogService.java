@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,6 +58,15 @@ public class TravellogService {
         return travellogRepository.findAllSummaryByWorkspaceId(workspaceId);
     }
 
+    @RequireWorkspaceMember
+    public List<TravellogResponse> getTravelLogsWithDetails(Long workspaceId) {
+        return travellogRepository.findAllWithDetailsByWorkspaceId(workspaceId)
+                .stream()
+                .sorted(Comparator.comparing(TravelLog::getCreatedAt))
+                .map(TravellogResponse::from)
+                .toList();
+    }
+
     // ── 생성 ─────────────────────────────────────────────────
 
     @Transactional
@@ -68,7 +78,7 @@ public class TravellogService {
                 .orElseThrow(() -> new SoflyException(ErrorCode.USER_NOT_FOUND));
 
         TravelLog travelLog = TravelLog.builder()
-                .day(request.day())
+                .mainTitle(request.mainTitle())
                 .travelDate(request.travelDate())
                 .title(request.title())
                 .content(request.content())

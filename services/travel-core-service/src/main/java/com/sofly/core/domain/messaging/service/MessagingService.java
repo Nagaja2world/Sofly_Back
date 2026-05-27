@@ -2,6 +2,8 @@ package com.sofly.core.domain.messaging.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,9 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sofly.core.domain.messaging.document.MessagingMessage;
+import com.sofly.core.domain.messaging.dto.MessagingContactResponse;
 import com.sofly.core.domain.messaging.dto.MessagingMessageRequest;
 import com.sofly.core.domain.messaging.dto.MessagingMessageResponse;
 import com.sofly.core.domain.messaging.dto.MessagingRoomCreateRequest;
+import com.sofly.core.domain.messaging.dto.MessagingRoomSummaryResponse;
 import com.sofly.core.domain.messaging.entity.MessagingRoom;
 import com.sofly.core.domain.messaging.entity.MessagingRoomMember;
 import com.sofly.core.domain.messaging.repository.MessagingMessageRepository;
@@ -21,6 +25,7 @@ import com.sofly.core.domain.messaging.repository.MessagingRoomMemberRepository;
 import com.sofly.core.domain.messaging.repository.MessagingRoomRepository;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.repository.UserRepository;
+import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
 
@@ -34,6 +39,7 @@ public class MessagingService {
     private final MessagingRoomMemberRepository messagingRoomMemberRepository;
     private final MessagingMessageRepository messagingMessageRepository;
     private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChannelTopic channelTopic;
 
@@ -99,5 +105,31 @@ public class MessagingService {
         return messagingMessageRepository
                 .findByMessagingRoomIdOrderByCreatedAtDesc(roomId, pageable)
                 .map(MessagingMessageResponse::from);
+    }
+
+    // 1대1 채팅 가능한 연락처 목록 (내가 속한 모든 워크스페이스의 멤버, 나 제외 + 중복 제거)
+    @Transactional(readOnly = true)
+    public List<MessagingContactResponse> getContacts(Long userId) {
+        return workspaceMemberRepository.findAllSharedWorkspaceMembers(userId).stream()
+                .collect(Collectors.toMap(
+                        wm -> wm.getUser().getId(),
+                        MessagingContactResponse::from,
+                        (existing, duplicate) -> existing
+                ))
+                .values()
+                .stream()
+                .toList();
+    }
+
+    // 내가 속한 채팅방 목록
+    @Transactional(readOnly = true)
+    public List<MessagingRoomSummaryResponse> getMyRooms(Long userId) {
+        List<Long> roomIds = messagingRoomMemberRepository.findRoomIdsByUserId(userId);
+        if (roomIds.isEmpty()) {
+            return List.of();
+        }
+        return messagingRoomRepository.findAllById(roomIds).stream()
+                .map(MessagingRoomSummaryResponse::from)
+                .toList();
     }
 }

@@ -52,7 +52,9 @@ public class SecurityConfig {
                         "/websocket-chat.html",
                         "/websocket-chat-test.html",   // TODO: 채팅 REST API 허용 (개발 중에만, 나중에 인증 붙이면 제거
                         "/ws/**",                       // TODO: Websocket 핸드셰이크 경로 허용
-                        "/api/v1/messaging/**",       
+                        "/api/v1/messaging/**",
+                        "/api/v1/flights/**",
+                        "/api/v1/hotels/**",
                         "/login/oauth2/**",
                         "/oauth2/**",
                         "/api/auth/refresh",

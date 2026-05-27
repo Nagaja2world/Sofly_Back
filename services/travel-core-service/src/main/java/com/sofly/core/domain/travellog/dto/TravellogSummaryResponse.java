@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 public record TravellogSummaryResponse(
         Long id,
-        Integer day,
+        String mainTitle,
         LocalDate travelDate,
         String title,
         Weather weather,
@@ -18,7 +18,7 @@ public record TravellogSummaryResponse(
     public static TravellogSummaryResponse from(TravelLog log) {
         return new TravellogSummaryResponse(
                 log.getId(),
-                log.getDay(),
+                log.getMainTitle(),
                 log.getTravelDate(),
                 log.getTitle(),
                 log.getWeather(),

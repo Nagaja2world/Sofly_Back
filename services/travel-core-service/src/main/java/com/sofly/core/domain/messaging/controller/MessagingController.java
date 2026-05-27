@@ -1,6 +1,7 @@
 package com.sofly.core.domain.messaging.controller;
 
 import java.security.Principal;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,12 +18,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sofly.core.domain.messaging.dto.MessagingContactResponse;
 import com.sofly.core.domain.messaging.dto.MessagingMessageRequest;
 import com.sofly.core.domain.messaging.dto.MessagingMessageResponse;
 import com.sofly.core.domain.messaging.dto.MessagingRoomCreateRequest;
+import com.sofly.core.domain.messaging.dto.MessagingRoomSummaryResponse;
 import com.sofly.core.domain.messaging.entity.MessagingRoom;
 import com.sofly.core.domain.messaging.service.MessagingService;
 import com.sofly.core.global.response.ApiResponse;
+import com.sofly.core.global.security.util.SecurityUtils;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -37,6 +41,28 @@ import lombok.RequiredArgsConstructor;
 public class MessagingController {
 
     private final MessagingService messagingService;
+
+    @Operation(summary = "내 채팅방 목록 조회", description = "내가 속한 모든 채팅방 목록을 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음")
+    })
+    @GetMapping("/rooms")
+    public ResponseEntity<ApiResponse<List<MessagingRoomSummaryResponse>>> getMyRooms() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(messagingService.getMyRooms(userId)));
+    }
+
+    @Operation(summary = "연락처 목록 조회", description = "1대1 채팅 가능한 유저 목록을 조회합니다. 내가 속한 모든 워크스페이스의 멤버(나 제외, 중복 제거)를 반환합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 없음")
+    })
+    @GetMapping("/contacts")
+    public ResponseEntity<ApiResponse<List<MessagingContactResponse>>> getContacts() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(messagingService.getContacts(userId)));
+    }
 
     @Operation(summary = "채팅방 생성", description = "채팅방을 생성합니다. (1:1, 그룹, 워크스페이스)")
     @ApiResponses({

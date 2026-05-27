@@ -84,10 +84,30 @@ public class ChatService {
         );
     }
 
+    // ChatRoom 제목 수정
+    @Transactional
+    public ChatRoomSummaryResponse updateChatRoomTitle(Long roomId, ChatRoomUpdateRequest request) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        room.updateTitle(request.title());
+        return ChatRoomSummaryResponse.from(room);
+    }
+
+    // ChatRoom 삭제 (메시지 + AI 메모리 포함)
+    @Transactional
+    public void deleteChatRoom(Long roomId) {
+        chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        rdbChatMemory.clear("room:" + roomId);
+        chatRoomRepository.deleteById(roomId);
+    }
+
     // 워크스페이스 소속 ChatRoom 목록 (왼쪽 탭용)
     @Transactional(readOnly = true)
     public List<ChatRoomSummaryResponse> getChatRooms(Long workspaceId) {
-        return chatRoomRepository.findByWorkspaceId(workspaceId)
+        return chatRoomRepository.findByWorkspaceIdOrderByIdDesc(workspaceId)
                 .stream()
                 .map(ChatRoomSummaryResponse::from)
                 .toList();

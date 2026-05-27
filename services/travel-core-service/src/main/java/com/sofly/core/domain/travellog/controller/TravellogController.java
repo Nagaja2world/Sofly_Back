@@ -31,6 +31,12 @@ public class TravellogController {
         return ResponseEntity.ok(ApiResponse.success(travellogService.getTravelLogs(workspaceId)));
     }
 
+    @Operation(summary = "여행기 전체 목록 조회 (content·photos 포함)", description = "content, photos, 작성자 정보를 포함한 전체 목록을 한 번에 조회합니다. 단건 조회를 반복하는 대신 이 API를 사용하세요.")
+    @GetMapping("/full")
+    public ResponseEntity<ApiResponse<List<TravellogResponse>>> getTravelLogsWithDetails(@PathVariable Long workspaceId) {
+        return ResponseEntity.ok(ApiResponse.success(travellogService.getTravelLogsWithDetails(workspaceId)));
+    }
+
     @Operation(summary = "여행기 단건 조회", description = "여행기 상세 정보와 첨부 사진을 조회합니다.")
     @GetMapping("/{logId}")
     public ResponseEntity<ApiResponse<TravellogResponse>> getTravelLog(
