@@ -13,4 +13,6 @@ public interface SavedFlightRepository extends JpaRepository<SavedFlight, Long> 
     List<SavedFlight> findAllByWorkspaceIdAndFlightType(Long workspaceId, SavedFlight.FlightType flightType);
 
     Optional<SavedFlight> findByIdAndWorkspaceId(Long id, Long workspaceId);
+
+    void deleteAllByWorkspaceId(Long workspaceId);
 }
