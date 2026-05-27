@@ -64,13 +64,13 @@ public class Workspace extends BaseTimeEntity {
     }
     public void update(String title, String destination, String countryCode,
                        LocalDate startDate, LocalDate endDate, Integer headcount, String coverImageUrl) {
-        this.title = title;
-        this.destination = destination;
-        this.countryCode = countryCode;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.headcount = headcount;
-        this.coverImageUrl = coverImageUrl;
+        if (title != null) this.title = title;
+        if (destination != null) this.destination = destination;
+        if (countryCode != null) this.countryCode = countryCode;
+        if (startDate != null) this.startDate = startDate;
+        if (endDate != null) this.endDate = endDate;
+        if (headcount != null) this.headcount = headcount;
+        if (coverImageUrl != null) this.coverImageUrl = coverImageUrl;
     }
 
     public void generateInviteCode(String code) {
