@@ -42,6 +42,12 @@ public interface SupplyClient {
             @SpringQueryMap HotelSearchRequest request
     );
 
+    @GetMapping("/supply/hotels/details")
+    JsonNode getHotelDetails(
+            @RequestParam(required = false) String supplier,
+            @SpringQueryMap HotelDetailsRequest request
+    );
+
     @GetMapping("/supply/hotels/destinations")
     List<HotelDestination> searchHotelDestinations(@RequestParam String query);
 

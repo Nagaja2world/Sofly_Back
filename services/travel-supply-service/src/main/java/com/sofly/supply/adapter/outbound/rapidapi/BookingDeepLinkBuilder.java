@@ -7,25 +7,16 @@ public class BookingDeepLinkBuilder {
     private BookingDeepLinkBuilder() {}
 
     /**
-     * Booking.com 항공권 예약 딥링크 생성
-     * <p>예) https://flights.booking.com/flights/ICN.AIRPORT-HND.AIRPORT/{token}/
-     * ?type=ROUNDTRIP&adults=1&cabinClass=ECONOMY&depart=2026-07-06&return=2026-07-09&sort=BEST
-     *
-     * @param token      flightOffers[].token (Booking.com 내부 인코딩 토큰)
-     * @param origin     출발 IATA 코드 (예: ICN)
-     * @param dest       도착 IATA 코드 (예: HND)
-     * @param departDate 출발일 (yyyy-MM-dd)
-     * @param returnDate 귀국일 (yyyy-MM-dd, 편도면 null)
-     * @param tripType   ROUNDTRIP | ONE_WAY
-     * @param cabinClass ECONOMY, BUSINESS 등
-     * @param adults     성인 수
+     * Booking.com 항공권 검색 딥링크 생성.
+     * <p>RapidAPI의 flightOffers[].token은 getFlightDetails API용 토큰이며,
+     * flights.booking.com 웹 경로의 offer token과 항상 호환된다고 볼 수 없다.
      */
-    public static String buildFlightUrl(String token, String origin, String dest,
-                                  String departDate, String returnDate,
-                                  String tripType, String cabinClass, int adults) {
+    public static String buildFlightSearchUrl(String origin, String dest,
+                                              String departDate, String returnDate,
+                                              String tripType, String cabinClass, int adults) {
         String route = origin + ".AIRPORT-" + dest + ".AIRPORT";
         UriComponentsBuilder builder = UriComponentsBuilder
-                .fromHttpUrl("https://flights.booking.com/flights/" + route + "/" + token + "/")
+                .fromHttpUrl("https://flights.booking.com/flights/" + route + "/")
                 .queryParam("type", tripType)
                 .queryParam("adults", adults)
                 .queryParam("cabinClass", cabinClass != null ? cabinClass : "ECONOMY")
@@ -37,6 +28,17 @@ public class BookingDeepLinkBuilder {
             builder.queryParam("return", returnDate);
         }
         return builder.build().toUriString();
+    }
+
+    /**
+     * @deprecated Use {@link #buildFlightSearchUrl(String, String, String, String, String, String, int)}.
+     * The token accepted here is an API token, not a reliable public Booking.com URL token.
+     */
+    @Deprecated
+    public static String buildFlightUrl(String token, String origin, String dest,
+                                  String departDate, String returnDate,
+                                  String tripType, String cabinClass, int adults) {
+        return buildFlightSearchUrl(origin, dest, departDate, returnDate, tripType, cabinClass, adults);
     }
 
     /**

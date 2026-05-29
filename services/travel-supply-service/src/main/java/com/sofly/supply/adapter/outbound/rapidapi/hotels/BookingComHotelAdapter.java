@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sofly.supply.adapter.outbound.rapidapi.BookingDeepLinkBuilder;
 import com.sofly.supply.adapter.outbound.rapidapi.RapidApiJsonUtils;
+import com.sofly.supply.application.dto.HotelDetailsRequest;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.port.outbound.HotelSupplierPort;
 import lombok.RequiredArgsConstructor;
@@ -73,6 +74,46 @@ public class BookingComHotelAdapter implements HotelSupplierPort {
         JsonNode root = RapidApiJsonUtils.parseJson(response);
         injectHotelDeepLinks(root, request);
         return root;
+    }
+
+    @Cacheable(
+            value = "bookingHotelDetails",
+            key = "#request",
+            unless = "#result == null || #result.path('status').asBoolean() == false || #result.path('data').isMissingNode()"
+    )
+    @Override
+    public JsonNode getHotelDetails(HotelDetailsRequest request) {
+        String response = rapidApiWebClient.get()
+                .uri(urlBuilder -> {
+                    var builder = urlBuilder
+                            .path("/api/v1/hotels/getHotelDetails")
+                            .queryParam("hotel_id", request.getHotelId())
+                            .queryParam("arrival_date", request.getArrivalDate())
+                            .queryParam("departure_date", request.getDepartureDate());
+
+                    if (request.getAdults() != null)
+                        builder.queryParam("adults", request.getAdults());
+                    if (request.getChildrenAge() != null)
+                        builder.queryParam("children_age", request.getChildrenAge());
+                    if (request.getRoomQty() != null)
+                        builder.queryParam("room_qty", request.getRoomQty());
+                    if (request.getUnits() != null)
+                        builder.queryParam("units", request.getUnits().name().toLowerCase());
+                    if (request.getTemperatureUnit() != null)
+                        builder.queryParam("temperature_unit", request.getTemperatureUnit().getValue());
+                    if (request.getLanguageCode() != null)
+                        builder.queryParam("languagecode", request.getLanguageCode());
+                    if (request.getCurrencyCode() != null)
+                        builder.queryParam("currency_code", request.getCurrencyCode());
+
+                    return builder.build();
+                })
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        if (response == null) return RapidApiJsonUtils.nullNode();
+        return RapidApiJsonUtils.parseJson(response);
     }
 
     /**

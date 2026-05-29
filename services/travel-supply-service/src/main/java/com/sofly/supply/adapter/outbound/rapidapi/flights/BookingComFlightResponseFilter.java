@@ -18,7 +18,7 @@ class BookingComFlightResponseFilter {
 
     private BookingComFlightResponseFilter() {}
 
-    static JsonNode filter(JsonNode root, List<String> airlineFilter) {
+    static JsonNode filter(JsonNode root, List<String> airlineFilter, int adults) {
         ObjectNode result = MAPPER.createObjectNode();
         result.put("status", root.path("status").asBoolean());
 
@@ -29,7 +29,7 @@ class BookingComFlightResponseFilter {
         Map<String, ObjectNode> availableAirlines = extractAvailableAirlines(allOffers);
 
         ObjectNode filteredData = MAPPER.createObjectNode();
-        filteredData.set("flightOffers", filterOffers(allOffers, airlineFilter));
+        filteredData.set("flightOffers", filterOffers(allOffers, airlineFilter, adults));
         filteredData.set("aggregation", buildAggregation(data.path("aggregation").path("totalCount").asLong(), availableAirlines, null));
         result.set("data", filteredData);
         return result;
@@ -83,7 +83,11 @@ class BookingComFlightResponseFilter {
     }
 
     static ObjectNode mapOffer(JsonNode offer) {
-        return filterOffer(offer);
+        return mapOffer(offer, 1);
+    }
+
+    static ObjectNode mapOffer(JsonNode offer, int adults) {
+        return filterOffer(offer, adults);
     }
 
     private static ObjectNode buildAggregation(long totalCount, Map<String, ObjectNode> availableAirlines,
@@ -97,20 +101,20 @@ class BookingComFlightResponseFilter {
         return node;
     }
 
-    private static ArrayNode filterOffers(JsonNode offers, List<String> airlineFilter) {
+    private static ArrayNode filterOffers(JsonNode offers, List<String> airlineFilter, int adults) {
         ArrayNode result = MAPPER.createArrayNode();
         Set<String> filterSet = airlineFilter != null && !airlineFilter.isEmpty()
                 ? new java.util.HashSet<>(airlineFilter)
                 : null;
         for (JsonNode offer : offers) {
             if (filterSet == null || matchesAirlineFilter(offer, filterSet)) {
-                result.add(filterOffer(offer));
+                result.add(filterOffer(offer, adults));
             }
         }
         return result;
     }
 
-    private static ObjectNode filterOffer(JsonNode offer) {
+    private static ObjectNode filterOffer(JsonNode offer, int adults) {
         ObjectNode node = MAPPER.createObjectNode();
 
         String token = offer.path("token").asText();
@@ -120,7 +124,8 @@ class BookingComFlightResponseFilter {
         node.put("tripType", tripType);
         node.put("offerKeyToHighlight", offer.path("offerKeyToHighlight").asText());
 
-        // 예약 딥링크 생성
+        // Public Booking.com links use a different, session-sensitive token than RapidAPI details.
+        // Send users to the matching search result page instead of constructing a tokenized offer URL.
         JsonNode segments = offer.path("segments");
         if (!segments.isEmpty()) {
             JsonNode firstSeg = segments.get(0);
@@ -134,9 +139,9 @@ class BookingComFlightResponseFilter {
                     : null;
             String cabinClass = extractCabinClass(offer);
 
-            if (!token.isEmpty() && !origin.isEmpty() && !dest.isEmpty() && departDate != null) {
-                String bookingUrl = BookingDeepLinkBuilder.buildFlightUrl(
-                        token, origin, dest, departDate, returnDate, tripType, cabinClass, 1);
+            if (!origin.isEmpty() && !dest.isEmpty() && departDate != null) {
+                String bookingUrl = BookingDeepLinkBuilder.buildFlightSearchUrl(
+                        origin, dest, departDate, returnDate, tripType, cabinClass, adults);
                 node.put("bookingUrl", bookingUrl);
             }
         }

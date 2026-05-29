@@ -3,6 +3,7 @@ package com.sofly.core.domain.hotel.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.core.global.client.SupplyClient;
 import com.sofly.core.global.client.dto.HotelDestination;
+import com.sofly.core.global.client.dto.HotelDetailsRequest;
 import com.sofly.core.global.client.dto.HotelOptionsRequest;
 import com.sofly.core.global.client.dto.HotelSearchRequest;
 import com.sofly.core.global.client.dto.HotelSortOption;
@@ -23,6 +24,14 @@ public class HotelService {
     public JsonNode searchHotels(String supplier, HotelSearchRequest request) {
         try {
             return supplyClient.searchHotels(supplier, request);
+        } catch (FeignException e) {
+            throw new SoflyException(ErrorCode.SUPPLY_SERVICE_ERROR, e.getMessage());
+        }
+    }
+
+    public JsonNode getHotelDetails(String supplier, HotelDetailsRequest request) {
+        try {
+            return supplyClient.getHotelDetails(supplier, request);
         } catch (FeignException e) {
             throw new SoflyException(ErrorCode.SUPPLY_SERVICE_ERROR, e.getMessage());
         }
