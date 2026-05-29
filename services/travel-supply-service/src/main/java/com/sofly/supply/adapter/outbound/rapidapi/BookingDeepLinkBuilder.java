@@ -69,9 +69,10 @@ public class BookingDeepLinkBuilder {
     /** "The Taj Mahal Tower, Mumbai" → "the-taj-mahal-tower-mumbai" */
     private static String slugify(String name) {
         if (name == null) return "hotel";
-        return name.toLowerCase()
+        String slug = name.toLowerCase()
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .trim()
                 .replaceAll("\\s+", "-");
+        return slug.isEmpty() ? "hotel" : slug;
     }
 }

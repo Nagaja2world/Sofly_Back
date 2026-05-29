@@ -127,7 +127,7 @@ class BookingComFlightResponseFilter {
         // Public Booking.com links use a different, session-sensitive token than RapidAPI details.
         // Send users to the matching search result page instead of constructing a tokenized offer URL.
         JsonNode segments = offer.path("segments");
-        if (!segments.isEmpty()) {
+        if (segments.isArray() && !segments.isEmpty()) {
             JsonNode firstSeg = segments.get(0);
             JsonNode lastSeg = segments.get(segments.size() - 1);
 
@@ -219,7 +219,7 @@ class BookingComFlightResponseFilter {
     /** 첫 번째 leg의 cabinClass 반환, 없으면 "ECONOMY" */
     private static String extractCabinClass(JsonNode offer) {
         JsonNode legs = offer.path("segments").path(0).path("legs");
-        if (!legs.isEmpty()) {
+        if (legs.isArray() && !legs.isEmpty()) {
             String cabin = legs.get(0).path("cabinClass").asText();
             if (!cabin.isEmpty()) return cabin;
         }
