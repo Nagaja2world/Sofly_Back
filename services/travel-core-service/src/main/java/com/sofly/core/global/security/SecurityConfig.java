@@ -65,6 +65,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET,
                         "/api/sns/workspaces/search",
+                        "/api/sns/workspaces/trending-destinations",
                         "/api/sns/workspaces/*/comments",
                         "/api/sns/users/*/profile",
                         "/api/sns/users/*/follow-stats"
