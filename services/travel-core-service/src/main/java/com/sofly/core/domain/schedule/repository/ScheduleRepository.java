@@ -35,4 +35,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
            "WHERE s.workspace.id = :workspaceId " +
            "ORDER BY s.version DESC")
     List<Schedule> findAllWithItemsByWorkspaceId(@Param("workspaceId") Long workspaceId);
+
+    @Query("SELECT s.workspace.id FROM Schedule s WHERE s.id = :scheduleId")
+    Optional<Long> findWorkspaceIdById(@Param("scheduleId") Long scheduleId);
 }

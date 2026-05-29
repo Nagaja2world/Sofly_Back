@@ -8,9 +8,12 @@ import com.sofly.core.domain.schedule.repository.ScheduleRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember;
+import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
+import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
+import com.sofly.core.global.security.util.SecurityUtils;
 import com.sofly.core.global.security.workspace.RequireWorkspaceMember;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class ScheduleService {
 
     // 워크스페이스 일정 버전 목록
     public List<ScheduleSummaryResponse> getSchedulesByWorkspace(Long workspaceId) {
+        requireReadAccess(workspaceId);
         return scheduleRepository.findSummariesByWorkspaceId(workspaceId);
     }
 
@@ -42,11 +46,13 @@ public class ScheduleService {
     public ScheduleResponse getSchedule(Long scheduleId) {
         Schedule schedule = scheduleRepository.findByIdWithItems(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        requireReadAccess(schedule.getWorkspace().getId());
         return ScheduleResponse.from(schedule);
     }
 
     // 워크스페이스 최신 버전 일정
     public ScheduleResponse getLatestSchedule(Long workspaceId) {
+        requireReadAccess(workspaceId);
         Schedule schedule = scheduleRepository.findTopByWorkspaceIdOrderByVersionDesc(workspaceId)
                 .orElseThrow(() -> new EntityNotFoundException("No schedule found for workspace: " + workspaceId));
         // items 패치 (findTop은 items 미포함)
@@ -58,6 +64,7 @@ public class ScheduleService {
     // 새 일정 생성 (AI 결과 저장 또는 수동 생성)
     @Transactional
     public ScheduleResponse createSchedule(ScheduleCreateRequest request) {
+        requireEditorOrAbove(request.workspaceId());
         Workspace workspace = workspaceRepository.findById(request.workspaceId())
                 .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + request.workspaceId()));
 
@@ -86,6 +93,7 @@ public class ScheduleService {
     public ScheduleResponse forkSchedule(Long scheduleId, String newTitle) {
         Schedule origin = scheduleRepository.findByIdWithItems(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        requireEditorOrAbove(origin.getWorkspace().getId());
 
         int nextVersion = scheduleRepository.findMaxVersionByWorkspaceId(
                 origin.getWorkspace().getId()) + 1;
@@ -128,6 +136,7 @@ public class ScheduleService {
     public ScheduleResponse updateScheduleTitle(Long scheduleId, String title) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        requireEditorOrAbove(schedule.getWorkspace().getId());
         schedule.updateTitle(title);
         return getSchedule(scheduleId);
     }
@@ -135,6 +144,7 @@ public class ScheduleService {
     // 아이템 단건 수정 (visitTime, memo, category)
     @Transactional
     public ScheduleItemResponse updateItem(Long scheduleId, Long itemId, ScheduleItemUpdateRequest request) {
+        requireEditorOrAboveBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.update(
@@ -155,6 +165,7 @@ public class ScheduleService {
     public ScheduleItemResponse addItem(Long scheduleId, ScheduleItemCreateRequest request) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        requireEditorOrAbove(schedule.getWorkspace().getId());
 
         // 해당 일차의 맨 마지막 순서로 추가
         int nextOrder = scheduleItemRepository
@@ -184,6 +195,7 @@ public class ScheduleService {
     // 아이템 카테고리만 수정
     @Transactional
     public ScheduleItemResponse updateItemCategory(Long scheduleId, Long itemId, ScheduleItem.Category category) {
+        requireEditorOrAboveBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.updateCategory(category);
@@ -193,6 +205,7 @@ public class ScheduleService {
     // D&D 단일 아이템 이동 (프론트는 itemId + targetDay + targetOrderIndex만 전송)
     @Transactional
     public void moveItem(Long scheduleId, Long itemId, ScheduleItemMoveRequest request) {
+        requireEditorOrAboveBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
 
@@ -225,6 +238,7 @@ public class ScheduleService {
     // 아이템 단건 삭제
     @Transactional
     public void deleteItem(Long scheduleId, Long itemId) {
+        requireEditorOrAboveBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         scheduleItemRepository.delete(item);
@@ -235,6 +249,7 @@ public class ScheduleService {
     public void deleteSchedule(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        requireEditorOrAbove(schedule.getWorkspace().getId());
         scheduleRepository.delete(schedule);  // orphanRemoval로 items도 cascade 삭제
     }
 
@@ -310,5 +325,36 @@ public class ScheduleService {
                 item.getPhotoReference(),
                 item.getVisitTime()
         );
+    }
+
+    // ── 권한 체크 헬퍼 ──────────────────────────────────────
+
+    /** PUBLIC 워크스페이스는 누구나 읽을 수 있고, PRIVATE는 멤버만 읽을 수 있다. */
+    private void requireReadAccess(Long workspaceId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + workspaceId));
+        if (workspace.getVisibility() == WorkspaceVisibility.PUBLIC) return;
+        Long userId = SecurityUtils.getCurrentUserId();
+        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
+        }
+    }
+
+    /** 쓰기 작업: 항상 EDITOR 이상(OWNER/EDITOR) 멤버여야 한다. */
+    private void requireEditorOrAbove(Long workspaceId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        WorkspaceMember member = workspaceMemberRepository
+                .findByWorkspaceIdAndUserId(workspaceId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN));
+        if (member.getRole() == MemberRole.VIEWER) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
+        }
+    }
+
+    /** scheduleId로 workspaceId를 조회한 뒤 EDITOR 이상 체크 */
+    private void requireEditorOrAboveBySchedule(Long scheduleId) {
+        Long workspaceId = scheduleRepository.findWorkspaceIdById(scheduleId)
+                .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
+        requireEditorOrAbove(workspaceId);
     }
 }

@@ -11,8 +11,12 @@ import com.sofly.core.domain.schedule.dto.ScheduleCreateRequest;
 import com.sofly.core.domain.schedule.dto.ScheduleItemCreateRequest;
 import com.sofly.core.domain.schedule.dto.ScheduleResponse;
 import com.sofly.core.domain.schedule.service.ScheduleService;
+import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
+import com.sofly.core.domain.workspace.exception.WorkspaceException;
+import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.ai.memory.RdbChatMemory;
+import com.sofly.core.global.security.util.SecurityUtils;
 import com.sofly.core.global.ai.tools.PlaceVerificationTools;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
@@ -39,6 +43,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final PlaceVerificationTools placeVerificationTools;
     private final ScheduleService scheduleService;
     private final ObjectMapper objectMapper;
@@ -48,6 +53,7 @@ public class ChatService {
     public ChatRoomSummaryResponse createChatRoom(ChatRoomCreateRequest request) {
         workspaceRepository.findById(request.workspaceId())
                 .orElseThrow(() -> new SoflyException(ErrorCode.WORKSPACE_NOT_FOUND));
+        requireMember(request.workspaceId());
 
         ChatRoom room = ChatRoom.builder()
                 .workspaceId(request.workspaceId())
@@ -62,6 +68,7 @@ public class ChatService {
     public ChatResponse chat(Long roomId, ChatRequest request) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+        requireMember(room.getWorkspaceId());
 
         String conversationId = "room:" + roomId;
 
@@ -89,7 +96,7 @@ public class ChatService {
     public ChatRoomSummaryResponse updateChatRoomTitle(Long roomId, ChatRoomUpdateRequest request) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
+        requireMember(room.getWorkspaceId());
         room.updateTitle(request.title());
         return ChatRoomSummaryResponse.from(room);
     }
@@ -97,9 +104,9 @@ public class ChatService {
     // ChatRoom 삭제 (메시지 + AI 메모리 포함)
     @Transactional
     public void deleteChatRoom(Long roomId) {
-        chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
+        requireMember(room.getWorkspaceId());
         rdbChatMemory.clear("room:" + roomId);
         chatRoomRepository.deleteById(roomId);
     }
@@ -107,6 +114,7 @@ public class ChatService {
     // 워크스페이스 소속 ChatRoom 목록 (왼쪽 탭용)
     @Transactional(readOnly = true)
     public List<ChatRoomSummaryResponse> getChatRooms(Long workspaceId) {
+        requireMember(workspaceId);
         return chatRoomRepository.findByWorkspaceIdOrderByIdDesc(workspaceId)
                 .stream()
                 .map(ChatRoomSummaryResponse::from)
@@ -115,8 +123,9 @@ public class ChatService {
 
     // 메시지 스트리밍 (SSE용) — 청크 단위 Flux<String> 반환
     public Flux<String> chatStream(Long roomId, ChatRequest request) {
-        chatRoomRepository.findById(roomId)
+        ChatRoom streamRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+        requireMember(streamRoom.getWorkspaceId());
 
         String conversationId = "room:" + roomId;
 
@@ -143,6 +152,7 @@ public class ChatService {
     // AI 확정 JSON → Schedule 저장
     @Transactional
     public ScheduleResponse saveScheduleFromChat(Long roomId, Long workspaceId) {
+        requireMember(workspaceId);
         ChatMessage lastAssistantMessage = chatMessageRepository
                 .findTopByChatRoomIdAndRoleOrderByCreatedAtDesc(roomId, ChatMessage.Role.ASSISTANT)
                 .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_MESSAGE_NOT_FOUND));
@@ -197,11 +207,20 @@ public class ChatService {
         }
     }
 
+    /** 현재 사용자가 해당 워크스페이스의 멤버인지 검증 */
+    private void requireMember(Long workspaceId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
+        }
+    }
+
     // 특정 ChatRoom의 메시지 전체 (채팅창 진입 시)
     @Transactional(readOnly = true)
     public ChatHistoryResponse getChatRoomMessages(Long roomId) {
-        chatRoomRepository.findById(roomId)
+        ChatRoom msgRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+        requireMember(msgRoom.getWorkspaceId());
 
         return new ChatHistoryResponse(
                 roomId,
