@@ -12,6 +12,8 @@ import com.sofly.core.domain.schedule.dto.ScheduleItemCreateRequest;
 import com.sofly.core.domain.schedule.dto.ScheduleResponse;
 import com.sofly.core.domain.schedule.service.ScheduleService;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
+import com.sofly.core.domain.workspace.entity.WorkspaceMember;
+import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
@@ -207,10 +209,13 @@ public class ChatService {
         }
     }
 
-    /** 현재 사용자가 해당 워크스페이스의 멤버인지 검증 */
+    /** EDITOR 이상(OWNER/EDITOR)만 허용, VIEWER와 비멤버는 거부 */
     private void requireMember(Long workspaceId) {
         Long userId = SecurityUtils.getCurrentUserId();
-        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+        WorkspaceMember member = workspaceMemberRepository
+                .findByWorkspaceIdAndUserId(workspaceId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN));
+        if (member.getRole() == MemberRole.VIEWER) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
         }
     }

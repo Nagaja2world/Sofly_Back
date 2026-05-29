@@ -7,6 +7,8 @@ import com.sofly.core.domain.schedule.repository.ScheduleItemRepository;
 import com.sofly.core.domain.schedule.repository.ScheduleRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
 import com.sofly.core.domain.workspace.entity.Workspace;
+import com.sofly.core.domain.workspace.entity.WorkspaceMember;
+import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
 import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
@@ -338,15 +340,18 @@ public class ScheduleService {
         }
     }
 
-    /** 쓰기 작업: 워크스페이스 멤버(OWNER/EDITOR/VIEWER)면 허용, 비멤버는 거부 */
+    /** 쓰기 작업: EDITOR 이상(OWNER/EDITOR)만 허용, VIEWER와 비멤버는 거부 */
     private void requireMember(Long workspaceId) {
         Long userId = SecurityUtils.getCurrentUserId();
-        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
+        WorkspaceMember member = workspaceMemberRepository
+                .findByWorkspaceIdAndUserId(workspaceId, userId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN));
+        if (member.getRole() == MemberRole.VIEWER) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
         }
     }
 
-    /** scheduleId로 workspaceId를 조회한 뒤 멤버 체크 */
+    /** scheduleId로 workspaceId를 조회한 뒤 EDITOR 이상 체크 */
     private void requireMemberBySchedule(Long scheduleId) {
         Long workspaceId = scheduleRepository.findWorkspaceIdById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
