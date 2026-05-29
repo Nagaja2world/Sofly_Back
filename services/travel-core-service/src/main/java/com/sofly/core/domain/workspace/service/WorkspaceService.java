@@ -383,6 +383,7 @@ public class WorkspaceService {
                 .personalItemIncluded(request.getPersonalItemIncluded())
                 .bookingToken(request.getBookingToken())
                 .offerReference(request.getOfferReference())
+                .deepLinkUrl(request.getDeepLinkUrl())
                 .flightType(request.getFlightType())
                 .build();
 
@@ -435,7 +436,7 @@ public class WorkspaceService {
                 request.getTotalPrice(), request.getBaseFare(), request.getTax(), request.getPlatformFee(), request.getCurrencyCode(),
                 request.getCheckedBaggageKg(), request.getCheckedBaggagePiece(), request.getCabinBaggageKg(),
                 request.getPersonalItemIncluded(), request.getBookingToken(), request.getOfferReference(),
-                request.getFlightType()
+                request.getDeepLinkUrl(), request.getFlightType()
         );
 
         return SavedFlightResponse.from(flight);

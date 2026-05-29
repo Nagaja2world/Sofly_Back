@@ -58,6 +58,7 @@ public class SaveFlightRequest {
 
     private String bookingToken;
     private String offerReference;
+    private String deepLinkUrl;
 
     @NotNull
     private FlightType flightType;

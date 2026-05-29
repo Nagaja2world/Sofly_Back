@@ -44,7 +44,11 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
         if (airlineFilter.isEmpty()) {
             String response = fetchPage(request, request.getPageNo());
             if (response == null) return RapidApiJsonUtils.nullNode();
-            return BookingComFlightResponseFilter.filter(RapidApiJsonUtils.parseJson(response), List.of());
+            return BookingComFlightResponseFilter.filter(
+                    RapidApiJsonUtils.parseJson(response),
+                    List.of(),
+                    request.getAdults() != null ? request.getAdults() : 1
+            );
         }
 
         return fetchFilteredUntilFull(request, airlineFilter);
@@ -94,7 +98,7 @@ public class BookingComFlightSupplierAdapter implements FlightSupplierPort {
             int offsetInPage = (pageNo == startPage) ? startOffset : 0;
             for (int i = offsetInPage; i < offers.size(); i++) {
                 if (BookingComFlightResponseFilter.matchesAirlineFilter(offers.get(i), filterSet)) {
-                    collected.add(BookingComFlightResponseFilter.mapOffer(offers.get(i)));
+                    collected.add(BookingComFlightResponseFilter.mapOffer(offers.get(i), request.getAdults() != null ? request.getAdults() : 1));
                     if (collected.size() >= BookingComFlightResponseFilter.PAGE_SIZE) {
                         nextPageCursor = (i + 1 < offers.size())
                                 ? pageNo + ":" + (i + 1)

@@ -41,6 +41,7 @@ public class UpdateFlightRequest {
 
     private String bookingToken;
     private String offerReference;
+    private String deepLinkUrl;
 
     private FlightType flightType;
 }

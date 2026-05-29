@@ -2,6 +2,7 @@ package com.sofly.supply.adapter.inbound.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.application.dto.HotelDestination;
+import com.sofly.supply.application.dto.HotelDetailsRequest;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
@@ -39,7 +40,15 @@ public class HotelSearchController {
         binder.registerCustomEditor(HotelSearchRequest.TemperatureUnit.class, new PropertyEditorSupport() {
             @Override
             public void setAsText(String text) {
-                setValue(text == null || text.isBlank() ? null : HotelSearchRequest.TemperatureUnit.valueOf(text.toUpperCase()));
+                if (text == null || text.isBlank()) {
+                    setValue(null);
+                    return;
+                }
+                setValue("c".equalsIgnoreCase(text)
+                        ? HotelSearchRequest.TemperatureUnit.CELSIUS
+                        : "f".equalsIgnoreCase(text)
+                        ? HotelSearchRequest.TemperatureUnit.FAHRENHEIT
+                        : HotelSearchRequest.TemperatureUnit.valueOf(text.toUpperCase()));
             }
         });
     }
@@ -52,6 +61,16 @@ public class HotelSearchController {
             @ParameterObject @ModelAttribute HotelSearchRequest request
     ) {
         return hotelSearchService.search(supplier, request);
+    }
+
+    @Operation(summary = "호텔 상세 조회", description = "검색 응답의 hotel_id로 호텔 상세/객실/가격 정보를 조회합니다. 기본값: booking")
+    @GetMapping("/details")
+    public JsonNode details(
+            @Parameter(description = "공급자 키 (booking)", example = "booking")
+            @RequestParam(required = false) String supplier,
+            @ParameterObject @ModelAttribute HotelDetailsRequest request
+    ) {
+        return hotelSearchService.getHotelDetails(supplier, request);
     }
 
     @Operation(summary = "호텔 목적지 검색", description = "도시/지역명으로 dest_id와 search_type을 조회합니다. 호텔 검색 전에 먼저 호출하세요. 반환값에서 dest_id와 dest_type을 사용하면 됩니다.")

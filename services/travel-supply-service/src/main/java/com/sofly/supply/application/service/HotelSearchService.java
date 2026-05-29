@@ -2,6 +2,7 @@ package com.sofly.supply.application.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sofly.supply.application.dto.HotelDestination;
+import com.sofly.supply.application.dto.HotelDetailsRequest;
 import com.sofly.supply.application.dto.HotelOptionsRequest;
 import com.sofly.supply.application.dto.HotelSearchRequest;
 import com.sofly.supply.application.dto.HotelSortOption;
@@ -23,6 +24,10 @@ public class HotelSearchService {
 
     public JsonNode search(String supplier, HotelSearchRequest request) {
         return router.selectHotelSupplier(supplier).searchHotelsByCity(request);
+    }
+
+    public JsonNode getHotelDetails(String supplier, HotelDetailsRequest request) {
+        return router.selectHotelSupplier(supplier).getHotelDetails(request);
     }
 
     public List<HotelDestination> searchDestination(String query) {
