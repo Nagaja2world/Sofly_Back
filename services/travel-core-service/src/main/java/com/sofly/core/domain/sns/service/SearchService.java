@@ -3,6 +3,7 @@ package com.sofly.core.domain.sns.service;
 import com.sofly.core.domain.schedule.repository.ScheduleRepository;
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
 import com.sofly.core.domain.sns.dto.ScheduleSummary;
+import com.sofly.core.domain.sns.dto.TrendingDestinationResponse;
 import com.sofly.core.domain.sns.exception.SnsException;
 import com.sofly.core.domain.sns.repository.WorkspaceCommentRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceLikeRepository;
@@ -13,10 +14,13 @@ import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -103,6 +107,29 @@ public class SearchService {
         return keyword.replace("\\", "\\\\")
                       .replace("%", "\\%")
                       .replace("_", "\\_");
+    }
+
+    /** 요즘 뜨는 여행지 Top 10 — 최근 30일 PUBLIC 워크스페이스 기준, 데이터 부족 시 전체 기간 사용 */
+    public List<TrendingDestinationResponse> getTrendingDestinations() {
+        Pageable top10 = PageRequest.of(0, 10);
+        LocalDateTime since = LocalDateTime.now().minusDays(30);
+
+        List<Object[]> rows = workspaceRepository.findTrendingDestinations(since, top10);
+        if (rows.size() < 3) {
+            rows = workspaceRepository.findTrendingDestinationsAllTime(top10);
+        }
+
+        List<TrendingDestinationResponse> result = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            Object[] row = rows.get(i);
+            result.add(new TrendingDestinationResponse(
+                    i + 1,
+                    (String) row[0],
+                    (String) row[1],
+                    (Long) row[2]
+            ));
+        }
+        return result;
     }
 
     private String normalizeCountryCode(String countryCode) {

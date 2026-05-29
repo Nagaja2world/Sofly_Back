@@ -69,4 +69,21 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     Page<Workspace> searchPublicByKeyword(@Param("countryCode") String countryCode,
                                           @Param("keyword") String keyword,
                                           Pageable pageable);
+
+    @Query("SELECT w.destination, w.countryCode, COUNT(w) as cnt " +
+           "FROM Workspace w " +
+           "WHERE w.visibility = 'PUBLIC' " +
+           "AND w.destination IS NOT NULL " +
+           "AND w.createdAt >= :since " +
+           "GROUP BY w.destination, w.countryCode " +
+           "ORDER BY cnt DESC")
+    List<Object[]> findTrendingDestinations(@Param("since") LocalDateTime since, Pageable pageable);
+
+    @Query("SELECT w.destination, w.countryCode, COUNT(w) as cnt " +
+           "FROM Workspace w " +
+           "WHERE w.visibility = 'PUBLIC' " +
+           "AND w.destination IS NOT NULL " +
+           "GROUP BY w.destination, w.countryCode " +
+           "ORDER BY cnt DESC")
+    List<Object[]> findTrendingDestinationsAllTime(Pageable pageable);
 }
