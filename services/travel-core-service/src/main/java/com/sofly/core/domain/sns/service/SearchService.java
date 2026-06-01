@@ -89,6 +89,7 @@ public class SearchService {
                 commentCounts.getOrDefault(workspace.getId(), 0L),
                 isLiked,
                 null,
+                null,
                 null);
     }
 

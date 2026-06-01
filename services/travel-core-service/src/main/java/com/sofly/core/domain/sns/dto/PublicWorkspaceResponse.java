@@ -28,13 +28,15 @@ public class PublicWorkspaceResponse {
     private LocalDateTime createdAt;
     private Long snsPostId;
     private String snsFirstImageUrl;
+    private String snsPostContent;
 
     public static PublicWorkspaceResponse of(Workspace workspace,
                                               long likeCount,
                                               long commentCount,
                                               Boolean isLiked,
                                               Long snsPostId,
-                                              String snsFirstImageUrl) {
+                                              String snsFirstImageUrl,
+                                              String snsPostContent) {
         return PublicWorkspaceResponse.builder()
                 .id(workspace.getId())
                 .title(workspace.getTitle())
@@ -52,6 +54,7 @@ public class PublicWorkspaceResponse {
                 .createdAt(workspace.getCreatedAt())
                 .snsPostId(snsPostId)
                 .snsFirstImageUrl(snsFirstImageUrl)
+                .snsPostContent(snsPostContent)
                 .build();
     }
 }

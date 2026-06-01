@@ -69,13 +69,15 @@ public class FeedService {
                     Long snsPostId = snsPost != null ? snsPost.getId() : null;
                     String snsFirstImageUrl = (snsPost != null && !snsPost.getImages().isEmpty())
                             ? snsPost.getImages().get(0).getUrl() : null;
+                    String snsPostContent = snsPost != null ? snsPost.getContent() : null;
                     return PublicWorkspaceResponse.of(
                             w,
                             likeCounts.getOrDefault(w.getId(), 0L),
                             commentCounts.getOrDefault(w.getId(), 0L),
                             likedByUser.contains(w.getId()),
                             snsPostId,
-                            snsFirstImageUrl);
+                            snsFirstImageUrl,
+                            snsPostContent);
                 })
                 .toList();
 

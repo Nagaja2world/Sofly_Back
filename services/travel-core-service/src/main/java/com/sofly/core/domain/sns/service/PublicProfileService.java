@@ -81,6 +81,7 @@ public class PublicProfileService {
                     commentCounts.getOrDefault(w.getId(), 0L),
                     isLiked,
                     null,
+                    null,
                     null);
         }).toList();
 
