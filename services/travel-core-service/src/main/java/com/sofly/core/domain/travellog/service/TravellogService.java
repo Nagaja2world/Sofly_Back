@@ -93,6 +93,7 @@ public class TravellogService {
                 .author(author)
                 .build();
 
+        workspace.touch();
         return TravellogResponse.from(travellogRepository.save(travelLog));
     }
 
@@ -108,6 +109,7 @@ public class TravellogService {
             throw new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND);
         }
 
+        travelLog.getWorkspace().touch();
         travelLog.update(request);
         return TravellogResponse.from(travelLog);
     }
@@ -124,6 +126,7 @@ public class TravellogService {
             throw new SoflyException(ErrorCode.TRAVEL_LOG_NOT_FOUND);
         }
 
+        travelLog.getWorkspace().touch();
         travellogRepository.delete(travelLog);
     }
 
@@ -199,6 +202,7 @@ public class TravellogService {
                 .filter(p -> !existingPhotoIds.contains(p.getId()))
                 .forEach(travelLog::addPhoto);
 
+        travelLog.getWorkspace().touch();
         return TravellogResponse.from(travelLog);
     }
 }

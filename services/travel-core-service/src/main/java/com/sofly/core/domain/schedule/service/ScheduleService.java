@@ -87,6 +87,7 @@ public class ScheduleService {
         schedule.getItems().addAll(items);
         scheduleRepository.save(schedule);
 
+        workspace.touch();
         return ScheduleResponse.from(schedule);
     }
 
@@ -128,6 +129,7 @@ public class ScheduleService {
         forked.getItems().addAll(copiedItems);
         scheduleRepository.save(forked);
 
+        origin.getWorkspace().touch();
         return ScheduleResponse.from(forked);
     }
 
@@ -140,13 +142,14 @@ public class ScheduleService {
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
         requireMember(schedule.getWorkspace().getId());
         schedule.updateTitle(title);
+        schedule.getWorkspace().touch();
         return getSchedule(scheduleId);
     }
 
     // 아이템 단건 수정 (visitTime, memo, category)
     @Transactional
     public ScheduleItemResponse updateItem(Long scheduleId, Long itemId, ScheduleItemUpdateRequest request) {
-        requireMemberBySchedule(scheduleId);
+        Long workspaceId = requireMemberBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.update(
@@ -158,7 +161,7 @@ public class ScheduleService {
                 request.name()
         );
         item.updatePlace(request.placeId(), request.photoReference(), request.latitude(), request.longitude());
-
+        touchWorkspace(workspaceId);
         return ScheduleItemResponse.from(item);
     }
 
@@ -191,23 +194,25 @@ public class ScheduleService {
                 .build();
 
         scheduleItemRepository.save(item);
+        schedule.getWorkspace().touch();
         return ScheduleItemResponse.from(item);
     }
 
     // 아이템 카테고리만 수정
     @Transactional
     public ScheduleItemResponse updateItemCategory(Long scheduleId, Long itemId, ScheduleItem.Category category) {
-        requireMemberBySchedule(scheduleId);
+        Long workspaceId = requireMemberBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         item.updateCategory(category);
+        touchWorkspace(workspaceId);
         return ScheduleItemResponse.from(item);
     }
 
     // D&D 단일 아이템 이동 (프론트는 itemId + targetDay + targetOrderIndex만 전송)
     @Transactional
     public void moveItem(Long scheduleId, Long itemId, ScheduleItemMoveRequest request) {
-        requireMemberBySchedule(scheduleId);
+        Long workspaceId = requireMemberBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
 
@@ -219,20 +224,18 @@ public class ScheduleService {
         if (oldDay == newDay) {
             if (oldIndex == newIndex) return;
             if (oldIndex < newIndex) {
-                // 앞→뒤 이동: 사이 아이템들을 앞으로 당김
                 scheduleItemRepository.shiftOrderIndex(scheduleId, oldDay, oldIndex + 1, newIndex, -1);
             } else {
-                // 뒤→앞 이동: 사이 아이템들을 뒤로 밀기
                 scheduleItemRepository.shiftOrderIndex(scheduleId, oldDay, newIndex, oldIndex - 1, +1);
             }
         } else {
-            // day 간 이동
-            scheduleItemRepository.shiftOrderIndexFrom(scheduleId, oldDay, oldIndex + 1, -1);  // 원래 day 빈 자리 당기기
-            scheduleItemRepository.shiftOrderIndexFrom(scheduleId, newDay, newIndex, +1);       // 새 day 자리 만들기
+            scheduleItemRepository.shiftOrderIndexFrom(scheduleId, oldDay, oldIndex + 1, -1);
+            scheduleItemRepository.shiftOrderIndexFrom(scheduleId, newDay, newIndex, +1);
             item.moveToDay(newDay);
         }
 
         item.updateOrder(newIndex);
+        touchWorkspace(workspaceId);
     }
 
     // ── 삭제 ────────────────────────────────────────────────
@@ -240,10 +243,11 @@ public class ScheduleService {
     // 아이템 단건 삭제
     @Transactional
     public void deleteItem(Long scheduleId, Long itemId) {
-        requireMemberBySchedule(scheduleId);
+        Long workspaceId = requireMemberBySchedule(scheduleId);
         ScheduleItem item = scheduleItemRepository.findByScheduleIdAndId(scheduleId, itemId)
                 .orElseThrow(() -> new EntityNotFoundException("ScheduleItem not found: " + itemId));
         scheduleItemRepository.delete(item);
+        touchWorkspace(workspaceId);
     }
 
     // 일정 전체 삭제
@@ -252,7 +256,8 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
         requireMember(schedule.getWorkspace().getId());
-        scheduleRepository.delete(schedule);  // orphanRemoval로 items도 cascade 삭제
+        schedule.getWorkspace().touch();
+        scheduleRepository.delete(schedule);
     }
 
     // ── 딥링크 ──────────────────────────────────────────────
@@ -354,10 +359,15 @@ public class ScheduleService {
         }
     }
 
-    /** scheduleId로 workspaceId를 조회한 뒤 EDITOR 이상 체크 */
-    private void requireMemberBySchedule(Long scheduleId) {
+    /** scheduleId로 workspaceId를 조회한 뒤 EDITOR 이상 체크, workspaceId 반환 */
+    private Long requireMemberBySchedule(Long scheduleId) {
         Long workspaceId = scheduleRepository.findWorkspaceIdById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found: " + scheduleId));
         requireMember(workspaceId);
+        return workspaceId;
+    }
+
+    private void touchWorkspace(Long workspaceId) {
+        workspaceRepository.findById(workspaceId).ifPresent(w -> w.touch());
     }
 }

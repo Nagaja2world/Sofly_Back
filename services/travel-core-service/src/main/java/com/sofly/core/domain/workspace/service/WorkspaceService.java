@@ -390,6 +390,7 @@ public class WorkspaceService {
                 .build();
 
         savedFlightRepository.save(flight);
+        workspace.touch();
 
         // 도착 공항의 국가코드로 워크스페이스 countryCode 자동 업데이트
         airportInfoService.findByIata(request.getArrivalAirport())
@@ -421,7 +422,7 @@ public class WorkspaceService {
 
     @Transactional
     public SavedFlightResponse updateFlight(Long userId, Long workspaceId, Long flightId, UpdateFlightRequest request) {
-        findWorkspaceById(workspaceId);
+        Workspace workspace = findWorkspaceById(workspaceId);
         validateMember(workspaceId, userId);
 
         SavedFlight flight = savedFlightRepository.findByIdAndWorkspaceId(flightId, workspaceId)
@@ -441,6 +442,7 @@ public class WorkspaceService {
                 request.getDeepLinkUrl(), request.getFlightType()
         );
 
+        workspace.touch();
         return SavedFlightResponse.from(flight);
     }
 
@@ -448,13 +450,14 @@ public class WorkspaceService {
 
     @Transactional
     public void deleteFlight(Long userId, Long workspaceId, Long flightId) {
-        findWorkspaceById(workspaceId);
+        Workspace workspace = findWorkspaceById(workspaceId);
         validateMember(workspaceId, userId);
 
         SavedFlight flight = savedFlightRepository.findByIdAndWorkspaceId(flightId, workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.SAVED_FLIGHT_NOT_FOUND));
 
         savedFlightRepository.delete(flight);
+        workspace.touch();
     }
 
     // ── savedPlace ───────────────────────────────────────
