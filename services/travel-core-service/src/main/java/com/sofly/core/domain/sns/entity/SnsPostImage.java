@@ -39,4 +39,8 @@ public class SnsPostImage extends BaseTimeEntity {
                 .orderIndex(orderIndex)
                 .build();
     }
+
+    public void updateOrderIndex(int orderIndex) {
+        this.orderIndex = orderIndex;
+    }
 }

@@ -48,17 +48,22 @@ public class SnsPostController {
     }
 
     @Operation(summary = "SNS 카드 수정",
-               description = "텍스트·공개범위 수정. files 전달 시 기존 이미지 전체 교체.")
+               description = """
+                       텍스트·공개범위 수정 + 이미지 부분/전체 업데이트.
+                       keepImageIds 전달 시: 해당 ID 유지(순서 재정렬) + 나머지 삭제 + files 추가.
+                       keepImageIds 미전달 + files 전달 시: 기존 이미지 전체 교체.
+                       """)
     @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<SnsPostResponse>> updatePost(
             @PathVariable Long workspaceId,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(required = false) List<Long> keepImageIds,
             @RequestParam(required = false) String content,
             @RequestParam(required = false) SnsPost.Visibility visibility) {
         Long userId = SecurityUtils.getCurrentUserId();
         SnsPostUpdateRequest request = new SnsPostUpdateRequest(content, visibility);
         return ResponseEntity.ok(ApiResponse.success(
-                snsPostService.updatePost(workspaceId, userId, files, request)));
+                snsPostService.updatePost(workspaceId, userId, files, keepImageIds, request)));
     }
 
     @Operation(summary = "SNS 카드 삭제", description = "작성자 본인만 삭제 가능. S3 이미지도 함께 삭제됩니다.")

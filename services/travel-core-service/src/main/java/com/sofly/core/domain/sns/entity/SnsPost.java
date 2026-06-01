@@ -68,4 +68,8 @@ public class SnsPost extends BaseTimeEntity {
     public void addImage(SnsPostImage image) {
         this.images.add(image);
     }
+
+    public void removeImage(SnsPostImage image) {
+        this.images.remove(image);
+    }
 }

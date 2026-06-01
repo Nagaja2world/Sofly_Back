@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -78,7 +79,7 @@ public class SnsPostService {
                 .build();
         snsPostRepository.save(post);
 
-        uploadImages(post, workspaceId, files);
+        uploadImages(post, workspaceId, files, 0);
 
         return SnsPostResponse.from(post);
     }
@@ -91,10 +92,16 @@ public class SnsPostService {
         return SnsPostResponse.from(post);
     }
 
-    /** SNS 카드 수정 (텍스트+공개범위 수정, 이미지 추가 또는 전체 교체) */
+    /**
+     * SNS 카드 수정
+     * - keepImageIds 제공 시: 해당 ID 이미지 유지(순서 재정렬) + 나머지 삭제 + newFiles 추가
+     * - keepImageIds 미제공 + newFiles 있으면: 기존 이미지 전체 교체
+     * - 둘 다 없으면: 텍스트·공개범위만 수정
+     */
     @Transactional
     public SnsPostResponse updatePost(Long workspaceId, Long userId,
                                       List<MultipartFile> newFiles,
+                                      List<Long> keepImageIds,
                                       SnsPostUpdateRequest request) {
         validateMember(workspaceId, userId);
         SnsPost post = snsPostRepository.findByWorkspaceId(workspaceId)
@@ -106,16 +113,52 @@ public class SnsPostService {
 
         post.update(request.content(), request.visibility());
 
-        if (newFiles != null && !newFiles.isEmpty()) {
+        boolean hasKeepIds = keepImageIds != null;
+        boolean hasNewFiles = newFiles != null && !newFiles.isEmpty();
+
+        if (hasKeepIds) {
+            // 부분 업데이트: keepImageIds 유지 + 나머지 삭제 + 새 파일 추가
+            if (hasNewFiles) validateFiles(newFiles);
+
+            int totalCount = keepImageIds.size() + (hasNewFiles ? newFiles.size() : 0);
+            if (totalCount > MAX_IMAGES) {
+                throw new SoflyException(ErrorCode.TOO_MANY_FILES);
+            }
+
+            // keepImageIds에 없는 이미지 S3 삭제 후 컬렉션에서 제거
+            List<SnsPostImage> toDelete = post.getImages().stream()
+                    .filter(img -> !keepImageIds.contains(img.getId()))
+                    .toList();
+            toDelete.forEach(img -> {
+                try { s3Service.deleteObject(img.getS3Key()); } catch (Exception e) {
+                    log.warn("SNS 이미지 S3 삭제 실패: {}", img.getS3Key());
+                }
+                post.removeImage(img);
+            });
+
+            // 유지되는 이미지 orderIndex를 keepImageIds 순서로 재정렬
+            Map<Long, SnsPostImage> imageMap = post.getImages().stream()
+                    .collect(java.util.stream.Collectors.toMap(SnsPostImage::getId, img -> img));
+            for (int i = 0; i < keepImageIds.size(); i++) {
+                SnsPostImage img = imageMap.get(keepImageIds.get(i));
+                if (img != null) img.updateOrderIndex(i);
+            }
+
+            // 새 파일 업로드 (유지 이미지 다음 순서로)
+            if (hasNewFiles) {
+                uploadImages(post, workspaceId, newFiles, keepImageIds.size());
+            }
+
+        } else if (hasNewFiles) {
+            // 전체 교체: 기존 이미지 전부 삭제 후 새 파일로 교체
             validateFiles(newFiles);
-            // 기존 이미지 S3 삭제 후 교체
             post.getImages().forEach(img -> {
                 try { s3Service.deleteObject(img.getS3Key()); } catch (Exception e) {
                     log.warn("SNS 이미지 S3 삭제 실패: {}", img.getS3Key());
                 }
             });
             post.clearImages();
-            uploadImages(post, workspaceId, newFiles);
+            uploadImages(post, workspaceId, newFiles, 0);
         }
 
         return SnsPostResponse.from(post);
@@ -158,7 +201,7 @@ public class SnsPostService {
 
     // ── 내부 헬퍼 ──────────────────────────────────────────
 
-    private void uploadImages(SnsPost post, Long workspaceId, List<MultipartFile> files) {
+    private void uploadImages(SnsPost post, Long workspaceId, List<MultipartFile> files, int startIndex) {
         if (files == null || files.isEmpty()) return;
         List<String> uploadedKeys = new ArrayList<>();
         try {
@@ -168,7 +211,7 @@ public class SnsPostService {
                 String s3Key = String.format("sns-posts/%d/%s.%s", workspaceId, UUID.randomUUID(), ext);
                 s3Service.uploadFile(file, s3Key, true);
                 uploadedKeys.add(s3Key);
-                post.addImage(SnsPostImage.of(post, s3Key, s3Service.buildObjectUrl(s3Key), i));
+                post.addImage(SnsPostImage.of(post, s3Key, s3Service.buildObjectUrl(s3Key), startIndex + i));
             }
         } catch (RuntimeException e) {
             for (String key : uploadedKeys) {
