@@ -51,9 +51,10 @@ public class FeedService {
                 .collect(Collectors.toMap(p -> p.getWorkspace().getId(), p -> p, (a, b) -> a));
 
         LocalDateTime recencyCutoff = LocalDateTime.now(ZoneOffset.UTC).minusDays(7);
+        Random random = new Random();
         List<Workspace> sorted = candidates.stream()
-                .sorted(Comparator.comparingLong(
-                        (Workspace w) -> score(w, likeCounts, commentCounts, recencyCutoff)).reversed())
+                .sorted(Comparator.comparingDouble(
+                        (Workspace w) -> scoredWithNoise(w, likeCounts, commentCounts, recencyCutoff, random)).reversed())
                 .toList();
 
         int start = (int) pageable.getOffset();
@@ -104,6 +105,12 @@ public class FeedService {
         long commentCount = commentCounts.getOrDefault(w.getId(), 0L);
         long recencyBonus = (w.getCreatedAt() != null && w.getCreatedAt().isAfter(cutoff)) ? 10L : 0L;
         return likeCount * 3 + commentCount * 2 + recencyBonus;
+    }
+
+    private double scoredWithNoise(Workspace w, Map<Long, Long> likeCounts,
+                                   Map<Long, Long> commentCounts, LocalDateTime cutoff, Random random) {
+        double noise = 1.0 + (random.nextDouble() - 0.5) * 0.4;
+        return score(w, likeCounts, commentCounts, cutoff) * noise;
     }
 
     private Map<Long, Long> toMap(List<Object[]> rows) {
