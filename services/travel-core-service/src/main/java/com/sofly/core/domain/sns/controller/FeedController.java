@@ -22,11 +22,13 @@ public class FeedController {
     private final FeedService feedService;
 
     @Operation(summary = "알고리즘 피드 조회",
-               description = "인증 필수. page는 0부터 시작합니다. 팔로잉+공개 워크스페이스를 score(좋아요×3+댓글×2+최근생성+10) 순 반환.")
+               description = "인증 필수. 공개 워크스페이스를 score 순 반환. " +
+                             "해당 워크스페이스에 SNS 카드가 있으면 snsPostId, snsFirstImageUrl 필드가 포함됩니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<PublicWorkspaceResponse>>> getFeed(
             @PageableDefault(size = 20) Pageable pageable) {
         Long userId = SecurityUtils.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(feedService.getFeed(userId, pageable))));
+        return ResponseEntity.ok(ApiResponse.success(
+                PageResponse.from(feedService.getFeed(userId, pageable))));
     }
 }

@@ -1,6 +1,8 @@
 package com.sofly.core.domain.sns.service;
 
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
+import com.sofly.core.domain.sns.entity.SnsPost;
+import com.sofly.core.domain.sns.repository.SnsPostRepository;
 import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceCommentRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceLikeRepository;
@@ -27,6 +29,7 @@ public class FeedService {
     private final UserFollowRepository userFollowRepository;
     private final WorkspaceLikeRepository workspaceLikeRepository;
     private final WorkspaceCommentRepository workspaceCommentRepository;
+    private final SnsPostRepository snsPostRepository;
 
     public Page<PublicWorkspaceResponse> getFeed(Long userId, Pageable pageable) {
         Pageable bulk = PageRequest.of(0, CANDIDATE_LIMIT, Sort.by("createdAt").descending());
@@ -41,6 +44,15 @@ public class FeedService {
         Set<Long> likedByUser = Set.copyOf(
                 workspaceLikeRepository.findLikedWorkspaceIdsByUserId(userId, ids));
 
+        // SNS 포스트: PUBLIC은 모두, FOLLOWERS_ONLY는 팔로잉 대상만 노출
+        Set<Long> followingIdSet = Set.copyOf(followingIds);
+        List<SnsPost> snsPosts = snsPostRepository.findByWorkspaceIdsWithImages(
+                ids, List.of(SnsPost.Visibility.PUBLIC, SnsPost.Visibility.FOLLOWERS_ONLY));
+        Map<Long, SnsPost> snsPostMap = snsPosts.stream()
+                .filter(p -> p.getVisibility() == SnsPost.Visibility.PUBLIC
+                        || followingIdSet.contains(p.getAuthor().getId()))
+                .collect(Collectors.toMap(p -> p.getWorkspace().getId(), p -> p, (a, b) -> a));
+
         LocalDateTime recencyCutoff = LocalDateTime.now(ZoneOffset.UTC).minusDays(7);
         List<Workspace> sorted = candidates.stream()
                 .sorted(Comparator.comparingLong(
@@ -52,11 +64,19 @@ public class FeedService {
         if (start >= sorted.size()) return new PageImpl<>(List.of(), pageable, sorted.size());
 
         List<PublicWorkspaceResponse> responses = sorted.subList(start, end).stream()
-                .map(w -> PublicWorkspaceResponse.of(
-                        w,
-                        likeCounts.getOrDefault(w.getId(), 0L),
-                        commentCounts.getOrDefault(w.getId(), 0L),
-                        likedByUser.contains(w.getId())))
+                .map(w -> {
+                    SnsPost snsPost = snsPostMap.get(w.getId());
+                    Long snsPostId = snsPost != null ? snsPost.getId() : null;
+                    String snsFirstImageUrl = (snsPost != null && !snsPost.getImages().isEmpty())
+                            ? snsPost.getImages().get(0).getUrl() : null;
+                    return PublicWorkspaceResponse.of(
+                            w,
+                            likeCounts.getOrDefault(w.getId(), 0L),
+                            commentCounts.getOrDefault(w.getId(), 0L),
+                            likedByUser.contains(w.getId()),
+                            snsPostId,
+                            snsFirstImageUrl);
+                })
                 .toList();
 
         return new PageImpl<>(responses, pageable, sorted.size());
@@ -68,6 +88,8 @@ public class FeedService {
 
         if (!followingIds.isEmpty()) {
             workspaceRepository.findPublicByOwnerIds(followingIds, bulk)
+                    .getContent().forEach(w -> { if (seen.add(w.getId())) candidates.add(w); });
+            workspaceRepository.findFollowersOnlyByOwnerIds(followingIds, bulk)
                     .getContent().forEach(w -> { if (seen.add(w.getId())) candidates.add(w); });
         }
 

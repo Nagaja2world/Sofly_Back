@@ -79,7 +79,9 @@ public class PublicProfileService {
                     w,
                     likeCounts.getOrDefault(w.getId(), 0L),
                     commentCounts.getOrDefault(w.getId(), 0L),
-                    isLiked);
+                    isLiked,
+                    null,
+                    null);
         }).toList();
 
         return new PageImpl<>(responses, pageable, workspacePage.getTotalElements());

@@ -87,7 +87,9 @@ public class SearchService {
                 workspace,
                 likeCounts.getOrDefault(workspace.getId(), 0L),
                 commentCounts.getOrDefault(workspace.getId(), 0L),
-                isLiked);
+                isLiked,
+                null,
+                null);
     }
 
     private Map<Long, Long> toMap(List<Object[]> rows) {

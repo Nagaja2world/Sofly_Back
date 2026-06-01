@@ -25,6 +25,7 @@ import com.sofly.core.domain.user.code.UserErrorCode;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.exception.UserException;
 import com.sofly.core.domain.user.repository.UserRepository;
+import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.workspace.code.WorkspaceErrorCode;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
@@ -50,6 +51,7 @@ public class WorkspaceService {
 
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final UserFollowRepository userFollowRepository;
     private final WorkspaceInvitationRepository workspaceInvitationRepository;
     private final SavedFlightRepository savedFlightRepository;
     private final SavedPlaceRepository savedPlaceRepository;
@@ -408,8 +410,8 @@ public class WorkspaceService {
     // ── 항공편 목록 조회 ───────────────────────────────────────
 
     public List<SavedFlightResponse> getFlights(Long userId, Long workspaceId) {
-        findWorkspaceById(workspaceId);
-        validateMember(workspaceId, userId);
+        Workspace workspace = findWorkspaceById(workspaceId);
+        requireReadAccess(workspace, userId);
         return savedFlightRepository.findAllByWorkspaceId(workspaceId).stream()
                 .map(SavedFlightResponse::from)
                 .toList();
@@ -539,6 +541,15 @@ public class WorkspaceService {
         if (!workspace.isOwner(userId)) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
         }
+    }
+
+    /** PUBLIC: 누구나 / FOLLOWERS_ONLY: 팔로워+멤버 / PRIVATE: 멤버만 */
+    private void requireReadAccess(Workspace workspace, Long userId) {
+        if (workspace.getVisibility() == WorkspaceVisibility.PUBLIC) return;
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), userId)) return;
+        if (workspace.getVisibility() == WorkspaceVisibility.FOLLOWERS_ONLY
+                && userFollowRepository.existsByFollowerIdAndFollowingId(userId, workspace.getOwner().getId())) return;
+        throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
     }
 
     private void validateMember(Long workspaceId, Long userId) {

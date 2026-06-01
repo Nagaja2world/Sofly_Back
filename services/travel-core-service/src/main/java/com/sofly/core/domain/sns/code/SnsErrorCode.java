@@ -16,7 +16,10 @@ public enum SnsErrorCode implements BaseErrorCode {
     LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "SNS_005", "좋아요를 찾을 수 없습니다."),
     WORKSPACE_NOT_PUBLIC(HttpStatus.FORBIDDEN, "SNS_006", "공개된 워크스페이스가 아닙니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SNS_007", "댓글을 찾을 수 없습니다."),
-    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "SNS_008", "댓글 수정/삭제 권한이 없습니다.");
+    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "SNS_008", "댓글 수정/삭제 권한이 없습니다."),
+    SNS_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "SNS_009", "SNS 게시물을 찾을 수 없습니다."),
+    SNS_POST_FORBIDDEN(HttpStatus.FORBIDDEN, "SNS_010", "SNS 게시물에 접근 권한이 없습니다."),
+    SNS_POST_ALREADY_EXISTS(HttpStatus.CONFLICT, "SNS_011", "이미 SNS 게시물이 존재합니다. 워크스페이스당 하나만 작성할 수 있습니다.");
 
     private final HttpStatus status;
     private final String code;

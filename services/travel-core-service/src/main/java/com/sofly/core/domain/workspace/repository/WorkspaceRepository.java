@@ -44,6 +44,10 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     Page<Workspace> findPublicByOwnerIds(@Param("ownerIds") List<Long> ownerIds, Pageable pageable);
 
     @Query("SELECT w FROM Workspace w JOIN FETCH w.owner " +
+           "WHERE w.owner.id IN :ownerIds AND w.visibility = 'FOLLOWERS_ONLY'")
+    Page<Workspace> findFollowersOnlyByOwnerIds(@Param("ownerIds") List<Long> ownerIds, Pageable pageable);
+
+    @Query("SELECT w FROM Workspace w JOIN FETCH w.owner " +
            "WHERE w.owner.id = :userId AND w.visibility = 'PUBLIC'")
     Page<Workspace> findPublicByUserId(@Param("userId") Long userId, Pageable pageable);
 

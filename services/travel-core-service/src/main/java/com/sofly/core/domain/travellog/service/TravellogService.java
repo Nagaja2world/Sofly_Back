@@ -12,11 +12,15 @@ import com.sofly.core.domain.travellog.entity.TravelLog;
 import com.sofly.core.domain.travellog.repository.TravellogRepository;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.repository.UserRepository;
+import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.workspace.entity.Workspace;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember;
+import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
+import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
+import com.sofly.core.global.security.util.SecurityUtils;
 import com.sofly.core.global.security.workspace.RequireWorkspaceMember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,6 +39,8 @@ public class TravellogService {
 
     private final TravellogRepository travellogRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final UserFollowRepository userFollowRepository;
     private final UserRepository userRepository;
     private final AlbumService albumService;
     private final PhotoRepository photoRepository;
@@ -53,13 +59,13 @@ public class TravellogService {
         return TravellogResponse.from(travelLog);
     }
 
-    @RequireWorkspaceMember
     public List<TravellogSummaryResponse> getTravelLogs(Long workspaceId) {
+        requireReadAccess(workspaceId);
         return travellogRepository.findAllSummaryByWorkspaceId(workspaceId);
     }
 
-    @RequireWorkspaceMember
     public List<TravellogResponse> getTravelLogsWithDetails(Long workspaceId) {
+        requireReadAccess(workspaceId);
         return travellogRepository.findAllWithDetailsByWorkspaceId(workspaceId)
                 .stream()
                 .sorted(Comparator.comparing(TravelLog::getCreatedAt))
@@ -167,6 +173,18 @@ public class TravellogService {
     }
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────
+
+    /** PUBLIC: 누구나 / FOLLOWERS_ONLY: 팔로워+멤버 / PRIVATE: 멤버만 */
+    private void requireReadAccess(Long workspaceId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.WORKSPACE_NOT_FOUND));
+        if (workspace.getVisibility() == WorkspaceVisibility.PUBLIC) return;
+        Long userId = SecurityUtils.getCurrentUserId();
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) return;
+        if (workspace.getVisibility() == WorkspaceVisibility.FOLLOWERS_ONLY
+                && userFollowRepository.existsByFollowerIdAndFollowingId(userId, workspace.getOwner().getId())) return;
+        throw new SoflyException(ErrorCode.WORKSPACE_ACCESS_DENIED);
+    }
 
     private TravellogResponse addPhotosToTravelLog(Long logId, List<Long> photoIds) {
         TravelLog travelLog = travellogRepository.findByIdWithPhotos(logId)

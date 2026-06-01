@@ -54,7 +54,7 @@ public class WorkspaceFlightController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<SavedFlightResponse>>> getFlights(
             @PathVariable Long workspaceId) {
-        Long userId = SecurityUtils.getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();  // PUBLIC이면 멤버 여부 무관하게 조회 가능
         return ResponseEntity.ok(ApiResponse.success(workspaceService.getFlights(userId, workspaceId)));
     }
 

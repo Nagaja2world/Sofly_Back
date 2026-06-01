@@ -11,6 +11,7 @@ import com.sofly.core.domain.workspace.entity.WorkspaceMember;
 import com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole;
 import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
 import com.sofly.core.domain.workspace.exception.WorkspaceException;
+import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.security.util.SecurityUtils;
@@ -33,6 +34,7 @@ public class ScheduleService {
     private final ScheduleItemRepository scheduleItemRepository;
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final UserFollowRepository userFollowRepository;
 
     // ── 조회 ────────────────────────────────────────────────
 
@@ -329,15 +331,16 @@ public class ScheduleService {
 
     // ── 권한 체크 헬퍼 ──────────────────────────────────────
 
-    /** PUBLIC 워크스페이스는 누구나 읽을 수 있고, PRIVATE는 멤버만 읽을 수 있다. */
+    /** PUBLIC: 누구나 / FOLLOWERS_ONLY: 팔로워+멤버 / PRIVATE: 멤버만 */
     private void requireReadAccess(Long workspaceId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new EntityNotFoundException("Workspace not found: " + workspaceId));
         if (workspace.getVisibility() == WorkspaceVisibility.PUBLIC) return;
         Long userId = SecurityUtils.getCurrentUserId();
-        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) {
-            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
-        }
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) return;
+        if (workspace.getVisibility() == WorkspaceVisibility.FOLLOWERS_ONLY
+                && userFollowRepository.existsByFollowerIdAndFollowingId(userId, workspace.getOwner().getId())) return;
+        throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FORBIDDEN);
     }
 
     /** 쓰기 작업: EDITOR 이상(OWNER/EDITOR)만 허용, VIEWER와 비멤버는 거부 */
