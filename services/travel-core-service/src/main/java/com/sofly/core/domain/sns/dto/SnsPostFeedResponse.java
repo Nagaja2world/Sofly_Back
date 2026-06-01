@@ -9,7 +9,6 @@ public record SnsPostFeedResponse(
         Long workspaceId,
         AuthorInfo author,
         String content,
-        SnsPost.Visibility visibility,
         String firstImageUrl,
         int imageCount,
         LocalDateTime createdAt
@@ -21,7 +20,6 @@ public record SnsPostFeedResponse(
                 post.getWorkspace().getId(),
                 AuthorInfo.from(post.getAuthor()),
                 post.getContent(),
-                post.getVisibility(),
                 firstImage,
                 post.getImages().size(),
                 post.getCreatedAt()

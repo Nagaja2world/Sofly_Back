@@ -3,6 +3,7 @@ package com.sofly.core.domain.sns.service;
 import com.sofly.core.domain.sns.dto.PublicWorkspaceResponse;
 import com.sofly.core.domain.sns.entity.SnsPost;
 import com.sofly.core.domain.sns.repository.SnsPostRepository;
+
 import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceCommentRepository;
 import com.sofly.core.domain.sns.repository.WorkspaceLikeRepository;
@@ -44,13 +45,9 @@ public class FeedService {
         Set<Long> likedByUser = Set.copyOf(
                 workspaceLikeRepository.findLikedWorkspaceIdsByUserId(userId, ids));
 
-        // SNS 포스트: PUBLIC은 모두, FOLLOWERS_ONLY는 팔로잉 대상만 노출
-        Set<Long> followingIdSet = Set.copyOf(followingIds);
-        List<SnsPost> snsPosts = snsPostRepository.findByWorkspaceIdsWithImages(
-                ids, List.of(SnsPost.Visibility.PUBLIC, SnsPost.Visibility.FOLLOWERS_ONLY));
+        // SNS 포스트: 워크스페이스 공개범위를 따르므로 visibility 별도 필터 불필요
+        List<SnsPost> snsPosts = snsPostRepository.findByWorkspaceIdsWithImages(ids);
         Map<Long, SnsPost> snsPostMap = snsPosts.stream()
-                .filter(p -> p.getVisibility() == SnsPost.Visibility.PUBLIC
-                        || followingIdSet.contains(p.getAuthor().getId()))
                 .collect(Collectors.toMap(p -> p.getWorkspace().getId(), p -> p, (a, b) -> a));
 
         LocalDateTime recencyCutoff = LocalDateTime.now(ZoneOffset.UTC).minusDays(7);

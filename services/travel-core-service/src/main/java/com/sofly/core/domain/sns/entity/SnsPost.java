@@ -36,25 +36,13 @@ public class SnsPost extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private Visibility visibility = Visibility.PRIVATE;
-
     @OneToMany(mappedBy = "snsPost", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     @Builder.Default
     private List<SnsPostImage> images = new ArrayList<>();
 
-    public enum Visibility {
-        PUBLIC,           // 전체공개
-        FOLLOWERS_ONLY,   // 팔로워만
-        PRIVATE           // 나만 보기
-    }
-
-    public void update(String content, Visibility visibility) {
+    public void update(String content) {
         if (content != null) this.content = content;
-        if (visibility != null) this.visibility = visibility;
     }
 
     public void clearImages() {

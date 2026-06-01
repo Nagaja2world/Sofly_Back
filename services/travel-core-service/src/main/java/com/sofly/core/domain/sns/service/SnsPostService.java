@@ -2,7 +2,6 @@ package com.sofly.core.domain.sns.service;
 
 import com.sofly.core.domain.album.service.S3Service;
 import com.sofly.core.domain.sns.code.SnsErrorCode;
-import com.sofly.core.domain.sns.dto.SnsPostFeedResponse;
 import com.sofly.core.domain.sns.dto.SnsPostResponse;
 import com.sofly.core.domain.sns.dto.SnsPostUpdateRequest;
 import com.sofly.core.domain.sns.entity.SnsPost;
@@ -13,14 +12,13 @@ import com.sofly.core.domain.sns.repository.UserFollowRepository;
 import com.sofly.core.domain.user.entity.User;
 import com.sofly.core.domain.user.repository.UserRepository;
 import com.sofly.core.domain.workspace.entity.Workspace;
+import com.sofly.core.domain.workspace.entity.WorkspaceVisibility;
 import com.sofly.core.domain.workspace.repository.WorkspaceMemberRepository;
 import com.sofly.core.domain.workspace.repository.WorkspaceRepository;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,8 +52,7 @@ public class SnsPostService {
     @Transactional
     public SnsPostResponse createPost(Long workspaceId, Long userId,
                                       List<MultipartFile> files,
-                                      String content,
-                                      SnsPost.Visibility visibility) {
+                                      String content) {
         validateMember(workspaceId, userId);
 
         if (snsPostRepository.existsByWorkspaceId(workspaceId)) {
@@ -75,7 +72,6 @@ public class SnsPostService {
                 .workspace(workspace)
                 .author(author)
                 .content(content)
-                .visibility(visibility)
                 .build();
         snsPostRepository.save(post);
 
@@ -84,11 +80,11 @@ public class SnsPostService {
         return SnsPostResponse.from(post);
     }
 
-    /** 워크스페이스 SNS 카드 단건 조회 (전체 이미지) — 공개범위에 따라 접근 제어 */
+    /** 워크스페이스 SNS 카드 단건 조회 — 워크스페이스 공개범위 기준으로 접근 제어 */
     public SnsPostResponse getPost(Long workspaceId, Long userId) {
         SnsPost post = snsPostRepository.findByWorkspaceId(workspaceId)
                 .orElseThrow(() -> new SnsException(SnsErrorCode.SNS_POST_NOT_FOUND));
-        checkVisibilityAccess(post, userId);
+        checkWorkspaceVisibilityAccess(workspaceId, userId);
         return SnsPostResponse.from(post);
     }
 
@@ -96,7 +92,7 @@ public class SnsPostService {
      * SNS 카드 수정
      * - keepImageIds 제공 시: 해당 ID 이미지 유지(순서 재정렬) + 나머지 삭제 + newFiles 추가
      * - keepImageIds 미제공 + newFiles 있으면: 기존 이미지 전체 교체
-     * - 둘 다 없으면: 텍스트·공개범위만 수정
+     * - 둘 다 없으면: 텍스트만 수정
      */
     @Transactional
     public SnsPostResponse updatePost(Long workspaceId, Long userId,
@@ -111,13 +107,12 @@ public class SnsPostService {
             throw new SnsException(SnsErrorCode.SNS_POST_FORBIDDEN);
         }
 
-        post.update(request.content(), request.visibility());
+        post.update(request.content());
 
         boolean hasKeepIds = keepImageIds != null;
         boolean hasNewFiles = newFiles != null && !newFiles.isEmpty();
 
         if (hasKeepIds) {
-            // 부분 업데이트: keepImageIds 유지 + 나머지 삭제 + 새 파일 추가
             if (hasNewFiles) validateFiles(newFiles);
 
             int totalCount = keepImageIds.size() + (hasNewFiles ? newFiles.size() : 0);
@@ -125,7 +120,6 @@ public class SnsPostService {
                 throw new SoflyException(ErrorCode.TOO_MANY_FILES);
             }
 
-            // keepImageIds에 없는 이미지 S3 삭제 후 컬렉션에서 제거
             List<SnsPostImage> toDelete = post.getImages().stream()
                     .filter(img -> !keepImageIds.contains(img.getId()))
                     .toList();
@@ -136,7 +130,6 @@ public class SnsPostService {
                 post.removeImage(img);
             });
 
-            // 유지되는 이미지 orderIndex를 keepImageIds 순서로 재정렬
             Map<Long, SnsPostImage> imageMap = post.getImages().stream()
                     .collect(java.util.stream.Collectors.toMap(SnsPostImage::getId, img -> img));
             for (int i = 0; i < keepImageIds.size(); i++) {
@@ -144,13 +137,11 @@ public class SnsPostService {
                 if (img != null) img.updateOrderIndex(i);
             }
 
-            // 새 파일 업로드 (유지 이미지 다음 순서로)
             if (hasNewFiles) {
                 uploadImages(post, workspaceId, newFiles, keepImageIds.size());
             }
 
         } else if (hasNewFiles) {
-            // 전체 교체: 기존 이미지 전부 삭제 후 새 파일로 교체
             validateFiles(newFiles);
             post.getImages().forEach(img -> {
                 try { s3Service.deleteObject(img.getS3Key()); } catch (Exception e) {
@@ -183,22 +174,6 @@ public class SnsPostService {
         snsPostRepository.delete(post);
     }
 
-    /** SNS 피드: PUBLIC(전체) + FOLLOWERS_ONLY(팔로잉 대상만) */
-    public Page<SnsPostFeedResponse> getFeed(Long userId, Pageable pageable) {
-        List<Long> followingIds = userFollowRepository.findFollowingIdsByFollowerId(userId);
-        Page<SnsPost> page;
-        if (followingIds.isEmpty()) {
-            page = snsPostRepository.findPublicForFeed(SnsPost.Visibility.PUBLIC, pageable);
-        } else {
-            page = snsPostRepository.findForFeed(
-                    SnsPost.Visibility.PUBLIC,
-                    SnsPost.Visibility.FOLLOWERS_ONLY,
-                    followingIds,
-                    pageable);
-        }
-        return page.map(SnsPostFeedResponse::from);
-    }
-
     // ── 내부 헬퍼 ──────────────────────────────────────────
 
     private void uploadImages(SnsPost post, Long workspaceId, List<MultipartFile> files, int startIndex) {
@@ -224,25 +199,19 @@ public class SnsPostService {
     }
 
     /**
-     * SNS 카드 공개범위 접근 제어
-     * PUBLIC       → 누구나
-     * FOLLOWERS_ONLY → 작성자 본인 + 팔로워
-     * PRIVATE      → 작성자 본인만
+     * 워크스페이스 공개범위 기준 접근 제어
+     * PUBLIC          → 누구나
+     * FOLLOWERS_ONLY  → 워크스페이스 멤버 + 소유자 팔로워
+     * PRIVATE         → 워크스페이스 멤버만
      */
-    private void checkVisibilityAccess(SnsPost post, Long userId) {
-        if (post.isAuthor(userId)) return;
-
-        switch (post.getVisibility()) {
-            case PUBLIC -> { /* 누구나 접근 가능 */ }
-            case FOLLOWERS_ONLY -> {
-                boolean follows = userFollowRepository.existsByFollowerIdAndFollowingId(
-                        userId, post.getAuthor().getId());
-                boolean isMember = workspaceMemberRepository.existsByWorkspaceIdAndUserId(
-                        post.getWorkspace().getId(), userId);
-                if (!follows && !isMember) throw new SnsException(SnsErrorCode.SNS_POST_FORBIDDEN);
-            }
-            case PRIVATE -> throw new SnsException(SnsErrorCode.SNS_POST_FORBIDDEN);
-        }
+    private void checkWorkspaceVisibilityAccess(Long workspaceId, Long userId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new SoflyException(ErrorCode.WORKSPACE_NOT_FOUND));
+        if (workspace.getVisibility() == WorkspaceVisibility.PUBLIC) return;
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)) return;
+        if (workspace.getVisibility() == WorkspaceVisibility.FOLLOWERS_ONLY
+                && userFollowRepository.existsByFollowerIdAndFollowingId(userId, workspace.getOwner().getId())) return;
+        throw new SnsException(SnsErrorCode.SNS_POST_FORBIDDEN);
     }
 
     private void validateMember(Long workspaceId, Long userId) {

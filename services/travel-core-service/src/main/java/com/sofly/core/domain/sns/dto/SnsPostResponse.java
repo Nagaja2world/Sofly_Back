@@ -10,7 +10,6 @@ public record SnsPostResponse(
         Long workspaceId,
         AuthorInfo author,
         String content,
-        SnsPost.Visibility visibility,
         List<SnsPostImageResponse> images,
         LocalDateTime createdAt
 ) {
@@ -24,7 +23,6 @@ public record SnsPostResponse(
                 post.getWorkspace().getId(),
                 AuthorInfo.from(post.getAuthor()),
                 post.getContent(),
-                post.getVisibility(),
                 imageResponses,
                 post.getCreatedAt()
         );

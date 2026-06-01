@@ -2,7 +2,6 @@ package com.sofly.core.domain.sns.controller;
 
 import com.sofly.core.domain.sns.dto.SnsPostResponse;
 import com.sofly.core.domain.sns.dto.SnsPostUpdateRequest;
-import com.sofly.core.domain.sns.entity.SnsPost;
 import com.sofly.core.domain.sns.service.SnsPostService;
 import com.sofly.core.global.response.ApiResponse;
 import com.sofly.core.global.security.util.SecurityUtils;
@@ -26,17 +25,16 @@ public class SnsPostController {
     private final SnsPostService snsPostService;
 
     @Operation(summary = "SNS 카드 생성",
-               description = "워크스페이스당 1개. 사진(최대 10장) + 텍스트 + 공개범위(PUBLIC/FOLLOWERS_ONLY/PRIVATE)")
+               description = "워크스페이스당 1개. 사진(최대 10장) + 텍스트. 공개범위는 워크스페이스 설정을 따릅니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<SnsPostResponse>> createPost(
             @PathVariable Long workspaceId,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
-            @RequestParam(required = false) String content,
-            @RequestParam SnsPost.Visibility visibility) {
+            @RequestParam(required = false) String content) {
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        snsPostService.createPost(workspaceId, userId, files, content, visibility)));
+                        snsPostService.createPost(workspaceId, userId, files, content)));
     }
 
     @Operation(summary = "SNS 카드 조회", description = "워크스페이스의 SNS 카드 전체 정보(이미지 전체) 반환")
@@ -49,7 +47,7 @@ public class SnsPostController {
 
     @Operation(summary = "SNS 카드 수정",
                description = """
-                       텍스트·공개범위 수정 + 이미지 부분/전체 업데이트.
+                       텍스트 수정 + 이미지 부분/전체 업데이트.
                        keepImageIds 전달 시: 해당 ID 유지(순서 재정렬) + 나머지 삭제 + files 추가.
                        keepImageIds 미전달 + files 전달 시: 기존 이미지 전체 교체.
                        """)
@@ -58,10 +56,9 @@ public class SnsPostController {
             @PathVariable Long workspaceId,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @RequestParam(required = false) List<Long> keepImageIds,
-            @RequestParam(required = false) String content,
-            @RequestParam(required = false) SnsPost.Visibility visibility) {
+            @RequestParam(required = false) String content) {
         Long userId = SecurityUtils.getCurrentUserId();
-        SnsPostUpdateRequest request = new SnsPostUpdateRequest(content, visibility);
+        SnsPostUpdateRequest request = new SnsPostUpdateRequest(content);
         return ResponseEntity.ok(ApiResponse.success(
                 snsPostService.updatePost(workspaceId, userId, files, keepImageIds, request)));
     }
