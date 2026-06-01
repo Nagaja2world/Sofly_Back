@@ -23,7 +23,8 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
 
     @Query("SELECT DISTINCT wm.workspace FROM WorkspaceMember wm " +
            "JOIN FETCH wm.workspace.owner " +
-           "WHERE wm.user.id = :userId")
+           "WHERE wm.user.id = :userId " +
+           "ORDER BY wm.workspace.updatedAt DESC")
     List<Workspace> findAllWithOwnerByUserId(@Param("userId") Long userId);
 
     @Query("SELECT DISTINCT wm.workspace FROM WorkspaceMember wm " +
