@@ -19,7 +19,15 @@ public record PlacesResponse(
             String googleMapsUri,
             String businessStatus,
             String priceLevel,
-            List<Photo> photos
+            List<Photo> photos,
+            List<AddressComponent> addressComponents
+    ) {}
+
+    public record AddressComponent(
+            String longText,
+            String shortText,
+            List<String> types,
+            String languageCode
     ) {}
 
     public record LocalizedText(String text, String languageCode) {}

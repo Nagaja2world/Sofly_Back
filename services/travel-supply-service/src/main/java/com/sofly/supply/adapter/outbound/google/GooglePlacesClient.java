@@ -62,7 +62,8 @@ public class GooglePlacesClient implements PlaceInfoPort {
                                     "places.googleMapsUri," +
                                     "places.businessStatus," +
                                     "places.priceLevel," +
-                                    "places.photos"
+                                    "places.photos," +
+                                    "places.addressComponents"
                     )
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of(

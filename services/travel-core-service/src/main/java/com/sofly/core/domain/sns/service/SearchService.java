@@ -129,7 +129,7 @@ public class SearchService {
                     i + 1,
                     (String) row[0],
                     (String) row[1],
-                    (Long) row[2]
+                    ((Number) row[2]).longValue()
             ));
         }
         return result;

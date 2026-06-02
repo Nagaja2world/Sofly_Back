@@ -392,9 +392,11 @@ public class WorkspaceService {
         savedFlightRepository.save(flight);
         workspace.touch();
 
-        // 도착 공항의 국가코드로 워크스페이스 countryCode 자동 업데이트
-        airportInfoService.findByIata(request.getArrivalAirport())
-                .ifPresent(info -> workspace.updateCountryCode(info.countryCode()));
+        // countryCode가 없을 때만 도착 공항 기준으로 설정 (이미 있으면 덮어쓰지 않음)
+        if (workspace.getCountryCode() == null || workspace.getCountryCode().isBlank()) {
+            airportInfoService.findByIata(request.getArrivalAirport())
+                    .ifPresent(info -> workspace.updateCountryCode(info.countryCode()));
+        }
 
         // 정복 지도: 도착 국가/도시를 PLANNED 상태로 자동 반영
         List<Long> memberIds = workspace.getMembers().stream()
