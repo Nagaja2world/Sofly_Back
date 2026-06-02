@@ -1,5 +1,6 @@
 package com.sofly.core.domain.chat.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sofly.core.domain.chat.dto.ChatHistoryResponse;
 import com.sofly.core.domain.chat.dto.ChatRequest;
 import com.sofly.core.domain.chat.dto.ChatResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -33,6 +35,7 @@ public class ChatMessageController {
             Executors.newScheduledThreadPool(10);
 
     private final ChatService chatService;
+    private final ObjectMapper objectMapper;
 
     @Operation(summary = "ChatRoom 메시지 조회", description = "특정 ChatRoom의 전체 메시지를 반환합니다.")
     @GetMapping("/{roomId}/messages")
@@ -92,7 +95,10 @@ public class ChatMessageController {
                         chunk -> {
                             if (chunk == null) return;
                             try {
-                                emitter.send(SseEmitter.event().data(chunk));
+                                // 청크를 JSON으로 감싸 전송: 본문의 \n이 SSE data: 라인 구분자로
+                                // 먹히지 않도록 이스케이프된다. 프론트는 JSON.parse 후 content를 사용.
+                                emitter.send(SseEmitter.event()
+                                        .data(objectMapper.writeValueAsString(Map.of("content", chunk))));
                                 collector.append(chunk);
                             } catch (IOException e) {
                                 emitter.completeWithError(e);
@@ -115,7 +121,9 @@ public class ChatMessageController {
         heartbeat.cancel(true);
         try {
             String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
-            emitter.send(SseEmitter.event().name("error").data(message));
+            // 일반 청크와 동일하게 JSON 봉투로 통일: data: {"message":"..."}
+            emitter.send(SseEmitter.event().name("error")
+                    .data(objectMapper.writeValueAsString(Map.of("message", message))));
         } catch (IOException ignored) {
             // Client disconnected or response is already closed.
         }
