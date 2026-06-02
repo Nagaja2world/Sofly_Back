@@ -3,6 +3,7 @@ package com.sofly.core.domain.conquest.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 @Getter
@@ -25,7 +26,9 @@ public class TripRouteResponse {
     private double arrivalLat;
     private double arrivalLng;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private LocalDateTime departureTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private LocalDateTime arrivalTime;
 
     private String airline;

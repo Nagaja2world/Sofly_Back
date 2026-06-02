@@ -5,6 +5,7 @@ import com.sofly.core.domain.workspace.entity.SavedFlight.FlightType;
 import lombok.Builder;
 import lombok.Getter;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 @Getter
@@ -33,7 +34,9 @@ public class SavedFlightResponse {
     private String arrivalTerminal;
 
     // 시간
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private LocalDateTime departureTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private LocalDateTime arrivalTime;
     private Integer durationMinutes;
 
