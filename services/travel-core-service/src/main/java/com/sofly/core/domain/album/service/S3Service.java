@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
@@ -73,6 +74,23 @@ public class S3Service {
         } catch (SdkException e) {
             log.error("S3 Presigned URL 생성 실패. key={}, error={}", s3Key, e.getMessage(), e);
             throw new SoflyException(ErrorCode.S3_DOWNLOAD_FAILED);
+        }
+    }
+
+    /** S3 객체를 같은 버킷 내 다른 키로 복사 (public-read ACL 유지) */
+    public String copyObject(String sourceKey, String destinationKey) {
+        try {
+            s3Client.copyObject(CopyObjectRequest.builder()
+                    .sourceBucket(s3Config.getS3().getBucket())
+                    .sourceKey(sourceKey)
+                    .destinationBucket(s3Config.getS3().getBucket())
+                    .destinationKey(destinationKey)
+                    .acl(ObjectCannedACL.PUBLIC_READ)
+                    .build());
+            return buildObjectUrl(destinationKey);
+        } catch (SdkException e) {
+            log.error("S3 복사 실패. sourceKey={}, destKey={}, error={}", sourceKey, destinationKey, e.getMessage(), e);
+            throw new SoflyException(ErrorCode.S3_UPLOAD_FAILED);
         }
     }
 

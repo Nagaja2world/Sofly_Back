@@ -28,4 +28,8 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     /** 주어진 photoIds 중 해당 workspace 앨범에 속한 사진 수 반환 (workspace 소속 검증용) */
     @Query("SELECT COUNT(p) FROM Photo p WHERE p.id IN :photoIds AND p.album.workspace.id = :workspaceId")
     long countByIdsAndWorkspaceId(@Param("photoIds") List<Long> photoIds, @Param("workspaceId") Long workspaceId);
+
+    /** 주어진 photoIds 중 해당 workspace 앨범에 속한 사진 목록 반환 */
+    @Query("SELECT p FROM Photo p WHERE p.id IN :photoIds AND p.album.workspace.id = :workspaceId")
+    List<Photo> findAllByIdsAndWorkspaceId(@Param("photoIds") List<Long> photoIds, @Param("workspaceId") Long workspaceId);
 }
