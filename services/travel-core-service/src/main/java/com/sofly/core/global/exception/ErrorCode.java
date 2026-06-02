@@ -33,7 +33,7 @@ public enum ErrorCode {
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "사진을 찾을 수 없습니다."),
     UPLOAD_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "사진 업로드 권한이 없습니다."),
     DELETE_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "사진 삭제 권한이 없습니다."),
-    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, String.format("파일 크기는 %dMB를 초과할 수 없습니다.", 10)),
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, String.format("파일 크기는 %dMB를 초과할 수 없습니다.", 25)),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않는 파일 형식입니다. (jpeg, png, webp, heic만 가능)"),
     TOO_MANY_FILES(HttpStatus.BAD_REQUEST, String.format("한 번에 최대 %d장까지 업로드할 수 있습니다.", 20)),
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 업로드 처리 중 오류가 발생했습니다."),

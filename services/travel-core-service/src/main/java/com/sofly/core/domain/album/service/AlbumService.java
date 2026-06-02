@@ -32,7 +32,7 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class AlbumService {
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L; // 10MB
+    private static final long MAX_FILE_SIZE = 25 * 1024 * 1024L; // 25MB
     private static final int MAX_FILE_COUNT = 20;
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/heic"
