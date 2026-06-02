@@ -103,7 +103,7 @@ public class SnsPostService {
         SnsPost post = snsPostRepository.findByWorkspaceId(workspaceId)
                 .orElseThrow(() -> new SnsException(SnsErrorCode.SNS_POST_NOT_FOUND));
 
-        if (!post.isAuthor(userId)) {
+        if (!post.isAuthor(userId) && !isWorkspaceOwner(workspaceId, userId)) {
             throw new SnsException(SnsErrorCode.SNS_POST_FORBIDDEN);
         }
 
@@ -162,7 +162,7 @@ public class SnsPostService {
         SnsPost post = snsPostRepository.findByWorkspaceId(workspaceId)
                 .orElseThrow(() -> new SnsException(SnsErrorCode.SNS_POST_NOT_FOUND));
 
-        if (!post.isAuthor(userId)) {
+        if (!post.isAuthor(userId) && !isWorkspaceOwner(workspaceId, userId)) {
             throw new SnsException(SnsErrorCode.SNS_POST_FORBIDDEN);
         }
 
@@ -217,6 +217,12 @@ public class SnsPostService {
     private void validateMember(Long workspaceId, Long userId) {
         workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new SoflyException(ErrorCode.WORKSPACE_ACCESS_DENIED));
+    }
+
+    private boolean isWorkspaceOwner(Long workspaceId, Long userId) {
+        return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
+                .map(m -> m.getRole() == com.sofly.core.domain.workspace.entity.WorkspaceMember.MemberRole.OWNER)
+                .orElse(false);
     }
 
     private void validateFiles(List<MultipartFile> files) {
