@@ -16,7 +16,7 @@ jobs:
   deploy:
     name: Deploy Dozzle
     runs-on: ubuntu-latest
-    environment: production
+    environment: infrastructure-dozzle
 
     steps:
       - name: Deploy via SSH
