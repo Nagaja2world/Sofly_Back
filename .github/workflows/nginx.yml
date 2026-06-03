@@ -15,6 +15,7 @@ concurrency:
 jobs:
   deploy-nginx:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Deploy via SSH
