@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class SnsPostService {
 
-    private static final int MAX_IMAGES = 10;
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L;
+    private static final int MAX_IMAGES = 20;
+    private static final long MAX_FILE_SIZE = 25 * 1024 * 1024L;
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/heic"
     );
@@ -294,13 +294,20 @@ public class SnsPostService {
 
     private void validateFiles(List<MultipartFile> files) {
         if (files.size() > MAX_IMAGES) {
+            log.warn("SNS 파일 수 초과: 요청={}, 허용={}", files.size(), MAX_IMAGES);
             throw new SoflyException(ErrorCode.TOO_MANY_FILES);
         }
         for (MultipartFile file : files) {
-            if (file.getSize() > MAX_FILE_SIZE) {
+            String name = file.getOriginalFilename();
+            String contentType = file.getContentType();
+            long size = file.getSize();
+            if (size > MAX_FILE_SIZE) {
+                log.warn("SNS 파일 크기 초과: name={}, size={}MB, 허용={}MB",
+                        name, size / (1024 * 1024), MAX_FILE_SIZE / (1024 * 1024));
                 throw new SoflyException(ErrorCode.FILE_TOO_LARGE);
             }
-            if (!ALLOWED_TYPES.contains(file.getContentType())) {
+            if (!ALLOWED_TYPES.contains(contentType)) {
+                log.warn("SNS 허용되지 않는 파일 타입: name={}, contentType={}", name, contentType);
                 throw new SoflyException(ErrorCode.INVALID_FILE_TYPE);
             }
         }

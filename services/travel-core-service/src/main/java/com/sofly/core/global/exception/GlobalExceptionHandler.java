@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -74,6 +75,16 @@ public class GlobalExceptionHandler {
                 .status(errorCode.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(errorCode));
+    }
+
+    // ── 멀티파트 파일 크기 초과 (Spring 레벨) ─────────────
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
+        log.warn("파일 크기 초과 (Spring multipart 제한): {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.FILE_TOO_LARGE.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ApiResponse.fail(ErrorCode.FILE_TOO_LARGE.getMessage()));
     }
 
     // ── @Valid 유효성 검사 실패 ───────────────────────────
