@@ -133,6 +133,7 @@ cloud:
     s3:
       bucket: ${S3_BUCKET:sofly-bucket}
       region: ${AWS_REGION:ap-northeast-2}
+      endpoint: ${S3_ENDPOINT:}  # 비어 있으면 실제 AWS, LocalStack 사용 시 http://localhost:4566
     credentials:
       access-key: ${AWS_S3_ACCESS_KEY_ID}
       secret-key: ${AWS_S3_SECRET_ACCESS_KEY}
@@ -154,7 +155,7 @@ management:
         enabled: true
   zipkin:
     tracing:
-      endpoint: http://sofly-zipkin:9411/api/v2/spans
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   tracing:
     sampling:
       probability: 1.0

@@ -109,8 +109,13 @@ public class S3Service {
         }
     }
 
-    /** S3 객체 URL 생성 */
+    /** S3 객체 URL 생성 (LocalStack 사용 시 path-style URL 반환) */
     public String buildObjectUrl(String s3Key) {
+        String endpoint = s3Config.getS3().getEndpoint();
+        if (endpoint != null && !endpoint.isBlank()) {
+            // LocalStack: http://localhost:4566/sofly-bucket/key
+            return String.format("%s/%s/%s", endpoint, s3Config.getS3().getBucket(), s3Key);
+        }
         return String.format("https://%s.s3.%s.amazonaws.com/%s",
                 s3Config.getS3().getBucket(),
                 s3Config.getS3().getRegion(),
