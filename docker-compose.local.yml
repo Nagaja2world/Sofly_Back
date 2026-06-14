@@ -67,13 +67,15 @@ services:
     image: confluentinc/cp-kafka:7.6.0
     container_name: sofly-kafka
     ports:
-      - "9092:9092"
+      - "9092:9092"    # Docker 내부 서비스용 (kafka-ui 등)
+      - "29092:29092"  # 호스트(gradle bootRun) 접속용
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -109,14 +111,40 @@ services:
     networks:
       - sofly-net
 
+  localstack:
+    image: localstack/localstack:latest
+    container_name: sofly-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: ap-northeast-2
+      AWS_DEFAULT_REGION: ap-northeast-2
+    volumes:
+      - ./localstack/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+    networks:
+      - sofly-net
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: sofly-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - sofly-net
+
   prometheus:
     image: prom/prometheus:latest
     container_name: sofly-prometheus
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # 호스트(gradle bootRun) 접근용
     volumes:
       - ./monitoring/prometheus.local.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
+    networks:
+      - sofly-net
 
   grafana:
     image: grafana/grafana:latest
@@ -128,8 +156,11 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+    networks:
+      - sofly-net
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -141,6 +172,8 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - sofly-net
 
 volumes:
   postgres_data:
