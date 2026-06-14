@@ -74,6 +74,9 @@ public class ChatService {
 
         String conversationId = "room:" + roomId;
 
+        log.info("[AI-CHAT] ▶ USER  roomId={} | message=\"{}\"", roomId, request.message());
+
+        long start = System.currentTimeMillis();
         String response = chatClient.prompt()
                 .user(request.message())
                 .advisors(MessageChatMemoryAdvisor.builder(rdbChatMemory)
@@ -82,6 +85,11 @@ public class ChatService {
                 .tools(placeVerificationTools)
                 .call()
                 .content();
+        long elapsed = System.currentTimeMillis() - start;
+
+        log.info("[AI-CHAT] ◀ GEMINI roomId={} | elapsed={}ms | response=\"{}\"",
+                roomId, elapsed,
+                response.length() > 300 ? response.substring(0, 300) + "…" : response);
 
         room.updateLastMessage(response.length() > LAST_MESSAGE_PREVIEW_LENGTH ? response.substring(0, LAST_MESSAGE_PREVIEW_LENGTH) + "…" : response);
 
@@ -162,14 +170,24 @@ public class ChatService {
         AiScheduleOutput output;
         try {
             String content = lastAssistantMessage.getContent();
+            log.info("[AI-JSON] 원본 응답 길이={}자 | 앞 200자=\"{}\"",
+                    content.length(), content.substring(0, Math.min(200, content.length())));
+
             // AI가 마크다운 코드 블록(```json ... ```)이나 앞뒤 텍스트를 포함할 경우 JSON만 추출
             if (content.contains("```json")) {
                 content = content.substring(content.indexOf("```json") + 7, content.lastIndexOf("```")).trim();
+                log.info("[AI-JSON] 마크다운 코드 블록 제거 완료");
             } else if (content.contains("{") && content.contains("}")) {
                 content = content.substring(content.indexOf("{"), content.lastIndexOf("}") + 1).trim();
+                log.info("[AI-JSON] 앞뒤 텍스트 제거 완료");
             }
+
+            log.info("[AI-JSON] 파싱 시도 | JSON 앞 500자=\"{}\"",
+                    content.substring(0, Math.min(500, content.length())));
             output = objectMapper.readValue(content, AiScheduleOutput.class);
+            log.info("[AI-JSON] 파싱 성공 | days={}일", output.days() != null ? output.days().size() : 0);
         } catch (JsonProcessingException e) {
+            log.error("[AI-JSON] 파싱 실패 | error={}", e.getMessage());
             throw new SoflyException(ErrorCode.INVALID_AI_RESPONSE);
         }
 
