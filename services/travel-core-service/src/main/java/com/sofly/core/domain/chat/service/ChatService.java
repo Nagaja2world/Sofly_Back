@@ -23,6 +23,7 @@ import com.sofly.core.global.ai.tools.PlaceVerificationTools;
 import com.sofly.core.global.exception.ErrorCode;
 import com.sofly.core.global.exception.SoflyException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
