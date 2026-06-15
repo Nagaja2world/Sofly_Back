@@ -111,17 +111,34 @@ services:
     networks:
       - sofly-net
 
-  localstack:
-    image: localstack/localstack:latest
-    container_name: sofly-localstack
+  minio:
+    image: minio/minio:latest
+    container_name: sofly-minio
     ports:
-      - "4566:4566"
+      - "4566:9000"   # S3 API (S3_ENDPOINT=http://localhost:4566 로 접근)
+      - "9001:9001"   # MinIO Console (http://localhost:9001)
     environment:
-      SERVICES: s3
-      DEFAULT_REGION: ap-northeast-2
-      AWS_DEFAULT_REGION: ap-northeast-2
+      MINIO_ROOT_USER: local
+      MINIO_ROOT_PASSWORD: locallocal
+    command: server /data --console-address ":9001"
     volumes:
-      - ./localstack/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+      - minio_data:/data
+    networks:
+      - sofly-net
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: sofly-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+        sleep 3;
+        mc alias set local http://minio:9000 local locallocal;
+        mc mb --ignore-existing local/sofly-bucket;
+        mc anonymous set public local/sofly-bucket;
+        echo 'sofly-bucket 생성 완료';
+      "
     networks:
       - sofly-net
 
@@ -180,6 +197,7 @@ volumes:
   redis_data:
   prometheus_data:
   grafana_data:
+  minio_data:
 
 networks:
   sofly-net:
