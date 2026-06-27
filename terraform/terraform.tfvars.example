@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and fill in values
+# terraform.tfvars is gitignored — never commit real values
+
+aws_region  = "ap-northeast-2"
+environment = "prod"
+project     = "sofly"
+
+lightsail_bundle_id        = "medium_3_0"
+lightsail_blueprint_id     = "ubuntu_22_04"
+lightsail_availability_zone = "ap-northeast-2a"
+lightsail_ssh_public_key   = "ssh-rsa AAAA..."
+
+s3_media_bucket_name       = "sofly-media-prod"
